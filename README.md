@@ -1,32 +1,48 @@
-# React + TypeScript + Vite
+# Neural-OS
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Ferramenta pessoal de estudo: **um lugar só** para aprender uma matéria, anotar, praticar e nunca esquecer.
+Funciona inteira sem IA. Com IA (Hermes Agent / NVIDIA NIM / Ollama), o Prof. A.Ilson personaliza aulas, avaliações e desafios usando as suas anotações e o seu histórico.
 
-Currently, two official plugins are available:
+## Rodar
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Abra http://localhost:5173. Os dados ficam no navegador (faça backup em ⚙ Configurações).
+
+## Configurar IA e Obsidian
+
+1. Copie `.env.example` para `.env.local` e preencha o que for usar.
+2. Reinicie o `npm run dev`.
+3. No app: ⚙ (canto superior direito) → escolha o provedor → 🔄 buscar modelos → **Testar conexão**.
+
+As chaves ficam só no `.env.local` (fora do git). O navegador chama `/ai/<provedor>` e o servidor do Vite repassa com a chave (`server/devApi.ts`).
+
+## Como as abas se conectam
+
+| Aba | Pra quê |
+|---|---|
+| **Lobby** | Target (o que estou aprendendo), missões de hoje, revisões vencidas, constância |
+| **Árvore** | Matérias → tópicos → tópicos derivados. Cresce conforme você cria e domina |
+| **Prof. A.Ilson** | Quadro (explicação, pontos-chave, vídeos, onde pesquisar, dicas) + suas anotações + "prove que entendeu" |
+| **Sandbox** | Desafios do que você já estudou; correção de lógica e sintaxe sem executar |
+| **Molda-Horário** | Planejar a semana (domingo) + check-in diário de energia/tempo que ajusta o dia |
+| **Lousa** | Mapa mental livre (reforma pendente) |
+| **Dungeon** | Modo diversão de fim de semana (trilhas fixas C#, C, LFA) |
+
+Toda avaliação (explicação ou desafio) alimenta a **revisão espaçada**: o tópico volta pra revisão em 1, 3, 7… dias conforme você lembra.
+
+## Estrutura
+
+```
+server/devApi.ts      proxy de IA + gravação no Obsidian (roda dentro do Vite)
+src/domain/           regras puras, sem React: tipos, datas, revisão espaçada, planner, árvore, XP
+src/store/            estado (Zustand + persist): study, settings, nav, toast
+src/services/         IA (cliente OpenAI-compatível + prompts do professor) e Obsidian
+src/components/       peças de interface reutilizáveis
+src/features/<aba>/   uma pasta por aba
+```
+
+Atalhos: teclas `1`–`7` trocam de aba.

@@ -1,62 +1,46 @@
-import { useState, useEffect } from 'react';
-import { NeuralProvider } from './context/NeuralContext';
-import { Navbar, type TabId } from './components/layout/Navbar';
-import { Toaster } from './components/layout/Toaster';
-import Lobby from './components/Lobby';
-import Sandbox from './components/Sandbox';
-import { Classroom } from './components/classroom/classroom';
-import { DungeonProtocol } from './components/dungeon/DungeonProtocol';
-import LousaMental from './components/lousa-mental';
-import MoldaHorario from './components/MoldaHorario';
+import { lazy, Suspense, useEffect } from 'react';
+import { Navbar } from './components/Navbar';
+import { Toaster } from './components/Toaster';
+import { TABS, useNav, type TabId } from './store/nav';
+
+// Cada aba é carregada só quando você abre (code-splitting): o app abre mais rápido.
+const PAGES: Record<TabId, React.LazyExoticComponent<() => React.JSX.Element>> = {
+  lobby: lazy(() => import('./features/lobby/Lobby')),
+  arvore: lazy(() => import('./features/tree/NeuralTree')),
+  professor: lazy(() => import('./features/professor/Professor')),
+  sandbox: lazy(() => import('./features/sandbox/Sandbox')),
+  horario: lazy(() => import('./features/planner/Planner')),
+  lousa: lazy(() => import('./features/lousa')),
+  dungeon: lazy(() => import('./features/dungeon/DungeonProtocol')),
+};
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabId>('lobby');
+  const tab = useNav((s) => s.tab);
+  const go = useNav((s) => s.go);
+  const Page = PAGES[tab];
 
-  // Global hotkeys for tabs (1..6)
+  // Atalhos 1..7 trocam de aba (menos quando você está digitando).
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const activeTag = document.activeElement?.tagName.toLowerCase();
-      if (activeTag === 'input' || activeTag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) {
-        return;
-      }
-      if (e.key === '1') setActiveTab('lobby');
-      if (e.key === '2') setActiveTab('lousa');
-      if (e.key === '3') setActiveTab('sandbox');
-      if (e.key === '4') setActiveTab('professor');
-      if (e.key === '5') setActiveTab('dungeon');
-      if (e.key === '6') setActiveTab('molda');
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      if (el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const idx = Number(e.key) - 1;
+      if (idx >= 0 && idx < TABS.length) go(TABS[idx].id);
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const renderTab = () => {
-    switch (activeTab) {
-      case 'lobby':
-        return <Lobby onNavigateTab={(tab) => setActiveTab(tab as TabId)} />;
-      case 'lousa':
-        return <LousaMental onNavigateTab={(tab) => setActiveTab(tab as TabId)} />;
-      case 'sandbox':
-        return <Sandbox />;
-      case 'professor':
-        return <Classroom onNavigateTab={(tab) => setActiveTab(tab as TabId)} />;
-      case 'dungeon':
-        return <DungeonProtocol onNavigateTab={(tab) => setActiveTab(tab as TabId)} />;
-      case 'molda':
-        return <MoldaHorario />;
-      default:
-        return <Lobby onNavigateTab={(tab) => setActiveTab(tab as TabId)} />;
-    }
-  };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [go]);
 
   return (
-    <NeuralProvider>
-      <div className="min-h-screen bg-[#0a0f0d] font-mono text-[#9dc197] selection:bg-[#00ff66] selection:text-black">
-        <Navbar activeTab={activeTab} onSelectTab={setActiveTab} />
-        <main>{renderTab()}</main>
-        <Toaster />
-      </div>
-    </NeuralProvider>
+    <div className="min-h-screen">
+      <Navbar />
+      <main>
+        <Suspense fallback={<div className="p-8 text-center text-xs text-muted">carregando…</div>}>
+          <Page />
+        </Suspense>
+      </main>
+      <Toaster />
+    </div>
   );
 }

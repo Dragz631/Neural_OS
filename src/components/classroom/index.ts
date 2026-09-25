@@ -1,2 +1,0 @@
-export { Classroom } from './classroom';
-

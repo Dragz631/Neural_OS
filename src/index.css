@@ -1,5 +1,36 @@
 @import "tailwindcss";
 
+/* ─── Cores do tema ──────────────────────────────────────────────────────────
+   Antes cada arquivo repetia #00ff66, #39ff14, #9dc197... (3 verdes diferentes).
+   Agora são tokens: use bg-bg, text-fg, border-line, text-accent etc. */
+@theme {
+  --color-bg: #0a0f0d;
+  --color-panel: #0d1411;
+  --color-panel-2: #111b16;
+  --color-line: #1f3a2c;
+  --color-fg: #b9d4b3;
+  --color-muted: #6f8f69;
+  --color-accent: #00ff66;
+  --color-warn: #ffb347;
+  --color-danger: #ff5570;
+  --color-info: #7cf0ff;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+}
+
+html,
 body {
-  background-color: #0a0b0d;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: black;
+}
+
+/* Barra de rolagem discreta */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
 }

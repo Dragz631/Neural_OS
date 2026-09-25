@@ -1,0 +1,119 @@
+// ─── Modelo de dados do Neural-OS v2 ─────────────────────────────────────────
+// Tudo gira em torno de MATÉRIAS e TÓPICOS que você mesmo cria.
+// Nada aqui é fixo: a árvore, as missões e os desafios nascem do que você estuda.
+
+export type Id = string;
+
+/** Data local no formato AAAA-MM-DD (nunca use toISOString().slice pra isso: dá o dia em UTC). */
+export type LocalDate = string;
+
+export interface Subject {
+  id: Id;
+  name: string; // "C#", "Cálculo II", "LFA"
+  color: string; // cor do galho na árvore
+  /** Linguagem usada nos desafios do Sandbox (vazio = matéria sem código). */
+  language: string; // "csharp" | "c" | "python" | "" ...
+  createdAt: string;
+}
+
+/** Estado de revisão espaçada (algoritmo SM-2 simplificado, ver srs.ts). */
+export interface ReviewState {
+  ease: number; // multiplicador de intervalo (começa em 2.5)
+  intervalDays: number; // dias até a próxima revisão
+  due: LocalDate; // quando revisar de novo
+  reps: number; // acertos seguidos
+  lapses: number; // quantas vezes esqueceu
+}
+
+export interface Lesson {
+  explanation: string;
+  keyPoints: string[];
+  /** Termos de busca no YouTube (a IA não inventa URL de vídeo; a gente monta a busca). */
+  videoSearches: string[];
+  whereToResearch: string[];
+  tips: string[];
+  generatedAt: string;
+  source: 'ia' | 'manual';
+}
+
+export interface Topic {
+  id: Id;
+  subjectId: Id;
+  parentId?: Id; // tópico "pai" na árvore (pré-requisito)
+  title: string;
+  notes: string; // suas anotações (markdown) — o "um lugar só"
+  mastery: number; // 0-100
+  review: ReviewState;
+  lesson?: Lesson; // o que o Prof. A.Ilson escreveu no quadro
+  createdAt: string;
+  lastStudiedAt?: string;
+}
+
+export type SessionKind = 'aula' | 'leitura' | 'desafio' | 'revisao' | 'explicacao';
+
+export interface StudySession {
+  id: Id;
+  topicId: Id;
+  date: LocalDate;
+  minutes: number;
+  kind: SessionKind;
+  score?: number; // 0-100 quando houve avaliação
+  note?: string;
+}
+
+export interface CodeReview {
+  syntaxOk: boolean;
+  logicOk: boolean;
+  score: number; // 0-100
+  issues: string[];
+  feedback: string;
+  source: 'ia' | 'basica';
+}
+
+export interface Challenge {
+  id: Id;
+  topicId: Id;
+  language: string;
+  prompt: string;
+  hints: string[];
+  starterCode: string;
+  code: string;
+  review?: CodeReview;
+  createdAt: string;
+  solvedAt?: string;
+}
+
+export interface Target {
+  topicId?: Id;
+  /** Por que estou estudando isso (prova, trabalho, curiosidade...). */
+  goal: string;
+  deadline?: LocalDate;
+}
+
+export interface PlanItem {
+  id: Id;
+  topicId?: Id;
+  title: string;
+  kind: SessionKind;
+  minutes: number;
+  done: boolean;
+}
+
+/** Plano de uma semana (segunda a domingo). */
+export interface WeekPlan {
+  weekStart: LocalDate; // segunda-feira
+  days: PlanItem[][]; // 7 posições: 0 = segunda ... 6 = domingo
+}
+
+export type Energy = 1 | 2 | 3; // baixa, média, alta
+
+export interface DayCheckin {
+  date: LocalDate;
+  energy: Energy;
+  minutesAvailable: number;
+}
+
+export interface Profile {
+  name: string;
+  xp: number;
+}
