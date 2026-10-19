@@ -15,6 +15,8 @@ export interface DevApiEnv {
   NVIDIA_API_KEY?: string;
   OLLAMA_URL?: string;
   OBSIDIAN_VAULT_PATH?: string;
+  /** Cofre de estudos (lousas, resumo pro Brazuka). Se faltar, usa o OBSIDIAN_VAULT_PATH. */
+  ESTUDOS_VAULT_PATH?: string;
 }
 
 function target(url: string, prefix: string, key?: string): ProxyOptions {
@@ -35,14 +37,15 @@ export function aiProxy(env: DevApiEnv): Record<string, ProxyOptions> {
 }
 
 const MAX_BODY = 1_000_000;
+const MAX_FILE_BODY = 20_000_000; // lousa com imagem pesa
 
-function readJson(req: IncomingMessage): Promise<unknown> {
+function readJson(req: IncomingMessage, maxBody = MAX_BODY): Promise<unknown> {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks: Buffer[] = [];
     req.on('data', (c: Buffer) => {
       size += c.length;
-      if (size > MAX_BODY) reject(new Error('Nota grande demais'));
+      if (size > maxBody) reject(new Error('Arquivo grande demais'));
       else chunks.push(c);
     });
     req.on('end', () => {
@@ -56,8 +59,19 @@ function readJson(req: IncomingMessage): Promise<unknown> {
   });
 }
 
+/** Resolve um caminho relativo dentro de `root`, recusando qualquer coisa que escape (../). */
+function inside(root: string, rel: string): string | null {
+  const file = path.resolve(root, rel);
+  return file.startsWith(root + path.sep) ? file : null;
+}
+
+const ESTUDOS_EXT = ['.excalidraw', '.json', '.md'];
+
 export function devApi(env: DevApiEnv): Plugin {
   const vaultRoot = env.OBSIDIAN_VAULT_PATH ? path.resolve(env.OBSIDIAN_VAULT_PATH, 'Neural-OS') : undefined;
+  const estudosBase = env.ESTUDOS_VAULT_PATH || env.OBSIDIAN_VAULT_PATH;
+  const estudosRoot = estudosBase ? path.resolve(estudosBase) : undefined;
+  const excalidrawAssets = path.resolve(import.meta.dirname, '../node_modules/@excalidraw/excalidraw/dist/prod');
 
   return {
     name: 'neural-os-dev-api',
@@ -65,6 +79,51 @@ export function devApi(env: DevApiEnv): Plugin {
       server.middlewares.use('/api/vault/status', (_req, res) => {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ configured: !!vaultRoot, folder: vaultRoot }));
+      });
+
+      // Fontes do Excalidraw servidas daqui (sem depender de CDN/internet).
+      server.middlewares.use('/excalidraw-assets', async (req, res, next) => {
+        const rel = decodeURIComponent((req.url ?? '').split('?')[0]).replace(/^\/+/, '');
+        const file = inside(excalidrawAssets, rel);
+        if (!file || !rel.startsWith('fonts/')) return next();
+        try {
+          const data = await fs.readFile(file);
+          res.setHeader('Content-Type', file.endsWith('.woff2') ? 'font/woff2' : 'application/octet-stream');
+          res.setHeader('Cache-Control', 'public, max-age=31536000');
+          res.end(data);
+        } catch {
+          next();
+        }
+      });
+
+      // Grava arquivos no cofre de estudos (lousas .excalidraw, resumo .json/.md).
+      server.middlewares.use('/api/estudos/file', async (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          return res.end('Use POST');
+        }
+        if (!estudosRoot) {
+          res.statusCode = 400;
+          return res.end('ESTUDOS_VAULT_PATH não configurado no .env.local');
+        }
+        try {
+          const body = (await readJson(req, MAX_FILE_BODY)) as { path?: unknown; content?: unknown };
+          if (typeof body.path !== 'string' || typeof body.content !== 'string' || !ESTUDOS_EXT.some((e) => (body.path as string).endsWith(e))) {
+            res.statusCode = 400;
+            return res.end('Pedido inválido');
+          }
+          const file = inside(estudosRoot, body.path);
+          if (!file) {
+            res.statusCode = 400;
+            return res.end('Caminho fora do cofre');
+          }
+          await fs.mkdir(path.dirname(file), { recursive: true });
+          await fs.writeFile(file, body.content, 'utf8');
+          res.end('ok');
+        } catch (e) {
+          res.statusCode = 500;
+          res.end(e instanceof Error ? e.message : 'Erro ao salvar');
+        }
       });
 
       server.middlewares.use('/api/vault/note', async (req, res) => {

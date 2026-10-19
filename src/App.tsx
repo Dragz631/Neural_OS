@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
+import { NextStepBar } from './components/NextStepBar';
 import { Toaster } from './components/Toaster';
 import { TABS, useNav, type TabId } from './store/nav';
 
@@ -19,9 +20,11 @@ export default function App() {
   const go = useNav((s) => s.go);
   const Page = PAGES[tab];
 
-  // Atalhos 1..7 trocam de aba (menos quando você está digitando).
+  // Atalhos 1..7 trocam de aba (menos quando você está digitando, e nunca na Lousa:
+  // lá os números são as ferramentas do Excalidraw).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (useNav.getState().tab === 'lousa') return;
       const el = document.activeElement as HTMLElement | null;
       if (el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable)) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -35,6 +38,7 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <Navbar />
+      <NextStepBar />
       <main>
         <Suspense fallback={<div className="p-8 text-center text-xs text-muted">carregando…</div>}>
           <Page />

@@ -34,3 +34,30 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line) transparent;
 }
+
+/* Botões nossos dentro da barra do Excalidraw (Lousa) */
+.excali-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 2.25rem;
+  padding: 0 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+  color: var(--color-fg);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.excali-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.excali-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.excali-btn--accent {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
