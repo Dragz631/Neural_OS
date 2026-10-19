@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { toLocalDate } from '../domain/dates';
 import { applyGrade, isDue, newReviewState, nextMastery, type Grade } from '../domain/srs';
 import { xpForSession } from '../domain/xp';
+import type { EntradaDiario } from '../domain/diario';
 import type {
   Challenge,
   DayCheckin,
@@ -38,6 +39,9 @@ export interface StudyData {
 
 interface StudyActions {
   setProfileName: (name: string) => void;
+  updateProfile: (patch: Partial<Profile>) => void;
+  /** XP de fora das sessões (entregas, troféus, Dungeon). */
+  addXp: (amount: number) => void;
 
   addSubject: (s: Pick<Subject, 'name' | 'color' | 'language'>) => Id;
   updateSubject: (id: Id, patch: Partial<Subject>) => void;
@@ -49,6 +53,8 @@ interface StudyActions {
   setLesson: (id: Id, lesson: Lesson) => void;
   /** Registra uma revisão: atualiza domínio e agenda a próxima. */
   gradeTopic: (id: Id, grade: Grade) => void;
+  /** Registra dúvida/erro/conceito no diário do tópico. */
+  addDiario: (topicId: Id, entrada: Omit<EntradaDiario, 'id' | 'data'>) => void;
 
   logSession: (s: { topicId: Id; minutes: number; kind: SessionKind; score?: number; note?: string }) => number;
 
@@ -81,6 +87,8 @@ export const useStudy = create<StudyData & StudyActions>()(
       ...INITIAL,
 
       setProfileName: (name) => set((s) => ({ profile: { ...s.profile, name } })),
+      updateProfile: (patch) => set((s) => ({ profile: { ...s.profile, ...patch } })),
+      addXp: (amount) => set((s) => ({ profile: { ...s.profile, xp: s.profile.xp + amount } })),
 
       addSubject: (data) => {
         const id = newId('sub');
@@ -129,6 +137,12 @@ export const useStudy = create<StudyData & StudyActions>()(
         }),
       setLesson: (id, lesson) =>
         set((s) => ({ topics: s.topics.map((t) => (t.id === id ? { ...t, lesson } : t)) })),
+      addDiario: (topicId, entrada) =>
+        set((s) => ({
+          topics: s.topics.map((t) =>
+            t.id === topicId ? { ...t, log: [{ ...entrada, id: newId('dia'), data: toLocalDate() }, ...(t.log ?? [])] } : t,
+          ),
+        })),
       gradeTopic: (id, grade) =>
         set((s) => ({
           topics: s.topics.map((t) =>

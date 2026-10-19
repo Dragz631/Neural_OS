@@ -3,7 +3,7 @@ import { Download, RefreshCw, Upload } from 'lucide-react';
 import { chat, listModels } from '../services/ai/client';
 import { vaultStatus, type VaultStatus } from '../services/vault';
 import { PROVIDER_LABEL, useSettings, type AIProvider } from '../store/settings';
-import { exportData, useStudy, type StudyData } from '../store/study';
+import { gerarBackup, restaurarBackup } from '../store/backup';
 import { toast } from '../store/toast';
 import { useAI } from '../hooks/useAI';
 import { Badge, Button, ErrorNote, Input, Label, Modal, Select } from './ui';
@@ -22,7 +22,6 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
   const [testReply, setTestReply] = useState('');
   const { run, loading, error, clearError } = useAI();
   const fileRef = useRef<HTMLInputElement>(null);
-  const replaceAll = useStudy((s) => s.replaceAll);
 
   useEffect(() => {
     if (open) vaultStatus().then(setVault);
@@ -43,7 +42,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
     });
 
   const backup = () => {
-    const blob = new Blob([JSON.stringify(exportData(), null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(gerarBackup(), null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `neural-os-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -53,9 +52,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
 
   const restore = async (file: File) => {
     try {
-      const data = JSON.parse(await file.text()) as StudyData;
-      if (!Array.isArray(data.subjects) || !Array.isArray(data.topics)) throw new Error('arquivo não parece um backup do Neural-OS');
-      replaceAll(data);
+      restaurarBackup(JSON.parse(await file.text()));
       toast({ title: 'Backup restaurado', variant: 'success' });
     } catch (e) {
       toast({ title: 'Não deu pra restaurar', description: String(e), variant: 'destructive' });

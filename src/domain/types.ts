@@ -1,3 +1,4 @@
+import type { EntradaDiario } from './diario';
 // ─── Modelo de dados do Neural-OS v2 ─────────────────────────────────────────
 // Tudo gira em torno de MATÉRIAS e TÓPICOS que você mesmo cria.
 // Nada aqui é fixo: a árvore, as missões e os desafios nascem do que você estuda.
@@ -45,6 +46,8 @@ export interface Topic {
   mastery: number; // 0-100
   review: ReviewState;
   lesson?: Lesson; // o que o Prof. A.Ilson escreveu no quadro
+  /** Diário do tópico: dúvidas, erros e conceitos, com data (ver domain/diario.ts). */
+  log?: EntradaDiario[];
   createdAt: string;
   lastStudiedAt?: string;
 }
@@ -79,6 +82,13 @@ export interface Challenge {
   starterCode: string;
   code: string;
   review?: CodeReview;
+  /** Escada de dicas: o que você tentou e o que espera que aconteça (pedido antes da 1ª dica). */
+  attempt?: string;
+  prediction?: string;
+  /** Maior nível de dica já aberto (0..6). Ausente = nenhuma dica. */
+  hintLevel?: number;
+  /** Dica de cada nível já gerada (índice = nível). */
+  ladder?: string[];
   createdAt: string;
   solvedAt?: string;
 }
@@ -116,4 +126,11 @@ export interface DayCheckin {
 export interface Profile {
   name: string;
   xp: number;
+  title?: string;
+  email?: string;
+  birthday?: LocalDate;
+  /** O que a IA deve saber de você (vai junto em todo pedido ao professor). */
+  bio?: string;
+  /** Foto: endereço da imagem ou imagem embutida (data URL). */
+  avatarUrl?: string;
 }
