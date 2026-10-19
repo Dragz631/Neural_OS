@@ -12,6 +12,7 @@ import { TopicSelect } from '../../components/TopicPicker';
 import { Button, ErrorNote } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { onTextSubmit, ttdPersistence } from './aiDiagram';
+import { useBibliotecaNeural } from './biblioteca/carregar';
 import { useBoards } from './boardsStore';
 import { describeScene } from './describeScene';
 import { lookAtBoard, type BoardLook } from './professorLook';
@@ -121,6 +122,7 @@ function Board({ boardId, name, topicId }: { boardId: string; name: string; topi
   const aiOn = useSettings((s) => s.provider !== 'off');
   const { run, loading, error } = useAI();
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
+  useBibliotecaNeural(api);
   const [look, setLook] = useState<BoardLook | null>(null);
   const saveTimer = useRef<number | undefined>(undefined);
   const mirrorTimer = useRef<number | undefined>(undefined);

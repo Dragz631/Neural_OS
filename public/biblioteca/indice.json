@@ -1,0 +1,80 @@
+{
+  "versao": "297a349-5dd402455a",
+  "arquivos": [
+    {
+      "arquivo": "estruturas-de-dados.excalidrawlib",
+      "tema": "estruturas-de-dados",
+      "itens": 37
+    },
+    {
+      "arquivo": "grafos.excalidrawlib",
+      "tema": "grafos",
+      "itens": 12
+    },
+    {
+      "arquivo": "fluxograma.excalidrawlib",
+      "tema": "fluxograma",
+      "itens": 27
+    },
+    {
+      "arquivo": "uml-er.excalidrawlib",
+      "tema": "uml-er",
+      "itens": 51
+    },
+    {
+      "arquivo": "banco-de-dados.excalidrawlib",
+      "tema": "banco-de-dados",
+      "itens": 39
+    },
+    {
+      "arquivo": "arquitetura.excalidrawlib",
+      "tema": "arquitetura",
+      "itens": 68
+    },
+    {
+      "arquivo": "redes.excalidrawlib",
+      "tema": "redes",
+      "itens": 18
+    },
+    {
+      "arquivo": "git.excalidrawlib",
+      "tema": "git",
+      "itens": 7
+    },
+    {
+      "arquivo": "hardware.excalidrawlib",
+      "tema": "hardware",
+      "itens": 17
+    },
+    {
+      "arquivo": "portas-logicas.excalidrawlib",
+      "tema": "portas-logicas",
+      "itens": 34
+    },
+    {
+      "arquivo": "matematica.excalidrawlib",
+      "tema": "matematica",
+      "itens": 15
+    },
+    {
+      "arquivo": "ia-deep-learning.excalidrawlib",
+      "tema": "ia-deep-learning",
+      "itens": 12
+    },
+    {
+      "arquivo": "logos-dev.excalidrawlib",
+      "tema": "logos-dev",
+      "itens": 91
+    },
+    {
+      "arquivo": "logos-ia.excalidrawlib",
+      "tema": "logos-ia",
+      "itens": 17
+    },
+    {
+      "arquivo": "logos-linguagens.excalidrawlib",
+      "tema": "logos-linguagens",
+      "itens": 25
+    }
+  ]
+}

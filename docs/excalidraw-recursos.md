@@ -62,3 +62,20 @@ Zoom, encaixar tudo (Shift+1), modo Zen (Alt+Z), grade (Ctrl+'), encaixar em obj
 - 🔌 Salvamento automático: IndexedDB (0,7 s) + cópia `Estudos-vault/Lousas/<nome>.excalidraw` (3 s, e também ao fechar a página). Abre no Obsidian com o plugin Excalidraw.
 - 🔌 **"Prof., olha"**: lê a estrutura da lousa (caixas, textos, setas A → B, quadros) e devolve o que está bom, a maior lacuna, UMA pergunta e UM próximo passo; dá pra anotar isso no tópico.
 - 🔌 Mandar a seleção (ou a lousa inteira) pras anotações do tópico ligado.
+
+## Biblioteca (montada em 19/10/2026)
+Abra pelo botão **Biblioteca** (canto superior direito da lousa) e use a **busca**: cada item tem o tema no nome.
+Exemplos de busca: `grafo`, `UML`, `banco`, `fluxograma`, `porta`, `Autômato`, `Logo IA`, `Logo: Python`.
+
+| Grupo | Itens | De onde vem |
+|---|---|---|
+| Estrutura de dados, Grafos, Fluxograma, UML/ER, Banco de dados, Arquitetura, Redes, Git, Hardware, Portas lógicas, Matemática, IA/Deep learning, Logo dev | 428 | 36 pacotes da comunidade (MIT) — lista e autores em `public/biblioteca/CREDITOS.md` |
+| Logo IA | 17 + 3 selos | Claude, Anthropic, Ollama, Gemini, DeepSeek, Mistral, Meta, Meta AI, Hugging Face, NVIDIA, Perplexity, Copilot, Cursor, Qwen, LangChain, LM Studio, DeepMind (simple-icons, CC0) + selos ChatGPT, OpenAI, Grok |
+| Logo (linguagens/ferramentas) | 25 + 3 selos | Python, C, C++, .NET, JS, TS, React, Node, HTML5, CSS, Git, GitHub, Docker, PostgreSQL, MySQL, SQLite, Linux, Obsidian, Notion, OpenJDK, Kotlin, Rust, Go, Jupyter, Mermaid + selos C#, Java, VS Code |
+| Autômato (LFA) | 8 | Feitos pro Neural-OS: estado, estado final, estado inicial, transição, laço, AFD pronto, fita de Turing, pilha |
+
+- **Remontar** (pacotes novos, outro commit): `node scripts/montar-biblioteca.mjs`. A versão é uma impressão do conteúdo; o app só recarrega a biblioteca quando ela muda.
+- Itens que você salva na biblioteca **não somem** quando ela é atualizada (o app troca só os itens dele, pelo id).
+- Logos viram formas editáveis (não imagem), então aparecem na miniatura, inserem e salvam no `.excalidraw`.
+- Selos: marcas que o pacote aberto de ícones não tem (removidas por questão legal) viram um selo com o nome, sem imitar o logo.
+- Corrigido na montagem: 3 setas de pacotes da comunidade estavam ligadas a elementos fora do item (geravam erro no console).
