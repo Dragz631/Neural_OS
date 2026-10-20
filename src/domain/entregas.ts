@@ -21,6 +21,8 @@ export interface Entrega {
   notionId?: string;
   criadaEm: string;
   entregueEm?: string;
+  /** XP já pago (voltar o status e entregar de novo não paga outra vez). */
+  xpPago?: boolean;
 }
 
 export const CATEGORIA: Record<CategoriaEntrega, { rotulo: string; cor: string }> = {

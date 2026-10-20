@@ -93,8 +93,12 @@ export interface Challenge {
   solvedAt?: string;
 }
 
+export type Priority = 'NORMAL' | 'ALTA' | 'CRÍTICA';
+
 export interface Target {
   topicId?: Id;
+  priority?: Priority;
+  description?: string;
   /** Por que estou estudando isso (prova, trabalho, curiosidade...). */
   goal: string;
   deadline?: LocalDate;

@@ -30,13 +30,14 @@ export const useEntregas = create<EntregasState>()(
         if (!atual) return;
         const status = proximoStatus(atual.status);
         const entregue = status === 'entregue';
+        const pagaAgora = entregue && !atual.xpPago;
         set((s) => ({
-          lista: s.lista.map((x) => (x.id === id ? { ...x, status, entregueEm: entregue ? new Date().toISOString() : undefined } : x)),
+          lista: s.lista.map((x) =>
+            x.id === id ? { ...x, status, entregueEm: entregue ? new Date().toISOString() : undefined, xpPago: x.xpPago || pagaAgora } : x,
+          ),
         }));
-        if (entregue) {
-          useStudy.getState().addXp(atual.xp);
-          usePresenca.getState().marcar();
-        }
+        if (pagaAgora) useStudy.getState().addXp(atual.xp);
+        if (entregue) usePresenca.getState().marcar();
       },
     }),
     { name: 'neural-os.entregas', version: 1 },

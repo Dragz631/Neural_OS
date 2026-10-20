@@ -4,12 +4,42 @@ import { cn } from '../lib/utils';
 
 // Kit mínimo de interface. Uma versão de cada coisa, usada em todas as abas.
 
-export function Panel({ title, actions, children, className }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
+/** Título no estilo do Neural-OS: "NOME // DESCRIÇÃO" (a parte depois de // fica apagada). */
+function PanelTitle({ title }: { title: ReactNode }) {
+  if (typeof title !== 'string' || !title.includes('//')) return <>{title}</>;
+  const [nome, ...resto] = title.split('//');
   return (
-    <section className={cn('rounded border border-line bg-panel p-4', className)}>
+    <>
+      <span className="text-fg">{nome.trim()}</span>
+      <span className="text-muted/70"> // {resto.join('//').trim()}</span>
+    </>
+  );
+}
+
+export function Panel({
+  title,
+  actions,
+  children,
+  className,
+  accent,
+}: {
+  title?: ReactNode;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  /** Cartão em destaque (borda e brilho na cor de destaque). */
+  accent?: boolean;
+}) {
+  return (
+    <section className={cn('relative rounded border bg-panel p-4', accent ? 'glow border-accent/70' : 'border-line', className)}>
       {(title || actions) && (
         <header className="mb-3 flex items-center justify-between gap-2 border-b border-line pb-2">
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">{title}</h2>
+          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-muted">
+            <span className="pulse-dot" aria-hidden />
+            <span>
+              <PanelTitle title={title} />
+            </span>
+          </h2>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </header>
       )}

@@ -38,7 +38,7 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <NextStepBar />
+      {tab !== 'lobby' && <NextStepBar />}
       <main>
         <Suspense fallback={<div className="p-8 text-center text-xs text-muted">carregando…</div>}>
           <Page />
