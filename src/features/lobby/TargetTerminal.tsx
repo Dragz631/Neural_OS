@@ -4,7 +4,8 @@ import { diffDays, formatShort, toLocalDate } from '../../domain/dates';
 import type { Priority } from '../../domain/types';
 import { useNav } from '../../store/nav';
 import { topicPath, useStudy } from '../../store/study';
-import { SubjectModal, TopicModal, TopicSelect } from '../../components/TopicPicker';
+import { TopicModal, TopicSelect } from '../../components/TopicPicker';
+import { NovaMateriaModal } from '../materia/NovaMateriaModal';
 import { Badge, Button, Input, Label, Panel, ProgressBar, Select, Textarea } from '../../components/ui';
 
 const PRIORIDADES: Priority[] = ['NORMAL', 'ALTA', 'CRÍTICA'];
@@ -128,15 +129,15 @@ function Boasvindas() {
           O Neural-OS gira em torno do que <b className="text-accent">você</b> está estudando. Nada vem pronto:
         </p>
         <ol className="list-decimal space-y-1 pl-5 text-muted">
-          <li>Crie uma matéria (ex.: C#, Cálculo II, LFA).</li>
-          <li>Crie o primeiro tópico e defina como Target.</li>
+          <li>Diga o que quer aprender (ex.: SQL, C#, Cálculo).</li>
+          <li>O professor monta o caminho; você revisa e confirma.</li>
           <li>Siga o Próximo passo. A árvore cresce conforme você aprende.</li>
         </ol>
         <Button variant="primary" onClick={() => setAberto(true)}>
-          <Plus size={14} /> Criar primeira matéria
+          <Plus size={14} /> O que você quer aprender?
         </Button>
       </div>
-      <SubjectModal open={aberto} onClose={() => setAberto(false)} />
+      <NovaMateriaModal open={aberto} onClose={() => setAberto(false)} />
     </Panel>
   );
 }

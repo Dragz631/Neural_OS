@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { resumirMaterias } from '../../domain/materias';
 import { useNav } from '../../store/nav';
 import { useStudy } from '../../store/study';
-import { SubjectModal } from '../../components/TopicPicker';
+import { NovaMateriaModal } from '../materia/NovaMateriaModal';
 import { ProgressBar } from '../../components/ui';
 
 /** Um cartão por matéria: progresso, nível e o próximo tópico (clique leva direto). */
@@ -45,7 +45,7 @@ export function FaixaMaterias() {
       >
         <Plus size={18} /> Nova matéria
       </button>
-      <SubjectModal open={nova} onClose={() => setNova(false)} />
+      <NovaMateriaModal open={nova} onClose={() => setNova(false)} />
     </div>
   );
 }

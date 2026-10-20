@@ -1,0 +1,20 @@
+{
+  "materia": "Cybersecurity",
+  "linguagem": "python",
+  "topicos": [
+    { "titulo": "Mapa da segurança: CIA (confidencialidade, integridade, disponibilidade)", "porque": "Todo ataque quebra um desses três; é a lente pra entender o resto.", "minutos": 25 },
+    { "titulo": "Como a internet funciona (IP, portas, TCP/UDP)", "porque": "Não dá pra defender (nem atacar) o que você não entende como trafega.", "pai": 0, "minutos": 40 },
+    { "titulo": "DNS e HTTP/HTTPS", "porque": "Quase todo ataque web passa por aqui.", "pai": 1, "minutos": 35 },
+    { "titulo": "Linux na linha de comando", "porque": "As ferramentas de segurança vivem no terminal.", "pai": 0, "minutos": 40 },
+    { "titulo": "Permissões, usuários e processos no Linux", "porque": "Escalar privilégio é explorar permissão mal configurada.", "pai": 3, "minutos": 35 },
+    { "titulo": "Criptografia: hash, simétrica e assimétrica", "porque": "Senha, HTTPS e assinatura digital dependem disso.", "pai": 0, "minutos": 40 },
+    { "titulo": "Autenticação e senhas", "porque": "Por que senha em texto puro é desastre e como hash + salt protege.", "pai": 5, "minutos": 30 },
+    { "titulo": "Reconhecimento e varredura (nmap)", "porque": "O primeiro passo de um ataque: descobrir o que está exposto.", "pai": 1, "minutos": 35 },
+    { "titulo": "OWASP Top 10: visão geral", "porque": "A lista das falhas web mais comuns; mapa do que estudar em web.", "pai": 2, "minutos": 30 },
+    { "titulo": "SQL Injection", "porque": "Liga direto com SQL: entrada do usuário virando comando no banco.", "pai": 8, "minutos": 40 },
+    { "titulo": "XSS (Cross-Site Scripting)", "porque": "Código do atacante rodando no navegador da vítima.", "pai": 8, "minutos": 35 },
+    { "titulo": "Firewall, logs e detecção", "porque": "O lado da defesa: ver o ataque acontecendo.", "pai": 7, "minutos": 35 },
+    { "titulo": "Engenharia social e phishing", "porque": "O ponto mais fraco costuma ser a pessoa, não o sistema.", "pai": 0, "minutos": 25 },
+    { "titulo": "Laboratório seguro (CTF e máquinas vulneráveis)", "porque": "Praticar só em ambiente feito pra isso, nunca em sistema dos outros.", "pai": 7, "minutos": 30 }
+  ]
+}

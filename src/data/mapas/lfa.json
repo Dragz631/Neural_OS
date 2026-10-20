@@ -1,0 +1,18 @@
+{
+  "materia": "LFA (Linguagens Formais e Autômatos)",
+  "linguagem": "automato",
+  "topicos": [
+    { "titulo": "Alfabeto, cadeia e linguagem", "porque": "O vocabulário de toda a matéria: o que é uma 'palavra' pra máquina.", "minutos": 30 },
+    { "titulo": "Operações com linguagens (união, concatenação, fecho de Kleene)", "porque": "Como montar linguagens grandes a partir de pequenas.", "pai": 0, "minutos": 35 },
+    { "titulo": "Autômato finito determinístico (AFD)", "porque": "A máquina mais simples que reconhece uma linguagem.", "pai": 0, "minutos": 40 },
+    { "titulo": "Autômato finito não determinístico (AFN)", "porque": "Mais fácil de desenhar; mesma força do AFD.", "pai": 2, "minutos": 40 },
+    { "titulo": "Conversão AFN → AFD", "porque": "Provar que os dois reconhecem as mesmas linguagens (e cai em prova).", "pai": 3, "minutos": 40 },
+    { "titulo": "Minimização de AFD", "porque": "O menor autômato possível pra mesma linguagem.", "pai": 4, "minutos": 35 },
+    { "titulo": "Expressões regulares", "porque": "O jeito em texto de descrever linguagens regulares (regex do dia a dia).", "pai": 1, "minutos": 35 },
+    { "titulo": "Equivalência entre ER e autômatos", "porque": "Liga as duas formas: dá pra ir de uma pra outra.", "pai": 6, "minutos": 40 },
+    { "titulo": "Lema do bombeamento (linguagens não regulares)", "porque": "Provar que um autômato finito NÃO dá conta (ex.: aⁿbⁿ).", "pai": 7, "minutos": 45 },
+    { "titulo": "Gramáticas livres de contexto", "porque": "Descrever linguagens de programação (parênteses balanceados, expressões).", "pai": 8, "minutos": 40 },
+    { "titulo": "Autômato de pilha", "porque": "A máquina que reconhece linguagens livres de contexto.", "pai": 9, "minutos": 40 },
+    { "titulo": "Máquina de Turing", "porque": "O modelo de 'computador' teórico: limite do que dá pra computar.", "pai": 10, "minutos": 45 }
+  ]
+}

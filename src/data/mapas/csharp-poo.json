@@ -1,0 +1,20 @@
+{
+  "materia": "C# / POO",
+  "linguagem": "csharp",
+  "topicos": [
+    { "titulo": "Estrutura de um programa C# e o .NET", "porque": "Saber onde o código começa (Main) e o que o compilador faz.", "minutos": 25 },
+    { "titulo": "Tipos, variáveis e operadores", "porque": "C# é tipado: o tipo decide o que você pode fazer com o valor.", "pai": 0, "minutos": 30 },
+    { "titulo": "Decisão e repetição (if, switch, for, while)", "porque": "A lógica de qualquer programa.", "pai": 1, "minutos": 35 },
+    { "titulo": "Métodos e parâmetros", "porque": "Quebrar o problema em partes com nome.", "pai": 2, "minutos": 30 },
+    { "titulo": "Classes e objetos", "porque": "A ideia central da POO: modelar coisas do mundo como objetos.", "pai": 3, "minutos": 40 },
+    { "titulo": "Construtores", "porque": "Garantir que o objeto nasce num estado válido.", "pai": 4, "minutos": 30 },
+    { "titulo": "Encapsulamento e propriedades", "porque": "Proteger o estado (ex.: saldo não pode ficar negativo).", "pai": 5, "minutos": 35 },
+    { "titulo": "Herança", "porque": "Reaproveitar e especializar comportamento (Animal → Cachorro).", "pai": 6, "minutos": 40 },
+    { "titulo": "Polimorfismo (virtual/override)", "porque": "O mesmo chamado fazendo coisas diferentes conforme o objeto.", "pai": 7, "minutos": 40 },
+    { "titulo": "Classes abstratas e interfaces", "porque": "Contratos: o que uma classe PRECISA saber fazer.", "pai": 8, "minutos": 40 },
+    { "titulo": "Coleções (List, Dictionary)", "porque": "Guardar e buscar muitos objetos.", "pai": 4, "minutos": 35 },
+    { "titulo": "Tratamento de exceções", "porque": "Programa que lida com erro em vez de travar.", "pai": 3, "minutos": 30 },
+    { "titulo": "LINQ", "porque": "Consultar coleções como se fosse SQL dentro do C#.", "pai": 10, "minutos": 40 },
+    { "titulo": "Princípios SOLID", "porque": "Código que continua fácil de mudar quando o projeto cresce.", "pai": 9, "minutos": 45 }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "materia": "Python",
+  "linguagem": "python",
+  "topicos": [
+    { "titulo": "Rodar Python e o REPL", "porque": "Ter onde testar cada ideia em segundos.", "minutos": 20 },
+    { "titulo": "Variáveis e tipos (int, float, str, bool)", "porque": "Tudo no programa é um valor de algum tipo.", "pai": 0, "minutos": 30 },
+    { "titulo": "Entrada, saída e f-strings", "porque": "Conversar com o usuário e mostrar resultados legíveis.", "pai": 1, "minutos": 25 },
+    { "titulo": "if / elif / else", "porque": "Fazer o programa decidir.", "pai": 1, "minutos": 30 },
+    { "titulo": "Laços: for e while", "porque": "Repetir sem copiar código.", "pai": 3, "minutos": 35 },
+    { "titulo": "Listas e tuplas", "porque": "Guardar várias coisas em ordem.", "pai": 4, "minutos": 35 },
+    { "titulo": "Dicionários e conjuntos", "porque": "Achar coisas por chave, rápido (o que mais aparece em scripts reais).", "pai": 5, "minutos": 35 },
+    { "titulo": "Funções", "porque": "Dar nome a um pedaço de lógica e reaproveitar.", "pai": 4, "minutos": 35 },
+    { "titulo": "Módulos e pip", "porque": "Usar código pronto (requests, pandas...) em vez de reinventar.", "pai": 7, "minutos": 25 },
+    { "titulo": "Arquivos (ler e escrever)", "porque": "Automatizar coisas do dia a dia: logs, CSV, relatórios.", "pai": 7, "minutos": 30 },
+    { "titulo": "Erros e exceções (try/except)", "porque": "Programa que não morre no primeiro problema.", "pai": 9, "minutos": 30 },
+    { "titulo": "Classes e objetos em Python", "porque": "Liga com o que você já viu em C#: mesma ideia, sintaxe mais curta.", "pai": 7, "minutos": 40 },
+    { "titulo": "Projeto: script de automação", "porque": "Juntar tudo num programa útil de verdade.", "pai": 10, "minutos": 45 }
+  ]
+}

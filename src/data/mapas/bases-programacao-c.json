@@ -1,0 +1,19 @@
+{
+  "materia": "Bases da Programação (C)",
+  "linguagem": "c",
+  "topicos": [
+    { "titulo": "Lógica e algoritmo (passo a passo)", "porque": "Pensar a solução antes de escrever código: o pilar de tudo.", "minutos": 30 },
+    { "titulo": "Estrutura de um programa C (main, #include)", "porque": "Onde o programa começa e de onde vêm printf/scanf.", "pai": 0, "minutos": 25 },
+    { "titulo": "Variáveis, tipos e operadores", "porque": "int, float, char: cada tipo ocupa memória diferente.", "pai": 1, "minutos": 30 },
+    { "titulo": "Entrada e saída (printf, scanf)", "porque": "Conversar com o usuário pelo terminal.", "pai": 2, "minutos": 30 },
+    { "titulo": "Condicionais (if, else, switch)", "porque": "Fazer o programa decidir.", "pai": 3, "minutos": 30 },
+    { "titulo": "Repetição (for, while, do-while)", "porque": "Contadores e acumuladores: repetir sem copiar código.", "pai": 4, "minutos": 35 },
+    { "titulo": "Vetores", "porque": "Muitos valores do mesmo tipo em sequência.", "pai": 5, "minutos": 35 },
+    { "titulo": "Strings em C", "porque": "Texto em C é vetor de char terminado em \\0 — e isso causa bugs clássicos.", "pai": 6, "minutos": 35 },
+    { "titulo": "Matrizes", "porque": "Tabelas de dados (vetor de vetores).", "pai": 6, "minutos": 30 },
+    { "titulo": "Funções", "porque": "Dividir o programa em partes reaproveitáveis.", "pai": 5, "minutos": 35 },
+    { "titulo": "Ponteiros", "porque": "Mexer direto na memória: o que faz C ser C.", "pai": 9, "minutos": 45 },
+    { "titulo": "Structs", "porque": "Agrupar dados diferentes (ex.: aluno com nome e nota).", "pai": 9, "minutos": 35 },
+    { "titulo": "Alocação dinâmica (malloc/free)", "porque": "Memória do tamanho que o programa precisar, na hora.", "pai": 10, "minutos": 40 }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "materia": "Web (HTML, CSS, JavaScript)",
+  "linguagem": "javascript",
+  "topicos": [
+    { "titulo": "Como a web funciona (navegador, servidor, HTTP)", "porque": "Saber o que acontece entre digitar o endereço e a página aparecer.", "minutos": 25 },
+    { "titulo": "HTML: estrutura e tags semânticas", "porque": "O esqueleto da página; semântica ajuda acessibilidade e busca.", "pai": 0, "minutos": 35 },
+    { "titulo": "Formulários HTML", "porque": "Como a página recebe dados do usuário.", "pai": 1, "minutos": 30 },
+    { "titulo": "CSS: seletores, cores e box model", "porque": "Todo layout é caixa dentro de caixa.", "pai": 1, "minutos": 40 },
+    { "titulo": "Flexbox e Grid", "porque": "Montar layouts sem gambiarra.", "pai": 3, "minutos": 40 },
+    { "titulo": "Responsividade (media queries)", "porque": "A mesma página funcionando no celular e no PC.", "pai": 4, "minutos": 30 },
+    { "titulo": "JavaScript: variáveis, tipos e funções", "porque": "A página passa a ter comportamento.", "pai": 1, "minutos": 40 },
+    { "titulo": "DOM: selecionar e alterar elementos", "porque": "JS mexendo na página que o HTML montou.", "pai": 6, "minutos": 40 },
+    { "titulo": "Eventos (click, submit, input)", "porque": "Reagir ao que o usuário faz.", "pai": 7, "minutos": 35 },
+    { "titulo": "Arrays, objetos e JSON", "porque": "O formato dos dados que vêm das APIs.", "pai": 6, "minutos": 35 },
+    { "titulo": "fetch e APIs (async/await)", "porque": "Buscar dados de um servidor sem recarregar a página.", "pai": 9, "minutos": 45 },
+    { "titulo": "Projeto: página interativa completa", "porque": "Juntar HTML, CSS e JS num resultado de verdade.", "pai": 10, "minutos": 60 }
+  ]
+}

@@ -17,6 +17,7 @@ import { useBoards } from './boardsStore';
 import { describeScene } from './describeScene';
 import { lookAtBoard, type BoardLook } from './professorLook';
 import { loadScene, mirrorOnExit, mirrorToVault, saveScene } from './sceneStorage';
+import { mapaParaElementos } from './mapaParaLousa';
 
 // Lousa = Excalidraw completo, pra pensar de forma estruturada.
 // É SUA: o professor só olha quando você pede ("Prof., olha minha lousa").
@@ -131,9 +132,28 @@ function Board({ boardId, name, topicId }: { boardId: string; name: string; topi
 
   // initialData aceita Promise: o Excalidraw espera o IndexedDB carregar.
   const initialData = useMemo(
-    () => loadScene(boardId).then((s) => (s ? { elements: s.elements, appState: s.appState, files: s.files } : null)),
+    () =>
+      loadScene(boardId).then((s) => {
+        if (s) return { elements: s.elements, appState: s.appState, files: s.files };
+        // Lousa nova vinda do "Nova matéria": desenha o mapa na primeira abertura.
+        const mapa = useBoards.getState().boards.find((b) => b.id === boardId)?.mapa;
+        return mapa ? { elements: mapaParaElementos(mapa), scrollToContent: true, mapaNovo: true } : null;
+      }),
     [boardId],
   );
+
+  // Mapa recém-desenhado: cabe inteiro na tela (sem passar de 100% de zoom).
+  useEffect(() => {
+    if (!api) return;
+    let vivo = true;
+    void initialData.then((d) => {
+      if (!vivo || !d || !('mapaNovo' in d)) return;
+      requestAnimationFrame(() => api.setViewport({ target: api.getSceneElements(), fit: 'scale-down', offsets: { ui: true } }));
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [api, initialData]);
 
   // Fechou/recarregou a página com algo pendente: manda pro cofre na saída.
   useEffect(() => {

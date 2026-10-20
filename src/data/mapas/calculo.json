@@ -1,0 +1,18 @@
+{
+  "materia": "Cálculo",
+  "linguagem": "",
+  "topicos": [
+    { "titulo": "Funções e gráficos", "porque": "Cálculo estuda como funções mudam; primeiro é preciso lê-las bem.", "minutos": 35 },
+    { "titulo": "Limites (ideia intuitiva)", "porque": "O que acontece 'perto' de um ponto: a base de derivada e integral.", "pai": 0, "minutos": 40 },
+    { "titulo": "Cálculo de limites e indeterminações", "porque": "As técnicas que caem em prova (0/0, fatoração, racionalização).", "pai": 1, "minutos": 45 },
+    { "titulo": "Continuidade", "porque": "Quando dá pra desenhar a função sem tirar o lápis.", "pai": 1, "minutos": 25 },
+    { "titulo": "Derivada: definição e significado", "porque": "Taxa de variação: velocidade, inclinação da reta tangente.", "pai": 2, "minutos": 40 },
+    { "titulo": "Regras de derivação", "porque": "Derivar sem usar o limite toda vez (potência, produto, quociente).", "pai": 4, "minutos": 40 },
+    { "titulo": "Regra da cadeia", "porque": "Derivar função dentro de função — a mais usada.", "pai": 5, "minutos": 40 },
+    { "titulo": "Máximos, mínimos e otimização", "porque": "A aplicação mais prática: achar o melhor valor.", "pai": 6, "minutos": 45 },
+    { "titulo": "Integral indefinida (antiderivada)", "porque": "O caminho de volta da derivada.", "pai": 5, "minutos": 40 },
+    { "titulo": "Integral definida e área", "porque": "Somar infinitos pedacinhos: área sob a curva.", "pai": 8, "minutos": 40 },
+    { "titulo": "Técnicas de integração (substituição, por partes)", "porque": "Integrar o que não sai direto.", "pai": 9, "minutos": 45 },
+    { "titulo": "Derivadas parciais", "porque": "Funções de várias variáveis (Cálculo II).", "pai": 6, "minutos": 40 }
+  ]
+}

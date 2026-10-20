@@ -6,7 +6,9 @@ import { bounds, layoutTree, type TreeNode } from '../../domain/tree';
 import type { Id } from '../../domain/types';
 import { useNav } from '../../store/nav';
 import { topicPath, useStudy } from '../../store/study';
-import { SubjectModal, TopicModal } from '../../components/TopicPicker';
+import { TopicModal } from '../../components/TopicPicker';
+import { preRequisitoFraco } from '../../domain/materias';
+import { NovaMateriaModal } from '../materia/NovaMateriaModal';
 import { Badge, Button, Empty, Label, Panel, ProgressBar, Select } from '../../components/ui';
 import { LANGUAGES } from '../../domain/catalog';
 
@@ -113,7 +115,14 @@ export default function NeuralTree() {
                 return <line key={`${e.from}-${e.to}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={e.color} strokeOpacity={active ? 0.55 : 0.15} strokeWidth={active ? 2 : 1} />;
               })}
               {nodes.map((n) => (
-                <NodeShape key={n.id} node={n} selected={n.id === selected} due={!!n.topic?.lastStudiedAt && isDue(n.topic.review, today)} onPick={() => pick(n.id)} />
+                <NodeShape
+                  key={n.id}
+                  node={n}
+                  selected={n.id === selected}
+                  due={!!n.topic?.lastStudiedAt && isDue(n.topic.review, today)}
+                  locked={!!n.topic && !!preRequisitoFraco(n.topic, topics)}
+                  onPick={() => pick(n.id)}
+                />
               ))}
             </g>
             </svg>
@@ -122,12 +131,12 @@ export default function NeuralTree() {
       </div>
 
       <DetailPanel node={selectedNode} onDeleted={() => setSelected(null)} />
-      <SubjectModal open={subjectOpen} onClose={() => setSubjectOpen(false)} />
+      <NovaMateriaModal open={subjectOpen} onClose={() => setSubjectOpen(false)} />
     </div>
   );
 }
 
-function NodeShape({ node, selected, due, onPick }: { node: TreeNode; selected: boolean; due: boolean; onPick: () => void }) {
+function NodeShape({ node, selected, due, locked, onPick }: { node: TreeNode; selected: boolean; due: boolean; locked: boolean; onPick: () => void }) {
   if (node.kind === 'root') {
     return (
       <g onClick={onPick}>
@@ -172,8 +181,8 @@ function NodeShape({ node, selected, due, onPick }: { node: TreeNode; selected: 
           transform="rotate(-90)"
         />
       )}
-      <text textAnchor="middle" dy={4} fontSize={isSubject ? 12 : 10} fill={studied ? '#e6ffe9' : '#6f8f69'} fontWeight={isSubject ? 'bold' : 'normal'}>
-        {isSubject ? node.label.slice(0, 10) : `${mastery}%`}
+      <text textAnchor="middle" dy={4} fontSize={isSubject ? 12 : locked ? 14 : 10} fill={studied ? '#e6ffe9' : '#6f8f69'} fontWeight={isSubject ? 'bold' : 'normal'}>
+        {isSubject ? node.label.slice(0, 10) : locked ? '🔒' : `${mastery}%`}
       </text>
       {!isSubject && (
         <text textAnchor="middle" y={r + 18} fontSize={11} fill={studied ? '#b9d4b3' : '#6f8f69'}>
@@ -190,6 +199,7 @@ function Legend() {
       <div>● apagado = ainda não estudou</div>
       <div>◯ anel = domínio do tópico</div>
       <div className="text-warn">◌ piscando = hora de revisar</div>
+      <div>🔒 = pré-requisito ainda fraco (dá pra estudar, mas vale reforçar antes)</div>
       <div>arraste pra mover · roda pra zoom</div>
     </div>
   );

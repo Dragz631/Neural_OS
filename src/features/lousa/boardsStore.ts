@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { newId } from '../../store/study';
 import { idbDel } from '../../services/idb';
+import type { MapaMateria } from '../../domain/mapa';
 
 // Lista das lousas (só nome e metadados, leve). O desenho de cada uma fica no
 // IndexedDB, na chave `lousa:<id>` (ver sceneStorage.ts).
@@ -10,6 +11,8 @@ export interface BoardMeta {
   id: string;
   name: string;
   topicId?: string;
+  /** Mapa a desenhar quando a lousa for aberta pela 1ª vez (vem do "Nova matéria"). */
+  mapa?: MapaMateria;
   elementCount: number;
   createdAt: string;
   updatedAt: string;
@@ -18,7 +21,7 @@ export interface BoardMeta {
 interface BoardsState {
   boards: BoardMeta[];
   activeId?: string;
-  create: (name?: string) => string;
+  create: (name?: string, extra?: Pick<BoardMeta, 'topicId' | 'mapa'>) => string;
   rename: (id: string, name: string) => void;
   remove: (id: string) => void;
   setActive: (id: string) => void;
@@ -30,10 +33,10 @@ export const useBoards = create<BoardsState>()(
   persist(
     (set, get) => ({
       boards: [],
-      create: (name) => {
+      create: (name, extra) => {
         const id = newId('lousa');
         const now = new Date().toISOString();
-        const board: BoardMeta = { id, name: name?.trim() || `Lousa ${get().boards.length + 1}`, elementCount: 0, createdAt: now, updatedAt: now };
+        const board: BoardMeta = { id, name: name?.trim() || `Lousa ${get().boards.length + 1}`, elementCount: 0, createdAt: now, updatedAt: now, ...extra };
         set((s) => ({ boards: [board, ...s.boards], activeId: id }));
         return id;
       },

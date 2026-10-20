@@ -1,0 +1,19 @@
+{
+  "materia": "Banco de dados",
+  "linguagem": "sql",
+  "topicos": [
+    { "titulo": "Por que bancos de dados existem (SGBD)", "porque": "O problema que planilha e arquivo solto não resolvem: muitos usuários, consistência, segurança.", "minutos": 25 },
+    { "titulo": "Modelo entidade-relacionamento (ER)", "porque": "Desenhar o mundo real (alunos, cursos, matrículas) antes das tabelas.", "pai": 0, "minutos": 40 },
+    { "titulo": "Cardinalidade (1:1, 1:N, N:N)", "porque": "Decide como as tabelas vão se ligar.", "pai": 1, "minutos": 35 },
+    { "titulo": "Do ER para o modelo relacional", "porque": "Transformar o desenho em tabelas e chaves.", "pai": 2, "minutos": 40 },
+    { "titulo": "Chaves e integridade referencial", "porque": "Impedir dado órfão (pedido de um cliente que não existe).", "pai": 3, "minutos": 30 },
+    { "titulo": "Normalização (1FN, 2FN, 3FN)", "porque": "Evitar repetição e contradição nos dados.", "pai": 3, "minutos": 45 },
+    { "titulo": "SQL DDL (CREATE, ALTER, DROP)", "porque": "Criar a estrutura do banco.", "pai": 4, "minutos": 30 },
+    { "titulo": "SQL DML (SELECT, INSERT, UPDATE, DELETE)", "porque": "Ler e mudar os dados (ver também o mapa de SQL).", "pai": 6, "minutos": 40 },
+    { "titulo": "JOINs e consultas com várias tabelas", "porque": "Juntar o que a normalização separou.", "pai": 7, "minutos": 40 },
+    { "titulo": "Índices", "porque": "Deixar a busca rápida sem mudar o resultado.", "pai": 8, "minutos": 30 },
+    { "titulo": "Transações e concorrência", "porque": "Dois usuários mexendo no mesmo dado ao mesmo tempo.", "pai": 7, "minutos": 40 },
+    { "titulo": "Views, procedures e triggers", "porque": "Colocar regra dentro do próprio banco.", "pai": 8, "minutos": 35 },
+    { "titulo": "NoSQL: quando usar", "porque": "Saber quando o relacional não é a melhor escolha.", "pai": 0, "minutos": 30 }
+  ]
+}

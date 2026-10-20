@@ -1,0 +1,21 @@
+{
+  "materia": "SQL",
+  "linguagem": "sql",
+  "topicos": [
+    { "titulo": "O que é um banco de dados relacional", "porque": "Antes da sintaxe: entender por que guardamos dados em tabelas ligadas em vez de planilhas soltas.", "minutos": 25 },
+    { "titulo": "Tabelas, linhas, colunas e tipos", "porque": "É o formato de tudo que você vai consultar; tipo errado gera bug silencioso.", "pai": 0, "minutos": 30 },
+    { "titulo": "SELECT e FROM", "porque": "A pergunta mais básica: 'me mostra os dados desta tabela'.", "pai": 1, "minutos": 30 },
+    { "titulo": "WHERE, AND/OR e operadores", "porque": "Filtrar é o que transforma 'todos os dados' em 'os dados que importam'.", "pai": 2, "minutos": 35 },
+    { "titulo": "ORDER BY e LIMIT", "porque": "Ordenar e cortar resultados: ranking, últimos registros, paginação.", "pai": 3, "minutos": 20 },
+    { "titulo": "Chave primária e chave estrangeira", "porque": "É o que liga uma tabela na outra; sem isso não existe JOIN.", "pai": 1, "minutos": 30 },
+    { "titulo": "INNER JOIN", "porque": "Juntar tabelas ligadas (ex.: pedido + cliente) — o coração do SQL relacional.", "pai": 5, "minutos": 40 },
+    { "titulo": "LEFT JOIN e dados que faltam (NULL)", "porque": "Achar o que NÃO tem par (clientes sem pedido) e entender o NULL.", "pai": 6, "minutos": 35 },
+    { "titulo": "GROUP BY e funções de agregação", "porque": "Contar, somar e tirar média por grupo: relatórios de verdade.", "pai": 4, "minutos": 40 },
+    { "titulo": "HAVING", "porque": "Filtrar grupos depois de agregar (WHERE não consegue).", "pai": 8, "minutos": 20 },
+    { "titulo": "Subconsultas", "porque": "Usar o resultado de uma consulta dentro de outra.", "pai": 9, "minutos": 35 },
+    { "titulo": "INSERT, UPDATE e DELETE", "porque": "Mudar dados com segurança (UPDATE sem WHERE apaga o dia).", "pai": 3, "minutos": 30 },
+    { "titulo": "Índices e desempenho", "porque": "Por que uma consulta leva 2 ms e outra 20 s.", "pai": 6, "minutos": 30 },
+    { "titulo": "Transações (ACID)", "porque": "Garantir que tudo acontece ou nada acontece (ex.: transferência bancária).", "pai": 11, "minutos": 30 },
+    { "titulo": "Modelagem e normalização", "porque": "Desenhar tabelas que não repetem dado nem se contradizem.", "pai": 5, "minutos": 45 }
+  ]
+}

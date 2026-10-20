@@ -37,3 +37,10 @@ export function resumirMaterias(subjects: Subject[], topics: Topic[], sessions: 
     };
   });
 }
+
+/** Cadeado da Árvore: pré-requisito ainda fraco. Dá pra estudar mesmo assim (é só aviso). */
+export function preRequisitoFraco(topic: Topic, topics: Topic[]): Topic | undefined {
+  if (!topic.parentId || topic.mastery >= DOMINADO) return undefined;
+  const pai = topics.find((t) => t.id === topic.parentId);
+  return pai && pai.mastery < PRE_REQUISITO_OK ? pai : undefined;
+}

@@ -97,6 +97,28 @@ export function devApi(env: DevApiEnv): Plugin {
       });
 
       // Grava arquivos no cofre de estudos (lousas .excalidraw, resumo .json/.md).
+      // Mapas de matéria gerados pelo Claude a pedido do Hugo (um .json por matéria).
+      server.middlewares.use('/api/estudos/mapas', async (_req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        if (!estudosRoot) return res.end('[]');
+        const pasta = path.join(estudosRoot, 'Neural-OS', 'import', 'mapas');
+        try {
+          const nomes = (await fs.readdir(pasta)).filter((n) => n.endsWith('.json'));
+          const mapas = await Promise.all(
+            nomes.map(async (arquivo) => {
+              try {
+                return { arquivo, mapa: JSON.parse(await fs.readFile(path.join(pasta, arquivo), 'utf8')) };
+              } catch {
+                return null; // arquivo quebrado: ignora, o app valida o resto
+              }
+            }),
+          );
+          res.end(JSON.stringify(mapas.filter(Boolean)));
+        } catch {
+          res.end('[]'); // pasta ainda não existe
+        }
+      });
+
       server.middlewares.use('/api/estudos/file', async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;

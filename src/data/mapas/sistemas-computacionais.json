@@ -1,0 +1,18 @@
+{
+  "materia": "Sistemas Computacionais",
+  "linguagem": "",
+  "topicos": [
+    { "titulo": "Visão geral: hardware, software e camadas", "porque": "O mapa do computador antes de entrar em cada peça.", "minutos": 30 },
+    { "titulo": "Sistemas de numeração (binário, hexadecimal)", "porque": "A língua que o hardware fala.", "pai": 0, "minutos": 40 },
+    { "titulo": "Representação de dados (inteiros, texto, ponto flutuante)", "porque": "Por que 0,1 + 0,2 não dá 0,3 no computador.", "pai": 1, "minutos": 40 },
+    { "titulo": "Lógica booleana e portas lógicas", "porque": "Como o hardware faz contas com 0 e 1.", "pai": 1, "minutos": 40 },
+    { "titulo": "Arquitetura de Von Neumann (CPU, memória, barramento)", "porque": "Como as peças conversam pra rodar um programa.", "pai": 0, "minutos": 40 },
+    { "titulo": "Ciclo de instrução (busca, decodifica, executa)", "porque": "O que a CPU faz bilhões de vezes por segundo.", "pai": 4, "minutos": 35 },
+    { "titulo": "Hierarquia de memória e cache", "porque": "Por que alguns programas são rápidos e outros lentos.", "pai": 4, "minutos": 35 },
+    { "titulo": "Entrada e saída (E/S) e interrupções", "porque": "Como teclado, disco e rede falam com a CPU.", "pai": 5, "minutos": 30 },
+    { "titulo": "Sistema operacional: papel e chamadas de sistema", "porque": "O 'gerente' entre os programas e o hardware.", "pai": 7, "minutos": 35 },
+    { "titulo": "Processos e threads", "porque": "Como vários programas rodam 'ao mesmo tempo'.", "pai": 8, "minutos": 40 },
+    { "titulo": "Gerência de memória (memória virtual, paginação)", "porque": "Cada programa acha que tem a memória toda só pra ele.", "pai": 8, "minutos": 40 },
+    { "titulo": "Sistemas de arquivos", "porque": "Como os dados ficam guardados no disco.", "pai": 8, "minutos": 30 }
+  ]
+}

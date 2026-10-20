@@ -1,0 +1,18 @@
+{
+  "materia": "UX/UI Design",
+  "linguagem": "",
+  "topicos": [
+    { "titulo": "O que é UX e o que é UI", "porque": "Experiência (resolver o problema) vs. interface (como fica na tela).", "minutos": 25 },
+    { "titulo": "Pesquisa com usuários", "porque": "Descobrir o problema real antes de desenhar.", "pai": 0, "minutos": 35 },
+    { "titulo": "Personas e jornada do usuário", "porque": "Pensar em pessoas concretas e no caminho que elas fazem.", "pai": 1, "minutos": 35 },
+    { "titulo": "Arquitetura da informação", "porque": "Organizar o conteúdo pra pessoa achar o que procura.", "pai": 2, "minutos": 30 },
+    { "titulo": "Wireframes e fluxos", "porque": "Esboçar a estrutura antes de pensar em cor.", "pai": 3, "minutos": 35 },
+    { "titulo": "Heurísticas de Nielsen", "porque": "10 regras pra avaliar se uma tela é fácil de usar.", "pai": 0, "minutos": 35 },
+    { "titulo": "Hierarquia visual, tipografia e grid", "porque": "O que o olho vê primeiro, e por quê.", "pai": 4, "minutos": 40 },
+    { "titulo": "Cor e contraste", "porque": "Comunicar estado e garantir leitura.", "pai": 6, "minutos": 30 },
+    { "titulo": "Acessibilidade", "porque": "A interface funcionando pra todo mundo.", "pai": 7, "minutos": 35 },
+    { "titulo": "Componentes e design system", "porque": "Peças reaproveitáveis com regras (o que o Neural-OS vai ganhar).", "pai": 6, "minutos": 40 },
+    { "titulo": "Prototipação (Figma)", "porque": "Testar a ideia clicável antes de programar.", "pai": 4, "minutos": 40 },
+    { "titulo": "Teste de usabilidade", "porque": "Ver gente de verdade usando e corrigir.", "pai": 10, "minutos": 35 }
+  ]
+}
