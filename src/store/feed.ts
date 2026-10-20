@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Cartao } from '../domain/cartoes';
+import type { LigacaoDoDia } from '../domain/ligacao';
 import type { Id, LocalDate } from '../domain/types';
 
 // Feed de cartões: o lote que a IA fez pra cada tópico (gasta conforme ele
-// responde e é refeito quando acaba), as rodadas do dia e o som.
+// responde e é refeito quando acaba), as rodadas do dia, o som e a ligação do dia.
 
 interface FeedState {
   /** Cartões da IA ainda não respondidos, por tópico. */
@@ -12,11 +13,14 @@ interface FeedState {
   rodadas: { data: LocalDate; n: number };
   melhorCombo: number;
   som: boolean;
+  /** Uma por dia (ver domain/ligacao.ts). */
+  ligacao?: LigacaoDoDia;
   guardar: (topicId: Id, cartoes: Cartao[]) => void;
   /** Tira do cache os cartões já respondidos. */
   gastar: (ids: Id[]) => void;
   fecharRodada: (hoje: LocalDate, combo: number) => void;
   alternarSom: () => void;
+  setLigacao: (l: LigacaoDoDia) => void;
 }
 
 export const useFeed = create<FeedState>()(
@@ -38,6 +42,7 @@ export const useFeed = create<FeedState>()(
           melhorCombo: Math.max(s.melhorCombo, combo),
         })),
       alternarSom: () => set((s) => ({ som: !s.som })),
+      setLigacao: (ligacao) => set({ ligacao }),
     }),
     { name: 'neural-os.feed', version: 1 },
   ),

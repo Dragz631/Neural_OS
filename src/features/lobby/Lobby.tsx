@@ -5,6 +5,7 @@ import { CalendarioCard } from './CalendarioCard';
 import { EntregasCard } from './EntregasCard';
 import { FaixaMaterias } from './FaixaMaterias';
 import { FeedCartoes } from './feed/FeedCartoes';
+import { LigacaoDoDia } from './LigacaoDoDia';
 import { MissoesHoje } from './MissoesHoje';
 import { PerfilResumo } from './PerfilResumo';
 import { TargetTerminal } from './TargetTerminal';
@@ -29,7 +30,10 @@ export default function Lobby() {
         </div>
       </div>
 
-      <FaixaMaterias />
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <FaixaMaterias />
+        <LigacaoDoDia />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <PerfilResumo />
