@@ -39,6 +39,9 @@ export const STATUS: Record<StatusEntrega, { rotulo: string; cor: string }> = {
   entregue: { rotulo: 'ENTREGUE ✓', cor: 'var(--color-accent)' },
 };
 
+/** XP de cada tipo de entrega (pago uma vez, ao entregar). */
+export const XP_POR_TIPO: Record<TipoEntrega, number> = { prova: 200, trabalho: 150, exercicio: 80, outro: 60 };
+
 /** pendente → em curso → entregue → pendente */
 export const proximoStatus = (s: StatusEntrega): StatusEntrega =>
   s === 'pendente' ? 'em_curso' : s === 'em_curso' ? 'entregue' : 'pendente';

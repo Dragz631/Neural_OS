@@ -1,12 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { addDays, toLocalDate } from '../../domain/dates';
-import { CATEGORIA, type CategoriaEntrega, type TipoEntrega } from '../../domain/entregas';
+import { CATEGORIA, XP_POR_TIPO, type CategoriaEntrega, type TipoEntrega } from '../../domain/entregas';
 import { useEntregas } from '../../store/entregas';
 import { useStudy } from '../../store/study';
 import { Button, Input, Select } from '../../components/ui';
 
-const XP_POR_TIPO: Record<TipoEntrega, number> = { prova: 200, trabalho: 150, exercicio: 80, outro: 60 };
 
 export function NovaEntregaForm() {
   const criar = useEntregas((s) => s.criar);

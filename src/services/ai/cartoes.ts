@@ -12,6 +12,8 @@ export interface ContextoCartoes {
   materia: string;
   /** Linguagem da matéria ("" = teórica, sem micro-desafio de código). */
   linguagem: string;
+  /** Material dele sobre a matéria (Notion, NotebookLM, ementa colada). */
+  contextoMateria?: string;
 }
 
 function lerEscolha(raw: Record<string, unknown>, topicId: string): CartaoEscolha | null {
@@ -51,7 +53,7 @@ export function lerCartoes(raw: unknown, topicId: string): Cartao[] {
   return cartoes;
 }
 
-export async function gerarCartoes({ topic, materia, linguagem }: ContextoCartoes, signal?: AbortSignal): Promise<Cartao[]> {
+export async function gerarCartoes({ topic, materia, linguagem, contextoMateria }: ContextoCartoes, signal?: AbortSignal): Promise<Cartao[]> {
   const base = [topic.lesson?.keyPoints.join('\n'), topic.notes].filter(Boolean).join('\n').slice(0, 3000);
   const micro = linguagem
     ? `- 2 "micro": código curto em ${linguagem} (até 8 linhas) e pergunta "o que imprime?", "onde está o bug?" ou "qual linha completa?".`
@@ -62,7 +64,7 @@ export async function gerarCartoes({ topic, materia, linguagem }: ContextoCartoe
       {
         role: 'user',
         content: `Crie cartões de 1 minuto pra revisar o tópico "${topic.title}" da matéria "${materia}".
-${base ? `O que o aluno já viu/anotou:\n"""\n${base}\n"""\n` : ''}
+${base ? `O que o aluno já viu/anotou:\n"""\n${base}\n"""\n` : ''}${contextoMateria ? `Material dele sobre a matéria (use só o que for deste tópico):\n"""\n${contextoMateria.slice(0, 2500)}\n"""\n` : ''}
 Regras:
 - NUNCA "defina X" ou "o que é X". Use: prever resultado, achar o erro, comparar duas coisas, aplicar num caso real.
 - 3 "revisao": múltipla escolha com 3 ou 4 opções curtas e 1 certa.

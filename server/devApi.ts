@@ -119,6 +119,21 @@ export function devApi(env: DevApiEnv): Plugin {
         }
       });
 
+      // Importação sob demanda: o Claude lê o Notion/NotebookLM quando o Hugo
+      // pede e grava esses dois arquivos; o app só lê (ver domain/importacao.ts).
+      server.middlewares.use('/api/estudos/import', async (_req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        const ler = async (arquivo: string) => {
+          if (!estudosRoot) return null;
+          try {
+            return JSON.parse(await fs.readFile(path.join(estudosRoot, 'Neural-OS', 'import', arquivo), 'utf8'));
+          } catch {
+            return null; // não existe ou está quebrado
+          }
+        };
+        res.end(JSON.stringify({ notion: await ler('notion.json'), notebooklm: await ler('notebooklm.json') }));
+      });
+
       server.middlewares.use('/api/estudos/file', async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;

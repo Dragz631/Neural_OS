@@ -20,7 +20,7 @@ export const useEntregas = create<EntregasState>()(
       lista: [],
       criar: (e) => {
         const id = newId('ent');
-        set((s) => ({ lista: [{ status: 'pendente', ...e, id, criadaEm: new Date().toISOString() }, ...s.lista] }));
+        set((s) => ({ lista: [{ ...e, status: e.status ?? 'pendente', id, criadaEm: new Date().toISOString() }, ...s.lista] }));
         return id;
       },
       atualizar: (id, patch) => set((s) => ({ lista: s.lista.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),

@@ -7,6 +7,7 @@ import { useAI } from '../../hooks/useAI';
 import { gerarMapa } from '../../services/ai/mapa';
 import { mapaManual, mapaSemIA } from '../../services/fontesMapa';
 import { aplicarMapa } from '../../store/aplicarMapa';
+import { useImportacao } from '../../store/importacao';
 import { useNav } from '../../store/nav';
 import { useSettings } from '../../store/settings';
 import { useStudy } from '../../store/study';
@@ -22,7 +23,20 @@ const ROTULO_ORIGEM: Record<OrigemMapa, string> = {
 };
 
 /** "Matéria em 1 frase": nome → mapa completo → você revisa → vira galho, Target e semana. */
-export function NovaMateriaModal({ open, onClose, nomeInicial = '', contextoInicial = '' }: { open: boolean; onClose: () => void; nomeInicial?: string; contextoInicial?: string }) {
+export function NovaMateriaModal({
+  open,
+  onClose,
+  nomeInicial = '',
+  contextoInicial = '',
+  onCriada,
+}: {
+  open: boolean;
+  onClose: () => void;
+  nomeInicial?: string;
+  contextoInicial?: string;
+  /** Avisa quem abriu (ex.: importação do Notion marca a disciplina como tratada). */
+  onCriada?: (subjectId: string) => void;
+}) {
   const aiOn = useSettings((s) => s.provider !== 'off');
   const { run, loading, error } = useAI();
   const [nome, setNome] = useState(nomeInicial);
@@ -55,7 +69,10 @@ export function NovaMateriaModal({ open, onClose, nomeInicial = '', contextoInic
 
   const confirmar = () => {
     if (!mapa) return;
-    const { topicIds } = aplicarMapa({ ...mapa, materia: mapa.materia || nome, objetivo });
+    const { subjectId, topicIds } = aplicarMapa({ ...mapa, materia: mapa.materia || nome, objetivo });
+    // O material colado (ou vindo do Notion/NotebookLM) continua servindo: alimenta os cartões da matéria.
+    if (contexto.trim()) useImportacao.getState().juntarContexto(subjectId, contexto.trim());
+    onCriada?.(subjectId);
     toast({ title: `${mapa.materia} criada`, description: `${topicIds.length} tópicos na Árvore. Próximo passo: ${mapa.topicos[0].titulo}`, variant: 'success' });
     setMapa(null);
     setNome('');

@@ -6,6 +6,7 @@ import { useAI } from '../../../hooks/useAI';
 import { gerarCartoes } from '../../../services/ai/cartoes';
 import { sons } from '../../../services/sons';
 import { useFeed } from '../../../store/feed';
+import { useImportacao } from '../../../store/importacao';
 import { usePresenca } from '../../../store/presenca';
 import { useSettings } from '../../../store/settings';
 import { useStudy } from '../../../store/study';
@@ -51,7 +52,7 @@ export function useRodada() {
       const semCartao = ordem.filter((t) => !useFeed.getState().cache[t.id]?.length).slice(0, GERAR_POR_RODADA);
       for (const t of semCartao) {
         const materia = estudo.subjects.find((s) => s.id === t.subjectId);
-        const lote = await ia.run((signal) => gerarCartoes({ topic: t, materia: materia?.name ?? '', linguagem: materia?.language ?? '' }, signal));
+        const lote = await ia.run((signal) => gerarCartoes({ topic: t, materia: materia?.name ?? '', linguagem: materia?.language ?? '', contextoMateria: useImportacao.getState().contexto[t.subjectId] }, signal));
         if (lote) useFeed.getState().guardar(t.id, lote);
       }
     }

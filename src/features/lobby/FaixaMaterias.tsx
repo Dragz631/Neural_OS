@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { DownloadCloud, Plus } from 'lucide-react';
 import { resumirMaterias } from '../../domain/materias';
 import { useNav } from '../../store/nav';
 import { useStudy } from '../../store/study';
 import { NovaMateriaModal } from '../materia/NovaMateriaModal';
+import { ImportarModal } from '../importar/ImportarModal';
+import { useNovidades } from '../importar/useNovidades';
 import { ProgressBar } from '../../components/ui';
 
 /** Um cartão por matéria: progresso, nível e o próximo tópico (clique leva direto). */
@@ -13,6 +15,8 @@ export function FaixaMaterias() {
   const sessions = useStudy((s) => s.sessions);
   const go = useNav((s) => s.go);
   const [nova, setNova] = useState(false);
+  const [importar, setImportar] = useState(false);
+  const { imp, novas, total } = useNovidades();
   const resumos = useMemo(() => resumirMaterias(subjects, topics, sessions), [subjects, topics, sessions]);
 
   return (
@@ -45,7 +49,18 @@ export function FaixaMaterias() {
       >
         <Plus size={18} /> Nova matéria
       </button>
+      {total > 0 && (
+        <button
+          type="button"
+          onClick={() => setImportar(true)}
+          className="glow flex w-40 shrink-0 flex-col items-center justify-center gap-1 rounded border border-accent/60 p-3 text-xs text-accent hover:bg-accent/10"
+        >
+          <DownloadCloud size={18} /> Notion / NotebookLM
+          <span className="font-bold">{total} novo(s)</span>
+        </button>
+      )}
       <NovaMateriaModal open={nova} onClose={() => setNova(false)} />
+      <ImportarModal open={importar} onClose={() => setImportar(false)} imp={imp} novas={novas} />
     </div>
   );
 }
