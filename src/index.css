@@ -136,10 +136,21 @@ body {
     box-shadow: 0 0 0 10px transparent;
   }
 }
+/* Escada de dicas: cada degrau novo desce deslizando. */
+.dica-entra {
+  animation: dica-entra 0.35s ease-out;
+}
+@keyframes dica-entra {
+  from {
+    transform: translateY(-4px);
+    border-color: var(--color-accent);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot,
   .cursor-blink::after,
-  .combo-glow {
+  .combo-glow,
+  .dica-entra {
     animation: none;
   }
   .xp-pop {

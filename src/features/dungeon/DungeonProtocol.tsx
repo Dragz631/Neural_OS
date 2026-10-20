@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useDungeon } from './store';
 import { useStudy } from '../../store/study';
-import { toast } from '../../store/toast';
+import { useNav } from '../../store/nav';
 import { DUNGEON_STAGES_BY_TRACK } from './dungeonData';
 import { CodexView } from './CodexView';
 import { BattleArena } from './BattleArena';
@@ -144,11 +144,9 @@ export default function DungeonProtocol() {
 
   const handleExportToSandbox = (code?: string) => {
     const snippetToExport = code || activeStage.codex.codeExample || activeStage.battle.codeSnippet;
-    // Copia o código pra você colar no Sandbox (ou no seu editor).
-    navigator.clipboard.writeText(snippetToExport).then(
-      () => toast({ title: 'Código copiado', description: 'Cole no Sandbox ou nas suas anotações.', variant: 'success' }),
-      () => toast({ title: 'Não consegui copiar', variant: 'destructive' }),
-    );
+    // Vai direto pro Sandbox como desafio "leia, preveja e melhore".
+    const linguagem = { csharp: 'csharp', c_bases: 'c', lfa: 'automato' }[activeTrack];
+    useNav.getState().mandarProSandbox({ texto: snippetToExport, origem: `Dungeon (${activeStage.codex.topic})`, linguagem });
   };
 
   return (

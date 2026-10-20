@@ -117,6 +117,8 @@ export async function generateChallenge(
   ctx: TopicContext,
   language: string,
   size: 'micro' | 'normal',
+  /** Habilidades marcadas no Sandbox que o desafio também deve cobrar. */
+  foco: string[] = [],
   signal?: AbortSignal,
 ): Promise<Pick<Challenge, 'prompt' | 'hints' | 'starterCode'>> {
   return chatJSON(
@@ -127,7 +129,7 @@ export async function generateChallenge(
         content: `${describe(ctx)}
 
 Crie UM desafio ${size === 'micro' ? 'MICRO (resolve em 5 minutos, poucas linhas)' : 'de 15-25 minutos'} na linguagem "${language || 'pseudocódigo'}"
-que obrigue a usar este tópico. Mire nas lacunas do aluno, se houver. Não entregue a solução.
+que obrigue a usar este tópico.${foco.length ? ` Combine também com: ${foco.join(', ')}.` : ''} Mire nas lacunas do aluno, se houver. Não entregue a solução.
 Formato JSON:
 {
   "prompt": "enunciado claro, com exemplo de entrada/saída quando fizer sentido",

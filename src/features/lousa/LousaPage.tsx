@@ -3,8 +3,9 @@ import { Excalidraw, MainMenu, TTDDialog, TTDDialogTrigger } from '@excalidraw/e
 import '@excalidraw/excalidraw/index.css';
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
-import { GraduationCap, NotebookPen, PanelLeftClose, PanelLeftOpen, Plus, Trash2, X } from 'lucide-react';
+import { Code2, GraduationCap, NotebookPen, PanelLeftClose, PanelLeftOpen, Plus, Trash2, X } from 'lucide-react';
 import { useAI } from '../../hooks/useAI';
+import { useNav } from '../../store/nav';
 import { useSettings } from '../../store/settings';
 import { useStudy } from '../../store/study';
 import { toast } from '../../store/toast';
@@ -222,6 +223,20 @@ function Board({ boardId, name, topicId }: { boardId: string; name: string; topi
     toast({ title: els.length ? 'Seleção enviada pras anotações' : 'Lousa enviada pras anotações', description: topic.title, variant: 'success' });
   };
 
+  // Texto selecionado (ex.: código escrito na lousa) vira desafio no Sandbox.
+  const sendSelectionToSandbox = () => {
+    if (!api) return;
+    const selected = api.getAppState().selectedElementIds;
+    const textos = api
+      .getSceneElements()
+      .filter((e) => selected[e.id] && e.type === 'text')
+      .sort((a, b) => a.y - b.y)
+      .map((e) => ('originalText' in e ? e.originalText : ''))
+      .filter(Boolean);
+    if (!textos.length) return toast({ title: 'Selecione o texto com o código', description: 'Depois aperte de novo pra mandar pro Sandbox.' });
+    useNav.getState().mandarProSandbox({ texto: textos.join('\n'), origem: `Lousa "${name}"` }, topic?.id);
+  };
+
   return (
     <div className="relative h-full">
       <Excalidraw
@@ -233,6 +248,9 @@ function Board({ boardId, name, topicId }: { boardId: string; name: string; topi
         name={name}
         renderTopRightUI={() => (
           <div className="flex gap-1.5">
+            <button type="button" onClick={sendSelectionToSandbox} title="Mandar o texto selecionado (código) pro Sandbox" className="excali-btn">
+              <Code2 size={15} />
+            </button>
             {topic && (
               <button type="button" onClick={sendSelectionToTopic} title={`Mandar pras anotações de "${topic.title}"`} className="excali-btn">
                 <NotebookPen size={15} />
