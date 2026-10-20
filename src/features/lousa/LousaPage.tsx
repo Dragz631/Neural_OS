@@ -6,7 +6,7 @@ import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from '@excalidraw
 import { Code2, GraduationCap, NotebookPen, PanelLeftClose, PanelLeftOpen, Plus, Trash2, X } from 'lucide-react';
 import { useAI } from '../../hooks/useAI';
 import { useNav } from '../../store/nav';
-import { useSettings } from '../../store/settings';
+import { useIALigada } from '../../store/conexoes';
 import { useStudy } from '../../store/study';
 import { toast } from '../../store/toast';
 import { TopicSelect } from '../../components/TopicPicker';
@@ -121,7 +121,7 @@ function Board({ boardId, name, topicId }: { boardId: string; name: string; topi
   const touch = useBoards((s) => s.touch);
   const topic = useStudy((s) => s.topics.find((t) => t.id === topicId));
   const updateTopic = useStudy((s) => s.updateTopic);
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const { run, loading, error } = useAI();
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   useBibliotecaNeural(api);

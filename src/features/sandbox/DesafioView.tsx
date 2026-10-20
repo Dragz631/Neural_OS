@@ -10,7 +10,7 @@ import { gradeFromScore } from '../../domain/srs';
 import type { Challenge, Topic } from '../../domain/types';
 import { useAI } from '../../hooks/useAI';
 import { reviewCode } from '../../services/ai/professor';
-import { useSettings } from '../../store/settings';
+import { useIALigada } from '../../store/conexoes';
 import { useStudy } from '../../store/study';
 import { toast } from '../../store/toast';
 import { EditorCodigo } from './EditorCodigo';
@@ -22,7 +22,7 @@ const NOTA_RESOLVIDO = 70;
 
 export function DesafioView({ challenge, topic }: { challenge: Challenge; topic: Topic }) {
   const { saveChallenge, removeChallenge, gradeTopic, logSession, addDiario } = useStudy.getState();
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const { run, loading, error } = useAI();
   const [code, setCode] = useState(challenge.code);
   const [xpGanho, setXpGanho] = useState<number>();

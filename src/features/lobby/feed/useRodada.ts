@@ -8,7 +8,7 @@ import { sons } from '../../../services/sons';
 import { useFeed } from '../../../store/feed';
 import { useImportacao } from '../../../store/importacao';
 import { usePresenca } from '../../../store/presenca';
-import { useSettings } from '../../../store/settings';
+import { iaLigada, useConexoes } from '../../../store/conexoes';
 import { useStudy } from '../../../store/study';
 
 // Lógica de uma rodada do feed: monta 5 cartões, conta combo e XP, manda erro
@@ -48,7 +48,7 @@ export function useRodada() {
     const estudo = useStudy.getState();
     const ordem = ordemDosTopicos(estudo.topics, toLocalDate(), estudo.target.topicId);
 
-    if (useSettings.getState().provider !== 'off') {
+    if (iaLigada(useConexoes.getState().motores)) {
       const semCartao = ordem.filter((t) => !useFeed.getState().cache[t.id]?.length).slice(0, GERAR_POR_RODADA);
       for (const t of semCartao) {
         const materia = estudo.subjects.find((s) => s.id === t.subjectId);

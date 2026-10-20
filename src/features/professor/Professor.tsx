@@ -8,7 +8,7 @@ import { toast } from '../../store/toast';
 import { evaluateExplanation, generateLesson, type ExplanationReview, type TopicContext } from '../../services/ai/professor';
 import { exportTopic } from '../../services/vault';
 import { useNav } from '../../store/nav';
-import { useSettings } from '../../store/settings';
+import { useIALigada } from '../../store/conexoes';
 import { topicPath, useStudy } from '../../store/study';
 import { TopicModal, TopicSelect } from '../../components/TopicPicker';
 import { Badge, Button, Empty, ErrorNote, Label, Modal, Panel, Textarea } from '../../components/ui';
@@ -118,7 +118,7 @@ function SessionTimer({ topic }: { topic: Topic }) {
 function Blackboard({ topic }: { topic: Topic }) {
   const ctx = useTopicContext(topic);
   const setLesson = useStudy((s) => s.setLesson);
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const { run, loading, error } = useAI();
   const [editing, setEditing] = useState(false);
   const lesson = topic.lesson;
@@ -325,7 +325,7 @@ function ExplainPanel({ topic }: { topic: Topic }) {
   const ctx = useTopicContext(topic);
   const gradeTopic = useStudy((s) => s.gradeTopic);
   const logSession = useStudy((s) => s.logSession);
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const { run, loading, error } = useAI();
   const [text, setText] = useState('');
   const [review, setReview] = useState<ExplanationReview | null>(null);

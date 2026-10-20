@@ -78,6 +78,7 @@ Formato JSON:
     ],
     (raw) => lerCartoes(raw, topic.id),
     signal,
+    'leve',
   );
 }
 
@@ -103,5 +104,6 @@ Formato JSON: {"nota": 80, "dica": "..."}`,
       return { nota: asScore(r.nota), dica: typeof r.dica === 'string' ? r.dica : '' };
     },
     signal,
+    'leve',
   );
 }

@@ -1,17 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Cpu, Settings, Zap } from 'lucide-react';
 import { levelFromXp } from '../domain/xp';
 import { TABS, useNav } from '../store/nav';
-import { PROVIDER_LABEL, useSettings } from '../store/settings';
+import { useConexoes } from '../store/conexoes';
 import { useStudy } from '../store/study';
 import { cn } from '../lib/utils';
+import { ConexoesModal } from './conexoes/ConexoesModal';
 import { SettingsModal } from './SettingsModal';
 
 export function Navbar() {
   const { tab, go } = useNav();
   const xp = useStudy((s) => s.profile.xp);
-  const provider = useSettings((s) => s.provider);
+  const professor = useConexoes((s) => s.conexoes.find((c) => c.id === (s.motores.professor ?? s.motores.dificil ?? s.motores.leve)));
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [conexoesOpen, setConexoesOpen] = useState(false);
+
+  // Lê do servidor quais motores estão ligados (uma vez, ao abrir o app).
+  useEffect(() => {
+    void useConexoes.getState().recarregar();
+  }, []);
   const { level, into, needed } = levelFromXp(xp);
 
   return (
@@ -49,16 +56,27 @@ export function Navbar() {
           </div>
           <button
             type="button"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => setConexoesOpen(true)}
+            title="Conexões: quais modelos fazem o trabalho do professor"
             className="flex items-center gap-1.5 rounded border border-line px-2 py-1 text-muted hover:border-accent hover:text-accent"
           >
-            <Cpu size={12} className={provider === 'off' ? '' : 'text-accent'} />
-            <span className="hidden sm:inline">{PROVIDER_LABEL[provider]}</span>
+            <Cpu size={12} className={professor ? 'text-accent' : ''} />
+            <span className="hidden sm:inline">{professor?.nome ?? 'Conectar modelo'}</span>
+          </button>
+          <button type="button" onClick={() => setSettingsOpen(true)} aria-label="Configurações" className="rounded border border-line p-1.5 text-muted hover:border-accent hover:text-accent">
             <Settings size={12} />
           </button>
         </div>
       </div>
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onConexoes={() => {
+          setSettingsOpen(false);
+          setConexoesOpen(true);
+        }}
+      />
+      <ConexoesModal open={conexoesOpen} onClose={() => setConexoesOpen(false)} />
     </nav>
   );
 }

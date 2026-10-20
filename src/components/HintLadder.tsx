@@ -5,7 +5,7 @@ import type { Challenge } from '../domain/types';
 import { useAI } from '../hooks/useAI';
 import { cn } from '../lib/utils';
 import { gerarDica } from '../services/ai/dicas';
-import { useSettings } from '../store/settings';
+import { useIALigada } from '../store/conexoes';
 import { Button, ErrorNote, Input, Label, Panel } from './ui';
 
 /**
@@ -13,7 +13,7 @@ import { Button, ErrorNote, Input, Label, Panel } from './ui';
  * e "o que espero que aconteça". Cada clique sobe 1 degrau; a partir do 3 custa XP.
  */
 export function HintLadder({ challenge, codigo, onSalvar }: { challenge: Challenge; codigo: string; onSalvar: (patch: Partial<Challenge>) => void }) {
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const { run, loading, error } = useAI();
   const [tentei, setTentei] = useState(challenge.attempt ?? '');
   const [espero, setEspero] = useState(challenge.prediction ?? '');

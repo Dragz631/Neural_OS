@@ -3,7 +3,7 @@ import type { CartaoFrase } from '../../../domain/cartoes';
 import { Button, ErrorNote, Textarea } from '../../../components/ui';
 import { useAI } from '../../../hooks/useAI';
 import { avaliarFrase, type NotaFrase } from '../../../services/ai/cartoes';
-import { useSettings } from '../../../store/settings';
+import { useIALigada } from '../../../store/conexoes';
 import { useStudy } from '../../../store/study';
 import { Autoavaliar, BotaoProximo, type PropsCartao } from './comum';
 
@@ -12,7 +12,7 @@ const NOTA_OK = 60;
 
 /** Explique em 1 frase. Com IA: nota + dica. Sem IA: compara com a referência e se avalia. */
 export function CartaoFraseView({ cartao, onResponder, onProximo }: PropsCartao<CartaoFrase>) {
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const topico = useStudy((s) => s.topics.find((t) => t.id === cartao.topicId)?.title ?? '');
   const { run, loading, error } = useAI();
   const [texto, setTexto] = useState('');

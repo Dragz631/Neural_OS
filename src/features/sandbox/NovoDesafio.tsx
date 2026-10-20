@@ -5,14 +5,14 @@ import { bancoDoTopico } from '../../domain/sandbox';
 import type { Challenge, Id, Topic } from '../../domain/types';
 import { useAI } from '../../hooks/useAI';
 import { generateChallenge } from '../../services/ai/professor';
-import { useSettings } from '../../store/settings';
+import { useIALigada } from '../../store/conexoes';
 import { newId, useStudy } from '../../store/study';
 
 type Dados = Pick<Challenge, 'prompt' | 'hints' | 'starterCode'>;
 
 /** Gera desafio do tópico: IA (cobrando as habilidades marcadas), banco, mini ou o seu. */
 export function NovoDesafio({ topic, linguagem, foco, onCriado }: { topic: Topic; linguagem: string; foco: string[]; onCriado: (id: Id) => void }) {
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const { run, loading, error } = useAI();
   const [proprio, setProprio] = useState(false);
 

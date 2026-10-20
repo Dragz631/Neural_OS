@@ -24,5 +24,6 @@ Formato JSON: {"ligacao": "..."}`,
     ],
     (raw) => asString((raw as Record<string, unknown>).ligacao, 'ligacao'),
     signal,
+    'leve',
   );
 }

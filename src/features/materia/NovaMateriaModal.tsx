@@ -9,7 +9,7 @@ import { mapaManual, mapaSemIA } from '../../services/fontesMapa';
 import { aplicarMapa } from '../../store/aplicarMapa';
 import { useImportacao } from '../../store/importacao';
 import { useNav } from '../../store/nav';
-import { useSettings } from '../../store/settings';
+import { useIALigada } from '../../store/conexoes';
 import { useStudy } from '../../store/study';
 import { toast } from '../../store/toast';
 import { Badge, Button, ErrorNote, Input, Label, Modal, Select, Textarea } from '../../components/ui';
@@ -37,7 +37,7 @@ export function NovaMateriaModal({
   /** Avisa quem abriu (ex.: importação do Notion marca a disciplina como tratada). */
   onCriada?: (subjectId: string) => void;
 }) {
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const { run, loading, error } = useAI();
   const [nome, setNome] = useState(nomeInicial);
   const [objetivo, setObjetivo] = useState('');

@@ -1,39 +1,19 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { IncomingMessage } from 'node:http';
-import type { Plugin, ProxyOptions } from 'vite';
+import type { Plugin } from 'vite';
+import { registrarConexoes } from './conexoes/rotas.ts';
 
 // ─── "Backend" mínimo que roda dentro do servidor do Vite ────────────────────
-// 1) Proxy de IA: o navegador chama /ai/<provedor>/..., e aqui a gente repassa
-//    pro destino real, colocando a chave que está no .env.local. Assim a chave
-//    nunca vai pro navegador, e não tem problema de CORS.
+// 1) IA: o navegador pede por MOTOR (/ai/motor/<leve|professor|dificil>) e o
+//    servidor escolhe a conexão, põe a chave do .env.local e faz o revezamento
+//    (server/conexoes). A chave nunca vai pro navegador.
 // 2) Cofre do Obsidian: grava notas .md dentro de <OBSIDIAN_VAULT_PATH>/Neural-OS.
 
 export interface DevApiEnv {
-  HERMES_URL?: string;
-  HERMES_API_KEY?: string;
-  NVIDIA_API_KEY?: string;
-  OLLAMA_URL?: string;
   OBSIDIAN_VAULT_PATH?: string;
   /** Cofre de estudos (lousas, resumo pro Brazuka). Se faltar, usa o OBSIDIAN_VAULT_PATH. */
   ESTUDOS_VAULT_PATH?: string;
-}
-
-function target(url: string, prefix: string, key?: string): ProxyOptions {
-  return {
-    target: url,
-    changeOrigin: true,
-    rewrite: (p) => p.replace(prefix, ''),
-    headers: key ? { Authorization: `Bearer ${key}` } : undefined,
-  };
-}
-
-export function aiProxy(env: DevApiEnv): Record<string, ProxyOptions> {
-  return {
-    '/ai/hermes': target(env.HERMES_URL || 'http://localhost:8642', '/ai/hermes', env.HERMES_API_KEY),
-    '/ai/nvidia': target('https://integrate.api.nvidia.com', '/ai/nvidia', env.NVIDIA_API_KEY),
-    '/ai/ollama': target(env.OLLAMA_URL || 'http://localhost:11434', '/ai/ollama'),
-  };
 }
 
 const MAX_BODY = 1_000_000;
@@ -76,6 +56,8 @@ export function devApi(env: DevApiEnv): Plugin {
   return {
     name: 'neural-os-dev-api',
     configureServer(server) {
+      registrarConexoes(server, path.resolve(import.meta.dirname, '..'));
+
       server.middlewares.use('/api/vault/status', (_req, res) => {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ configured: !!vaultRoot, folder: vaultRoot }));

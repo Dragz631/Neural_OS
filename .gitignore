@@ -25,3 +25,6 @@ dist-ssr
 
 dist
 .env.local
+
+# Conexões de IA (endereços/modelos) e uso diário: ficam só neste PC
+*.local.json

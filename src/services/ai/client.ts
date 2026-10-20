@@ -1,9 +1,12 @@
-import { useSettings, type AIProvider } from '../../store/settings';
+import type { Motor } from '../../domain/conexoes';
+import { iaLigada, useConexoes } from '../../store/conexoes';
+import { useSettings } from '../../store/settings';
 
-// ─── Cliente de IA (formato OpenAI /v1/chat/completions) ─────────────────────
-// Hermes Agent, NVIDIA NIM e Ollama falam o mesmo "idioma" (API compatível com OpenAI).
-// O navegador nunca vê chave de API: ele chama /ai/<provedor>/..., e o servidor do
-// Vite (server/devApi.ts) repassa pro destino real colocando a chave do .env.local.
+// ─── Cliente de IA: o app pede por MOTOR, nunca por provedor ─────────────────
+// Uma mente só (o Prof. A.Ilson); o motor é só quem faz a conta:
+//   leve = cartões e coisas curtas · professor = aula, desafio, correção · dificil = Claude.
+// O navegador chama /ai/motor/<motor> e o servidor (server/conexoes) escolhe a
+// conexão, põe a chave do .env.local e reveza se uma cair. Chave nunca vem pra cá.
 //
 // Regra importante: se a IA falhar, a gente AVISA (lança AIError). O código antigo
 // devolvia uma resposta pronta escondida, e você achava que a IA tinha respondido.
@@ -15,30 +18,17 @@ export interface ChatMessage {
   content: string;
 }
 
-const BASE: Record<Exclude<AIProvider, 'off'>, string> = {
-  hermes: '/ai/hermes/v1',
-  nvidia: '/ai/nvidia/v1',
-  ollama: '/ai/ollama/v1',
-};
+const TIMEOUT_MS = 180_000; // modelo local ou o Claude pela assinatura podem demorar
 
-const TIMEOUT_MS = 180_000; // modelo local/agent pode demorar na primeira chamada
-
-export function isAIEnabled(): boolean {
-  return useSettings.getState().provider !== 'off';
-}
-
-export async function chat(messages: ChatMessage[], signal?: AbortSignal): Promise<string> {
-  const { provider, models, temperature } = useSettings.getState();
-  if (provider === 'off') throw new AIError('IA desligada. Ative um provedor nas configurações.');
-
-  const model = models[provider];
-  if (!model) throw new AIError('Escolha um modelo nas configurações de IA.');
+export async function chat(messages: ChatMessage[], signal?: AbortSignal, motor: Motor = 'professor'): Promise<string> {
+  if (!iaLigada(useConexoes.getState().motores)) throw new AIError('Nenhum motor conectado. Abra Configurações → Conexões.');
+  const { temperature } = useSettings.getState();
 
   const timeout = AbortSignal.timeout(TIMEOUT_MS);
-  const res = await fetch(`${BASE[provider]}/chat/completions`, {
+  const res = await fetch(`/ai/motor/${motor}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages, temperature, stream: false }),
+    body: JSON.stringify({ messages, temperature }),
     signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   }).catch((e: unknown) => {
     const name = e instanceof Error ? e.name : '';
@@ -47,13 +37,9 @@ export async function chat(messages: ChatMessage[], signal?: AbortSignal): Promi
     throw new AIError('Não consegui falar com o servidor. O "npm run dev" está rodando?');
   });
 
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    throw new AIError(`IA respondeu erro ${res.status}. ${detail.slice(0, 200)}`);
-  }
-
-  const data = await res.json();
-  const content: unknown = data?.choices?.[0]?.message?.content;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new AIError(data?.erro ?? `IA respondeu erro ${res.status}.`);
+  const content: unknown = data?.texto;
   if (typeof content !== 'string' || !content.trim()) throw new AIError('A IA respondeu vazio.');
   return stripThinking(content);
 }
@@ -67,19 +53,29 @@ export function stripThinking(text: string): string {
  * Pede JSON e valida. `parse` recebe o objeto cru e devolve o tipo certo
  * (ou lança erro se faltar campo) — nunca confie cegamente no que a IA mandou.
  */
-export async function chatJSON<T>(messages: ChatMessage[], parse: (raw: unknown) => T, signal?: AbortSignal): Promise<T> {
+export async function chatJSON<T>(messages: ChatMessage[], parse: (raw: unknown) => T, signal?: AbortSignal, motor: Motor = 'professor'): Promise<T> {
   const withRule: ChatMessage[] = [
     ...messages,
     { role: 'user', content: 'Responda APENAS com um objeto JSON válido, sem texto antes ou depois, sem ```.' },
   ];
-  const text = await chat(withRule, signal);
-  const json = extractJSONObject(text);
-  if (!json) throw new AIError('A IA não devolveu JSON. Tente de novo.');
-  try {
-    return parse(JSON.parse(json));
-  } catch (e) {
-    throw new AIError(`Resposta da IA veio num formato inesperado: ${e instanceof Error ? e.message : e}`);
+  // Errou o formato? Tenta de novo no mesmo motor; na 2ª falha do professor, chama o difícil.
+  const tentativas: Motor[] = motor === 'professor' ? ['professor', 'professor', 'dificil'] : motor === 'leve' ? ['leve', 'professor'] : [motor];
+  let ultimoErro = '';
+  for (const m of tentativas) {
+    if (m === 'dificil' && !useConexoes.getState().motores.dificil) break;
+    const text = await chat(withRule, signal, m);
+    const json = extractJSONObject(text);
+    if (!json) {
+      ultimoErro = 'A IA não devolveu JSON.';
+      continue;
+    }
+    try {
+      return parse(JSON.parse(json));
+    } catch (e) {
+      ultimoErro = `Resposta da IA veio num formato inesperado: ${e instanceof Error ? e.message : e}`;
+    }
   }
+  throw new AIError(`${ultimoErro} Tente de novo.`);
 }
 
 /**
@@ -105,14 +101,6 @@ export function extractJSONObject(text: string): string | null {
     else if (ch === '}' && --depth === 0) return text.slice(start, i + 1);
   }
   return null;
-}
-
-export async function listModels(provider: AIProvider): Promise<string[]> {
-  if (provider === 'off') return [];
-  const res = await fetch(`${BASE[provider]}/models`, { signal: AbortSignal.timeout(10_000) });
-  if (!res.ok) throw new AIError(`Erro ${res.status} ao listar modelos.`);
-  const data = await res.json();
-  return (data?.data ?? []).map((m: { id: string }) => m.id).sort();
 }
 
 // ─── Validadores pequenos pra resposta da IA ─────────────────────────────────

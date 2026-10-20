@@ -7,7 +7,7 @@ import type { Topic } from '../../domain/types';
 import { gerarLigacao } from '../../services/ai/ligacao';
 import { useFeed } from '../../store/feed';
 import { useNav } from '../../store/nav';
-import { useSettings } from '../../store/settings';
+import { useIALigada } from '../../store/conexoes';
 import { useStudy } from '../../store/study';
 
 // Uma chamada por vez, fora do ciclo do componente: o StrictMode monta duas
@@ -17,7 +17,7 @@ let pedindo = false;
 /** Ligação do dia: como dois tópicos de matérias diferentes conversam. */
 export function LigacaoDoDia() {
   const hoje = toLocalDate();
-  const aiOn = useSettings((s) => s.provider !== 'off');
+  const aiOn = useIALigada();
   const ligacao = useFeed((s) => s.ligacao);
   const topics = useStudy((s) => s.topics);
   const subjects = useStudy((s) => s.subjects);
