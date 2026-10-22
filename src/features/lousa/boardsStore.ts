@@ -13,6 +13,10 @@ export interface BoardMeta {
   topicId?: string;
   /** Mapa a desenhar quando a lousa for aberta pela 1ª vez (vem do "Nova matéria"). */
   mapa?: MapaMateria;
+  /** Quadro do Prof. A.Ilson deste tópico (um por tópico; aparece também na Lousa). */
+  quadroDe?: string;
+  /** Chaves das aulas já desenhadas aqui (aula nova é desenhada ao lado, uma vez só). */
+  desenhados?: string[];
   elementCount: number;
   createdAt: string;
   updatedAt: string;
@@ -27,6 +31,9 @@ interface BoardsState {
   setActive: (id: string) => void;
   linkTopic: (id: string, topicId?: string) => void;
   touch: (id: string, elementCount: number) => void;
+  /** Acha ou cria o quadro do tópico SEM trocar a lousa ativa da aba Lousa. */
+  quadroDoTopico: (topicId: string, nome: string) => string;
+  marcarDesenhado: (id: string, chave: string) => void;
 }
 
 export const useBoards = create<BoardsState>()(
@@ -50,6 +57,16 @@ export const useBoards = create<BoardsState>()(
       },
       setActive: (activeId) => set({ activeId }),
       linkTopic: (id, topicId) => set((s) => ({ boards: s.boards.map((b) => (b.id === id ? { ...b, topicId } : b)) })),
+      quadroDoTopico: (topicId, nome) => {
+        const existente = get().boards.find((b) => b.quadroDe === topicId);
+        if (existente) return existente.id;
+        const id = newId('lousa');
+        const now = new Date().toISOString();
+        set((s) => ({ boards: [...s.boards, { id, name: `Quadro: ${nome}`, topicId, quadroDe: topicId, elementCount: 0, createdAt: now, updatedAt: now }] }));
+        return id;
+      },
+      marcarDesenhado: (id, chave) =>
+        set((s) => ({ boards: s.boards.map((b) => (b.id === id ? { ...b, desenhados: [...(b.desenhados ?? []), chave] } : b)) })),
       touch: (id, elementCount) =>
         set((s) => ({ boards: s.boards.map((b) => (b.id === id ? { ...b, elementCount, updatedAt: new Date().toISOString() } : b)) })),
     }),

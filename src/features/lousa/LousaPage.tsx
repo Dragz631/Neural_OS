@@ -117,7 +117,13 @@ function BoardList({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Board({ boardId, name, topicId }: { boardId: string; name: string; topicId?: string }) {
+/** Algo pra desenhar no quadro UMA vez (a `chave` fica gravada no quadro). Ex.: a aula do professor. */
+export interface DesenhoNovo {
+  chave: string;
+  criar: () => readonly ExcalidrawElement[];
+}
+
+export function Board({ boardId, name, topicId, desenho }: { boardId: string; name: string; topicId?: string; desenho?: DesenhoNovo }) {
   const touch = useBoards((s) => s.touch);
   const topic = useStudy((s) => s.topics.find((t) => t.id === topicId));
   const updateTopic = useStudy((s) => s.updateTopic);
@@ -155,6 +161,27 @@ function Board({ boardId, name, topicId }: { boardId: string; name: string; topi
       vivo = false;
     };
   }, [api, initialData]);
+
+  // Desenho novo (ex.: aula do professor): entra ao lado do que já existe,
+  // nunca por cima das anotações, e só uma vez por chave.
+  useEffect(() => {
+    if (!api || !desenho) return;
+    let vivo = true;
+    void initialData.then(() => {
+      const quadro = useBoards.getState().boards.find((b) => b.id === boardId);
+      if (!vivo || !quadro || quadro.desenhados?.includes(desenho.chave)) return;
+      useBoards.getState().marcarDesenhado(boardId, desenho.chave); // marca antes: o React em dev roda 2x
+      const atuais = api.getSceneElements();
+      const direita = atuais.reduce((max, el) => Math.max(max, el.x + el.width), -Infinity);
+      const dx = Number.isFinite(direita) ? direita + 200 : 0;
+      const novos = desenho.criar().map((el) => ({ ...el, x: el.x + dx }));
+      api.updateScene({ elements: [...atuais, ...novos] });
+      requestAnimationFrame(() => api.setViewport({ target: novos, fit: 'scale-down', offsets: { ui: true } }));
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [api, initialData, boardId, desenho]);
 
   // Fechou/recarregou a página com algo pendente: manda pro cofre na saída.
   useEffect(() => {

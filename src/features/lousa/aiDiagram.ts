@@ -28,7 +28,7 @@ function requestError(message: string, status = 500) {
 export async function onTextSubmit({ messages, onChunk, signal }: SubmitProps) {
   try {
     const history: ChatMessage[] = [{ role: 'system', content: SYSTEM }, ...messages];
-    const raw = await chat(history, signal);
+    const raw = await chat(history, signal, 'dificil'); // desenho = motor difícil (Claude); se faltar, o servidor reveza
     const mermaid = raw.replace(/^```(?:mermaid)?\s*/i, '').replace(/```\s*$/, '').trim();
     // O Excalidraw monta a mensagem do chat SÓ pelos pedaços (onChunk), e o botão
     // "Inserir" usa essa mensagem. Sem isso, o diagrama aparece vazio.

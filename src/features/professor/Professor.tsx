@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { BookMarked, FileDown, Lightbulb, PenLine, Play, Search, Sparkles, Square, MonitorPlay } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { FileDown, PenLine, Play, Sparkles, Square } from 'lucide-react';
 import { formatShort } from '../../domain/dates';
 import { GRADE_LABEL, gradeFromScore, isDue, type Grade } from '../../domain/srs';
-import type { Id, Lesson, Topic } from '../../domain/types';
+import type { Id, Topic } from '../../domain/types';
 import { useAI } from '../../hooks/useAI';
 import { toast } from '../../store/toast';
 import { evaluateExplanation, generateLesson, type ExplanationReview, type TopicContext } from '../../services/ai/professor';
@@ -13,6 +13,7 @@ import { topicPath, useStudy } from '../../store/study';
 import { TopicModal, TopicSelect } from '../../components/TopicPicker';
 import { Badge, Button, Empty, ErrorNote, Label, Modal, Panel, Textarea } from '../../components/ui';
 import { cn } from '../../lib/utils';
+import { QuadroProfessor } from './QuadroProfessor';
 
 /** Junta tudo que a IA precisa saber sobre você neste tópico. */
 function useTopicContext(topic?: Topic): TopicContext | undefined {
@@ -122,7 +123,6 @@ function Blackboard({ topic }: { topic: Topic }) {
   const { run, loading, error } = useAI();
   const [editing, setEditing] = useState(false);
   const lesson = topic.lesson;
-  const search = `${ctx?.subject?.name ?? ''} ${topic.title}`.trim();
 
   const generate = () =>
     run(async (signal) => {
@@ -149,78 +149,15 @@ function Blackboard({ topic }: { topic: Topic }) {
 
       <ErrorNote error={error} />
 
-      {!lesson ? (
-        <div className="py-10 text-center text-sm text-white/50">
-          O quadro está limpo.
-          <br />
-          {aiOn ? 'Peça a aula pro professor — ele usa suas anotações e seu histórico.' : 'Sem IA: escreva você mesmo o resumo, ou ative a IA nas configurações.'}
-          <div className="mt-4">
-            <a className="inline-flex items-center gap-1 text-[#f4f1de] underline" href={youtube(search)} target="_blank" rel="noreferrer">
-              <MonitorPlay size={14} /> Buscar "{search}" no YouTube
-            </a>
-          </div>
-        </div>
-      ) : (
-        <LessonView lesson={lesson} />
+      {!lesson && (
+        <p className="mb-3 text-sm text-white/60">
+          {aiOn ? 'Peça a aula: o professor desenha no quadro (e lê suas anotações e seu histórico). O quadro já é seu pra anotar.' : 'Sem IA: escreva a aula você mesmo, ou conecte um modelo. O quadro já é seu pra anotar.'}
+        </p>
       )}
+      <QuadroProfessor topic={topic} lesson={lesson} />
 
       <LessonEditor key={lesson?.generatedAt ?? 'new'} open={editing} onClose={() => setEditing(false)} topic={topic} />
     </section>
-  );
-}
-
-const youtube = (q: string) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-
-function LessonView({ lesson }: { lesson: Lesson }) {
-  return (
-    <div className="space-y-5 text-[#f4f1de]">
-      <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{lesson.explanation}</p>
-
-      {lesson.keyPoints.length > 0 && (
-        <BoardList icon={<BookMarked size={14} />} title="Pontos-chave" items={lesson.keyPoints} />
-      )}
-
-      <div className="grid gap-5 md:grid-cols-2">
-        {lesson.videoSearches.length > 0 && (
-          <div>
-            <h3 className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#f7e463]">
-              <MonitorPlay size={14} /> Vídeos (busca no YouTube)
-            </h3>
-            <ul className="space-y-1 text-sm">
-              {lesson.videoSearches.map((q) => (
-                <li key={q}>
-                  <a href={youtube(q)} target="_blank" rel="noreferrer" className="underline decoration-white/30 hover:decoration-white">
-                    {q}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {lesson.whereToResearch.length > 0 && <BoardList icon={<Search size={14} />} title="Onde pesquisar" items={lesson.whereToResearch} />}
-      </div>
-
-      {lesson.tips.length > 0 && <BoardList icon={<Lightbulb size={14} />} title="Dicas do professor" items={lesson.tips} />}
-
-      <p className="text-right text-[10px] text-white/30">
-        {lesson.source === 'ia' ? 'escrito pela IA' : 'escrito por você'} · {new Date(lesson.generatedAt).toLocaleDateString('pt-BR')}
-      </p>
-    </div>
-  );
-}
-
-function BoardList({ icon, title, items }: { icon: ReactNode; title: string; items: string[] }) {
-  return (
-    <div>
-      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#f7e463]">
-        {icon} {title}
-      </h3>
-      <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed">
-        {items.map((i) => (
-          <li key={i}>{i}</li>
-        ))}
-      </ul>
-    </div>
   );
 }
 
