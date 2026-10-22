@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { NextStepBar } from './components/NextStepBar';
 import { Toaster } from './components/Toaster';
+import { useBackupAutomatico } from './hooks/useBackupAutomatico';
 import { TABS, useNav, type TabId } from './store/nav';
 
 // Cada aba é carregada só quando você abre (code-splitting): o app abre mais rápido.
@@ -19,6 +20,7 @@ export default function App() {
   const tab = useNav((s) => s.tab);
   const go = useNav((s) => s.go);
   const Page = PAGES[tab];
+  useBackupAutomatico(); // cópia diária no cofre de estudos (os dados só vivem no navegador)
 
   // Atalhos 1..7 trocam de aba (menos quando você está digitando, e nunca na Lousa:
   // lá os números são as ferramentas do Excalidraw).
