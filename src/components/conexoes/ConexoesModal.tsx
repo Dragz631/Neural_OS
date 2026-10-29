@@ -4,6 +4,7 @@ import { MOTORES, type ConexaoPublica, type Motor } from '../../domain/conexoes'
 import { postConexoes, useConexoes } from '../../store/conexoes';
 import { toast } from '../../store/toast';
 import { Badge, Button, Empty, ErrorNote, Modal, Select } from '../ui';
+import { CartaoNotion } from './CartaoNotion';
 import { FormConexao } from './FormConexao';
 
 /** "Conexões": onde o Hugo liga modelos e escolhe qual faz cada parte do trabalho do professor. */
@@ -75,6 +76,11 @@ export function ConexoesModal({ open, onClose }: { open: boolean; onClose: () =>
           {conexoes.map((c) => (
             <CartaoConexao key={c.id} c={c} motoresDela={(Object.keys(MOTORES) as Motor[]).filter((m) => motores[m] === c.id)} onEditar={() => setForm(c)} />
           ))}
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">Fontes da faculdade</h3>
+          <CartaoNotion />
         </section>
       </div>
     </Modal>

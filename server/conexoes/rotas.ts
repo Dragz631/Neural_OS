@@ -6,6 +6,7 @@ import type { Conexao, ConexaoPublica, Motor } from '../../src/domain/conexoes.t
 import { criarArmazem, lerEnvTexto, varDaChave } from './armazem.ts';
 import { chamarConexao, ErroConexao, listarModelos, type Mensagem } from './chamar.ts';
 import { pedirAoMotor } from './motor.ts';
+import { chamarNotion, ErroNotion, tituloDe } from '../notion/cliente.ts';
 
 // Rotas das conexões. A chave entra por aqui UMA vez (o Hugo digita no modal)
 // e vai direto pro .env.local; nenhuma rota devolve chave pro navegador.
@@ -59,7 +60,7 @@ export function registrarConexoes(server: ViteDevServer, raiz: string) {
       if (req.method === 'GET' && rota === '/') {
         const conexoes: ConexaoPublica[] = await Promise.all(cfg.conexoes.map(async (c) => ({ ...c, temChave: !!env[varDaChave(c.id)], usoHoje: await armazem.usoHoje(c.id) })));
         const brazuka = lerEnvTexto(await fs.readFile(segredosBrazuka, 'utf8').catch(() => ''));
-        return responder(res, 200, { conexoes, motores: cfg.motores, temChaveBrazuka: !!brazuka.NVIDIA_API_KEY });
+        return responder(res, 200, { conexoes, motores: cfg.motores, temChaveBrazuka: !!brazuka.NVIDIA_API_KEY, temNotion: !!env.NOTION_TOKEN });
       }
       if (req.method !== 'POST') return responder(res, 405, { erro: 'Use POST' });
       const corpo = await lerCorpo(req);
@@ -117,11 +118,31 @@ export function registrarConexoes(server: ViteDevServer, raiz: string) {
         return responder(res, 200, { texto: texto.replace(/<think>[\s\S]*?<\/think>/gi, '').trim().slice(0, 200), ms: Date.now() - inicio });
       }
 
+      // Notion: a chave da integração interna vai direto pro .env.local.
+      if (rota === '/notion') {
+        const token = typeof corpo.token === 'string' ? corpo.token.trim() : '';
+        if (!token) {
+          await armazem.gravarVar('NOTION_TOKEN', null);
+          return responder(res, 200, { ok: true });
+        }
+        if (/[\r\n\s]/.test(token) || token.length > 300) return responder(res, 400, { erro: 'Chave com espaço ou quebra de linha: confira o que foi colado.' });
+        await armazem.gravarVar('NOTION_TOKEN', token);
+        return responder(res, 200, { ok: true });
+      }
+
+      // Testa a chave e mostra quais páginas a integração enxerga (as que o Hugo compartilhou).
+      if (rota === '/notion/testar') {
+        const eu = await chamarNotion<{ name?: string }>(armazem, 'GET', '/users/me');
+        const busca = await chamarNotion<{ results: { object: string; parent?: { type?: string }; title?: { plain_text: string }[]; properties?: never }[] }>(armazem, 'POST', '/search', { page_size: 100 });
+        const paginas = busca.results.filter((r) => r.parent?.type === 'workspace').map((r) => tituloDe(r));
+        return responder(res, 200, { integracao: eu.name ?? 'integração', paginas, total: busca.results.length });
+      }
+
       if (rota === '/modelos' && conexao) return responder(res, 200, { modelos: await listarModelos(conexao, env[varDaChave(conexao.id)]) });
 
       return responder(res, 404, { erro: 'Rota ou conexão não encontrada.' });
     } catch (e) {
-      return responder(res, e instanceof ErroConexao ? 502 : 500, { erro: e instanceof Error ? e.message : String(e) });
+      return responder(res, e instanceof ErroConexao || e instanceof ErroNotion ? 502 : 500, { erro: e instanceof Error ? e.message : String(e) });
     }
   });
 

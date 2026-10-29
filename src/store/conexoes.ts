@@ -8,6 +8,8 @@ interface ConexoesState {
   conexoes: ConexaoPublica[];
   motores: Partial<Record<Motor, string>>;
   temChaveBrazuka: boolean;
+  /** Chave da integração do Notion configurada no .env.local. */
+  temNotion: boolean;
   carregado: boolean;
   recarregar: () => Promise<void>;
 }
@@ -16,13 +18,14 @@ export const useConexoes = create<ConexoesState>()((set) => ({
   conexoes: [],
   motores: {},
   temChaveBrazuka: false,
+  temNotion: false,
   carregado: false,
   recarregar: async () => {
     try {
       const r = await fetch('/api/conexoes');
       if (!r.ok) throw new Error(String(r.status));
       const d = await r.json();
-      set({ conexoes: d.conexoes ?? [], motores: d.motores ?? {}, temChaveBrazuka: !!d.temChaveBrazuka, carregado: true });
+      set({ conexoes: d.conexoes ?? [], motores: d.motores ?? {}, temChaveBrazuka: !!d.temChaveBrazuka, temNotion: !!d.temNotion, carregado: true });
     } catch {
       set({ carregado: true }); // sem servidor de dev: app segue sem IA
     }
