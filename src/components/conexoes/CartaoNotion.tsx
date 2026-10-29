@@ -47,7 +47,7 @@ export function CartaoNotion() {
         Lê a grade, as disciplinas, provas, trabalhos e o Dashboard Study. Só escreve nas notas que o professor cria (caminhos de estudo e a grade dele). Precisa da chave de uma integração interna, compartilhada com "Faculdade CC - 2026" e "Dashboard Study".
       </p>
       <div className="flex gap-2">
-        <Input type="password" autoComplete="off" value={chave} onChange={(e) => setChave(e.target.value)} placeholder={temNotion ? 'configurada ✓ (cole outra pra trocar)' : 'cole a chave da integração (ntn_…)'} aria-label="Chave do Notion" />
+        <Input type="password" autoComplete="off" value={chave} onChange={(e) => setChave(e.target.value)} placeholder={temNotion ? 'configurada ✓ (cole outra pra trocar)' : 'cole o API token da conexão interna'} aria-label="Chave do Notion" />
         <Button variant="primary" onClick={salvar} disabled={ocupado || !chave.trim()}>
           Salvar
         </Button>
@@ -60,7 +60,7 @@ export function CartaoNotion() {
       {teste && (
         <p className="rounded border border-accent/40 bg-accent/10 p-2 text-xs text-accent">
           Conectado como "{teste.integracao}". Enxerga {teste.total} página(s)/banco(s)
-          {teste.paginas.length ? `: ${teste.paginas.join(', ')}` : '. Nenhuma página principal compartilhada ainda: no Notion, abra a página › ••• › Conexões › adicione a integração.'}
+          {teste.paginas.length ? `: ${teste.paginas.join(', ')}` : '. Nenhuma página principal compartilhada ainda: no Notion, abra a página › ••• (canto de cima) › Conexões › + Adicionar conexão.'}
         </p>
       )}
       <ErrorNote error={erro} />
