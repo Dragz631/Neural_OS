@@ -6,6 +6,7 @@ import { useConexoes } from '../store/conexoes';
 import { useSettings } from '../store/settings';
 import { gerarBackup, restaurarBackup } from '../store/backup';
 import { toast } from '../store/toast';
+import { SecaoFontes } from './SecaoFontes';
 import { Badge, Button, Label, Modal } from './ui';
 
 export function SettingsModal({ open, onClose, onConexoes }: { open: boolean; onClose: () => void; onConexoes: () => void }) {
@@ -57,6 +58,8 @@ export function SettingsModal({ open, onClose, onConexoes }: { open: boolean; on
             <input type="range" min={0} max={1} step={0.1} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} className="w-full accent-accent" />
           </label>
         </section>
+
+        <SecaoFontes onConexoes={onConexoes} />
 
         <section className="space-y-2 border-t border-line pt-4">
           <h3 className="text-xs font-bold uppercase tracking-widest text-fg">Obsidian</h3>

@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { IncomingMessage } from 'node:http';
 import type { Plugin } from 'vite';
 import { registrarConexoes } from './conexoes/rotas.ts';
+import { registrarFontes } from './fontes.ts';
 
 // ─── "Backend" mínimo que roda dentro do servidor do Vite ────────────────────
 // 1) IA: o navegador pede por MOTOR (/ai/motor/<leve|professor|dificil>) e o
@@ -57,6 +58,7 @@ export function devApi(env: DevApiEnv): Plugin {
     name: 'neural-os-dev-api',
     configureServer(server) {
       registrarConexoes(server, path.resolve(import.meta.dirname, '..'));
+      registrarFontes(server, path.resolve(import.meta.dirname, '..'));
 
       server.middlewares.use('/api/vault/status', (_req, res) => {
         res.setHeader('Content-Type', 'application/json');
