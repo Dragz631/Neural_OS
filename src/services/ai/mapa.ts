@@ -1,5 +1,6 @@
 import { validarMapa, type MapaMateria } from '../../domain/mapa';
 import { LANGUAGES } from '../../domain/catalog';
+import type { Motor } from '../../domain/conexoes';
 import { chatJSON } from './client';
 import { PROFESSOR } from './persona';
 
@@ -15,7 +16,7 @@ export interface PedidoMapa {
   contexto?: string;
 }
 
-export async function gerarMapa(p: PedidoMapa, signal?: AbortSignal): Promise<MapaMateria> {
+export async function gerarMapa(p: PedidoMapa, signal?: AbortSignal, motor: Motor = 'professor'): Promise<MapaMateria> {
   const linguagens = LANGUAGES.map((l) => `"${l.id}"`).join(', ');
   return chatJSON(
     [
@@ -30,7 +31,7 @@ Regras:
 - Cada tópico com "porque": 1 frase dizendo por que ele existe/importa (ligue ao que o aluno já sabe quando der).
 - "pai" = índice (base 0) do tópico anterior do qual ele depende; o primeiro não tem pai. Pai SEMPRE menor que o próprio índice.
 - "minutos" = duração realista da primeira aula (15 a 60).
-- "linguagem" = uma destas: ${linguagens} ("" se não envolve código).
+- "linguagem" = uma destas: ${linguagens}. Se o material usa código, escolha a linguagem principal dele (a que tem mais exemplos ou a que ele diz ser o foco); "" só se a matéria não tem código nenhum.
 - Títulos curtos, em português.
 Formato JSON:
 {"materia": "...", "linguagem": "", "topicos": [{"titulo": "...", "porque": "...", "pai": 0, "minutos": 30}]}`,
@@ -41,5 +42,6 @@ Formato JSON:
       return { ...mapa, materia: p.materia.trim() || mapa.materia, objetivo: p.objetivo };
     },
     signal,
+    motor,
   );
 }

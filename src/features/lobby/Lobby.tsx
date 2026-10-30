@@ -1,4 +1,5 @@
 import { NextStepBar } from '../../components/NextStepBar';
+import { ChamadaFaculdade } from '../faculdade/ChamadaFaculdade';
 import { AbasLobby } from './AbasLobby';
 import { CaixaEntradaCard } from './CaixaEntradaCard';
 import { CalendarioCard } from './CalendarioCard';
@@ -21,6 +22,7 @@ export default function Lobby() {
   return (
     <div className="mx-auto max-w-[1500px] space-y-4 p-4">
       <NextStepBar variant="hero" />
+      <ChamadaFaculdade />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <FeedCartoes />

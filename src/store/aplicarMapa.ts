@@ -14,7 +14,7 @@ import { useBoards } from '../features/lousa/boardsStore';
  *  - nasce uma lousa "Mapa de <matéria>" com o caminho desenhado.
  * Devolve os ids pra quem chamou (ex.: criar a lousa do mapa).
  */
-export function aplicarMapa(mapa: MapaMateria): { subjectId: string; topicIds: string[] } {
+export function aplicarMapa(mapa: MapaMateria, opcoes: { definirTarget?: boolean } = {}): { subjectId: string; topicIds: string[] } {
   const estudo = useStudy.getState();
   const cor = SUBJECT_COLORS[estudo.subjects.length % SUBJECT_COLORS.length];
   const subjectId = estudo.addSubject({ name: mapa.materia, color: cor, language: mapa.linguagem });
@@ -27,7 +27,7 @@ export function aplicarMapa(mapa: MapaMateria): { subjectId: string; topicIds: s
   });
 
   const primeiro = useStudy.getState().topics.find((t) => t.id === topicIds[0]);
-  useStudy.getState().setTarget({ topicId: topicIds[0], goal: mapa.objetivo ?? '', priority: 'NORMAL' });
+  if (opcoes.definirTarget ?? true) useStudy.getState().setTarget({ topicId: topicIds[0], goal: mapa.objetivo ?? '', priority: 'NORMAL' });
 
   // Semana: junta a sugestão (a partir de hoje) com o que já estava planejado.
   const hoje = toLocalDate();
