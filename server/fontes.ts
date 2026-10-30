@@ -3,6 +3,7 @@ import type { ViteDevServer } from 'vite';
 import { criarArmazem } from './conexoes/armazem.ts';
 import { criarNotebookLM } from './notebooklm.ts';
 import { chamarNotion, tituloDe } from './notion/cliente.ts';
+import { lerFaculdade } from './notion/faculdade.ts';
 
 // "Fontes" da faculdade: o que o professor consegue ler agora (Notion e
 // NotebookLM), pra tela de Configurações e pra montar a faculdade.
@@ -22,6 +23,15 @@ export function registrarFontes(server: ViteDevServer, raiz: string) {
   // Mantém a sessão do Google viva enquanto o app estiver ligado.
   void nlm.cutucar();
   setInterval(() => void nlm.cutucar(), 17 * 60 * 1000).unref();
+
+  // Tudo da faculdade num objeto só (Notion), com cache de 30 min.
+  server.middlewares.use('/api/faculdade', async (req, res) => {
+    try {
+      responder(res, 200, await lerFaculdade(armazem, raiz, (req.url ?? '').includes('forcar=1')));
+    } catch (e) {
+      responder(res, 502, { erro: erroDe(e) });
+    }
+  });
 
   // Botão "Entrar no Google": POST abre a janela, GET diz em que pé está.
   server.middlewares.use('/api/notebooklm/entrar', async (req, res) => {
