@@ -7,6 +7,7 @@ import { proximoTopico } from '../domain/materias';
 import { adaptDay, type AdaptedItem } from '../domain/planner';
 import type { SessionKind } from '../domain/types';
 import { useEntregas } from '../store/entregas';
+import { useFontesSemana } from './useSemana';
 import { useFaculdade } from '../store/faculdade';
 import type { TabId } from '../store/nav';
 import { selectDueTopics, useStudy } from '../store/study';
@@ -31,6 +32,7 @@ export function useToday() {
   const subjects = useStudy((s) => s.subjects);
   const blocos = useFaculdade((s) => s.blocos);
   const entregas = useEntregas((s) => s.lista);
+  const { herdadasPara } = useFontesSemana();
 
   return useMemo(() => {
     const today = toLocalDate();
@@ -63,6 +65,9 @@ export function useToday() {
           .slice(0, 2)
           .map((e) => ({ id: `prazo_${e.id}`, title: `${e.titulo} (${e.faltam === 0 ? 'é hoje' : `faltam ${e.faltam} dia(s)`})`, kind: 'leitura', minutes: 25, done: false, fromReview: true }));
 
-    return { today, weekStart, dayIdx, planned, checkin, due, missions: [...daAula, ...dePrazo, ...missions], targetTopic };
-  }, [topics, plans, checkins, target.topicId, subjects, blocos, entregas]);
+    // Ontem foi dia cansado: o que ficou sem estudar volta hoje como prioridade (curto).
+    const herdadas: AdaptedItem[] = herdadasPara(today).map((l) => ({ id: l.chave, topicId: l.topicId, title: l.titulo, kind: 'revisao', minutes: cansado ? 5 : (l.minutos ?? 10), done: false, fromReview: true, shortened: cansado }));
+
+    return { today, weekStart, dayIdx, planned, checkin, due, missions: [...herdadas, ...daAula, ...dePrazo, ...missions], targetTopic, herdadas };
+  }, [topics, plans, checkins, target.topicId, subjects, blocos, entregas, herdadasPara]);
 }

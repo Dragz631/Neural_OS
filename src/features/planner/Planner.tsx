@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { BatteryFull, BatteryLow, BatteryMedium, ChevronLeft, ChevronRight, Plus, Wand2, X } from 'lucide-react';
 import { addDays, formatShort, toLocalDate, weekStartOf, WEEKDAYS } from '../../domain/dates';
-import { suggestWeek, totalMinutes } from '../../domain/planner';
+import { suggestWeek } from '../../domain/planner';
+import { aplicarEnergia, diaBase, type DiaAjustado, type TipoLinha } from '../../domain/semana';
 import type { Energy, Id, PlanItem, SessionKind, WeekPlan } from '../../domain/types';
+import { useFontesSemana } from '../../hooks/useSemana';
 import { KIND_META, useToday } from '../../hooks/useToday';
 import { useNav } from '../../store/nav';
 import { newId, useStudy } from '../../store/study';
@@ -106,11 +108,18 @@ function CheckinCard() {
   );
 }
 
+const COR_LINHA: Record<TipoLinha, string> = { aula: 'text-info', rotina: 'text-muted', prazo: 'text-warn', evento: 'text-accent', revisao: 'text-accent', estudo: 'text-fg' };
+const ROTULO_LINHA: Record<TipoLinha, string> = { aula: 'AULA', rotina: 'ROTINA', prazo: 'PRAZO', evento: 'EVENTO', revisao: 'REVISÃO', estudo: 'ESTUDO' };
+
+type Vista = 'real' | Energy;
+
 function WeekBoard({ weekStart, onShift }: { weekStart: string; onShift: (weeks: number) => void }) {
   const plan = useStudy((s) => s.plans[weekStart]) ?? emptyWeek(weekStart);
   const setWeekPlan = useStudy((s) => s.setWeekPlan);
   const topics = useStudy((s) => s.topics);
   const targetTopic = useStudy((s) => s.topics.find((t) => t.id === s.target.topicId));
+  const { fontesDoDia, herdadasPara, checkins } = useFontesSemana();
+  const [vista, setVista] = useState<Vista>('real');
   const today = toLocalDate();
   const dates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const thisWeek = weekStartOf(today);
@@ -124,9 +133,18 @@ function WeekBoard({ weekStart, onShift }: { weekStart: string; onShift: (weeks:
     setWeekPlan({ weekStart, days: suggestWeek(dates, topics, targetTopic, today, () => newId('pl')) });
   };
 
+  // Cada dia: o dia cheio, ajustado pela energia (a real, se já fez check-in; ou a que você quer ver).
+  const dias = dates.map((date) => {
+    const energia: Energy = date < today ? 3 : vista === 'real' ? (checkins[date]?.energy ?? 3) : vista;
+    const herdadas = date >= today ? herdadasPara(date) : [];
+    const base = diaBase(date, fontesDoDia(date));
+    return { date, energia, herdadas, ajustado: aplicarEnergia([...herdadas, ...base], energia) };
+  });
+  const totalEstudo = dias.reduce((s, d) => s + d.ajustado.minutosEstudo, 0);
+
   return (
     <Panel
-      title={`${label} — ${totalMinutes(plan.days.flat())} min planejados`}
+      title={`${label} — ${totalEstudo} min de estudo`}
       actions={
         <>
           <Button className="px-2 py-1" onClick={() => onShift(-1)} aria-label="Semana anterior">
@@ -136,26 +154,41 @@ function WeekBoard({ weekStart, onShift }: { weekStart: string; onShift: (weeks:
             <ChevronRight size={14} />
           </Button>
           <Button className="px-2 py-1 text-[10px]" onClick={suggest} title="Monta um rascunho com o Target e as revisões que vencem na semana">
-            <Wand2 size={12} /> Sugerir semana
+            <Wand2 size={12} /> Sugerir estudo
           </Button>
         </>
       }
     >
-      <div className="grid gap-3 md:grid-cols-7">
-        {dates.map((date, i) => (
-          <DayColumn key={date} date={date} dayIdx={i} isToday={date === today} items={plan.days[i]} onChange={(items) => setDay(i, items)} />
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+        <span className="uppercase tracking-widest text-muted">Ver a semana se eu chegar com energia:</span>
+        {([['real', 'a de cada dia'], [3, 'Alta'], [2, 'Média'], [1, 'Baixa']] as [Vista, string][]).map(([v, nome]) => (
+          <Button key={String(v)} variant={vista === v ? 'primary' : 'ghost'} className="px-2 py-0.5 text-[10px]" onClick={() => setVista(v)}>
+            {nome}
+          </Button>
+        ))}
+        <span className="text-muted">
+          {vista === 1 ? 'Aula e prazo ficam; o estudo vira 5–10 min e o resto passa pro dia seguinte.' : vista === 2 ? 'O estudo encolhe pra uns 60%.' : 'Aulas e prazos nunca mudam, só o estudo.'}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
+        {dias.map((d, i) => (
+          <DayColumn key={d.date} date={d.date} dayIdx={i} isToday={d.date === today} energia={d.energia} ajustado={d.ajustado} items={plan.days[i]} onChange={(items) => setDay(i, items)} />
         ))}
       </div>
     </Panel>
   );
 }
 
-function DayColumn({ date, dayIdx, isToday, items, onChange }: { date: string; dayIdx: number; isToday: boolean; items: PlanItem[]; onChange: (items: PlanItem[]) => void }) {
+const ICONE_ENERGIA = { 1: BatteryLow, 2: BatteryMedium, 3: BatteryFull } as const;
+
+function DayColumn({ date, dayIdx, isToday, energia, ajustado, items, onChange }: { date: string; dayIdx: number; isToday: boolean; energia: Energy; ajustado: DiaAjustado; items: PlanItem[]; onChange: (items: PlanItem[]) => void }) {
   const topics = useStudy((s) => s.topics);
+  const go = useNav((s) => s.go);
   const [adding, setAdding] = useState(false);
   const [topicId, setTopicId] = useState<Id | undefined>();
   const [kind, setKind] = useState<SessionKind>('aula');
   const [minutes, setMinutes] = useState(30);
+  const Energia = ICONE_ENERGIA[energia];
 
   const add = (e: FormEvent) => {
     e.preventDefault();
@@ -169,29 +202,57 @@ function DayColumn({ date, dayIdx, isToday, items, onChange }: { date: string; d
     <div className={cn('flex min-h-[180px] flex-col rounded border bg-bg p-2', isToday ? 'border-accent/60' : 'border-line')}>
       <div className="mb-2 flex items-baseline justify-between">
         <span className={cn('text-xs font-bold uppercase', isToday ? 'text-accent' : 'text-fg')}>{WEEKDAYS[dayIdx]}</span>
-        <span className="text-[10px] text-muted">{formatShort(date)}</span>
+        <span className="flex items-center gap-1 text-[10px] text-muted">
+          {energia < 3 && <Energia size={11} className="text-warn" />}
+          {formatShort(date)}
+        </span>
       </div>
       <ul className="flex-1 space-y-1.5">
-        {items.map((it) => (
-          <li key={it.id} className={cn('group rounded border border-line bg-panel p-1.5 text-[11px]', it.done && 'opacity-50')}>
-            <div className="flex items-start gap-1">
-              <button
-                type="button"
-                onClick={() => onChange(items.map((x) => (x.id === it.id ? { ...x, done: !x.done } : x)))}
-                className={cn('flex-1 text-left leading-snug', it.done && 'line-through')}
-              >
-                {it.title}
-              </button>
-              <button type="button" onClick={() => onChange(items.filter((x) => x.id !== it.id))} className="text-muted opacity-0 hover:text-danger group-hover:opacity-100" aria-label="Remover">
-                <X size={12} />
-              </button>
-            </div>
-            <div className="mt-0.5 text-[10px] text-muted">
-              {KIND_META[it.kind].label} · {it.minutes}min
-            </div>
-          </li>
-        ))}
+        {ajustado.linhas.length === 0 && <li className="text-[11px] text-muted">Dia livre.</li>}
+        {ajustado.linhas.map((l) => {
+          const idPlano = l.chave.startsWith('pl-') ? l.chave.slice(3) : undefined;
+          const fixa = !l.flexivel && !l.feito;
+          return (
+            <li key={l.chave} className={cn('group rounded border px-1.5 py-1 text-[11px]', fixa ? 'border-line/60 bg-panel-2' : 'border-line bg-panel', l.feito && 'opacity-50')}>
+              <div className="flex items-start gap-1">
+                <button
+                  type="button"
+                  disabled={!idPlano}
+                  onClick={() => idPlano && onChange(items.map((x) => (x.id === idPlano ? { ...x, done: !x.done } : x)))}
+                  className={cn('flex-1 text-left leading-snug', l.feito && 'line-through')}
+                >
+                  <b className={cn('mr-1 text-[9px] tracking-wider', COR_LINHA[l.tipo])}>{ROTULO_LINHA[l.tipo]}</b>
+                  {l.titulo}
+                </button>
+                {idPlano && (
+                  <button type="button" onClick={() => onChange(items.filter((x) => x.id !== idPlano))} className="text-muted opacity-0 hover:text-danger group-hover:opacity-100" aria-label="Remover">
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+              <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted">
+                {l.hora && <span>{l.hora}</span>}
+                {l.sala && <span>{l.sala}</span>}
+                {l.minutos !== undefined && (
+                  <span className={cn(l.minutosOriginais && l.minutosOriginais !== l.minutos && 'text-warn')}>
+                    {l.minutosOriginais && l.minutosOriginais !== l.minutos ? `${l.minutos} min (era ${l.minutosOriginais})` : `${l.minutos} min`}
+                  </span>
+                )}
+                {isToday && l.flexivel && !l.feito && (
+                  <button type="button" className="ml-auto text-accent hover:underline" onClick={() => go(l.kind ? KIND_META[l.kind].tab : 'professor', l.topicId)}>
+                    Ir
+                  </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ul>
+      {ajustado.adiadas.length > 0 && (
+        <p className="mt-1.5 rounded border border-warn/40 bg-warn/5 px-1.5 py-1 text-[10px] leading-snug text-warn">
+          Fica pra amanhã como prioridade: {ajustado.adiadas.map((a) => a.titulo.replace(/^Revisar( a aula de)?:? ?/, '')).join(', ')}.
+        </p>
+      )}
       {adding ? (
         <form onSubmit={add} className="mt-2 space-y-1.5">
           <TopicSelect value={topicId} onChange={setTopicId} allowEmpty="— tópico —" />
@@ -214,10 +275,10 @@ function DayColumn({ date, dayIdx, isToday, items, onChange }: { date: string; d
         </form>
       ) : (
         <button type="button" onClick={() => setAdding(true)} className="mt-2 flex items-center justify-center gap-1 rounded border border-dashed border-line py-1 text-[10px] text-muted hover:border-accent hover:text-accent">
-          <Plus size={12} /> adicionar
+          <Plus size={12} /> estudo extra
         </button>
       )}
-      {items.length > 0 && <div className="mt-1 text-right text-[10px] text-muted">{totalMinutes(items)} min</div>}
+      {ajustado.minutosEstudo > 0 && <div className="mt-1 text-right text-[10px] text-muted">{ajustado.minutosEstudo} min de estudo</div>}
     </div>
   );
 }

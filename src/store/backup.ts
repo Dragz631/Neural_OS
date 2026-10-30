@@ -1,5 +1,6 @@
 import { useDungeon } from '../features/dungeon/store';
 import { useCaixa } from './caixaEntrada';
+import { useAprendiz } from './aprendiz';
 import { useEntregas } from './entregas';
 import { useFaculdade } from './faculdade';
 import { useImportacao } from './importacao';
@@ -18,6 +19,7 @@ export interface BackupV3 {
   presenca: string[];
   faculdade?: Pick<ReturnType<typeof useFaculdade.getState>, 'montadaEm' | 'blocos' | 'eventos' | 'cadernoDe'>;
   contextoMaterias?: Record<string, string>;
+  aprendiz?: Pick<ReturnType<typeof useAprendiz.getState>, 'respostas' | 'perfil'>;
   trofeusPagos: string[];
   dungeon: Pick<ReturnType<typeof useDungeon.getState>, 'track' | 'progress'>;
 }
@@ -32,6 +34,7 @@ export function gerarBackup(): BackupV3 {
     presenca: usePresenca.getState().dias,
     faculdade: (({ montadaEm, blocos, eventos, cadernoDe }) => ({ montadaEm, blocos, eventos, cadernoDe }))(useFaculdade.getState()),
     contextoMaterias: useImportacao.getState().contexto,
+    aprendiz: (({ respostas, perfil }) => ({ respostas, perfil }))(useAprendiz.getState()),
     trofeusPagos: useTrofeusPagos.getState().pagos,
     dungeon: { track, progress },
   };
@@ -47,6 +50,7 @@ export function restaurarBackup(dados: unknown) {
     usePresenca.setState({ dias: d.presenca ?? [] });
     if (d.faculdade) useFaculdade.setState(d.faculdade);
     if (d.contextoMaterias) useImportacao.setState({ contexto: d.contextoMaterias });
+    if (d.aprendiz) useAprendiz.setState(d.aprendiz);
     useTrofeusPagos.setState({ pagos: d.trofeusPagos ?? [] });
     if (d.dungeon) useDungeon.setState(d.dungeon);
     return;

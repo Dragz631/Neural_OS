@@ -14,6 +14,7 @@ import { TopicModal, TopicSelect } from '../../components/TopicPicker';
 import { Badge, Button, Empty, ErrorNote, Label, Modal, Panel, Textarea } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { QuadroProfessor } from './QuadroProfessor';
+import { RevisaoGuiada } from '../revisao/RevisaoGuiada';
 
 /** Junta tudo que a IA precisa saber sobre você neste tópico. */
 function useTopicContext(topic?: Topic): TopicContext | undefined {
@@ -73,6 +74,7 @@ export default function Professor() {
             <Blackboard key={topic.id} topic={topic} />
             <NotesPanel topic={topic} />
           </div>
+          <RevisaoGuiada key={`revisao-${topic.id}`} topic={topic} />
           <ExplainPanel key={`explain-${topic.id}`} topic={topic} />
         </>
       )}

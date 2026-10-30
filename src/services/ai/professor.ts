@@ -1,4 +1,5 @@
 import type { Challenge, CodeReview, Lesson, StudySession, Subject, Topic } from '../../domain/types';
+import { aprendizParaIA } from '../../store/aprendiz';
 import { asScore, asString, asStrings, chatJSON, type ChatMessage } from './client';
 
 // ─── Prof. A.Ilson ───────────────────────────────────────────────────────────
@@ -32,7 +33,7 @@ function describe(ctx: TopicContext): string {
   ].join('\n');
 }
 
-const sys = (extra = ''): ChatMessage => ({ role: 'system', content: `${PERSONA}\n${extra}` });
+const sys = (extra = ''): ChatMessage => ({ role: 'system', content: `${PERSONA}\n${aprendizParaIA()}\n${extra}` });
 
 export async function generateLesson(ctx: TopicContext, signal?: AbortSignal): Promise<Lesson> {
   return chatJSON(

@@ -10,6 +10,7 @@ import { useImportacao } from '../../../store/importacao';
 import { usePresenca } from '../../../store/presenca';
 import { iaLigada, useConexoes } from '../../../store/conexoes';
 import { useStudy } from '../../../store/study';
+import { useFontesSemana } from '../../../hooks/useSemana';
 
 // Lógica de uma rodada do feed: monta 5 cartões, conta combo e XP, manda erro
 // pro diário do tópico e, no fim, reagenda a revisão dos tópicos vencidos.
@@ -34,6 +35,7 @@ function respostaCerta(c: Cartao): string | undefined {
 
 export function useRodada() {
   const ia = useAI();
+  const { herdadasPara } = useFontesSemana();
   const [fase, setFase] = useState<Fase>('parado');
   const [cartoes, setCartoes] = useState<Cartao[]>([]);
   const [indice, setIndice] = useState(0);
@@ -46,7 +48,9 @@ export function useRodada() {
   const comecar = async () => {
     setFase('carregando');
     const estudo = useStudy.getState();
-    const ordem = ordemDosTopicos(estudo.topics, toLocalDate(), estudo.target.topicId);
+    // O que ficou de ontem (dia cansado) abre a rodada, em forma de pergunta leve.
+    const herdados = herdadasPara(toLocalDate()).flatMap((l) => (l.topicId ? [l.topicId] : []));
+    const ordem = ordemDosTopicos(estudo.topics, toLocalDate(), estudo.target.topicId, herdados);
 
     if (iaLigada(useConexoes.getState().motores)) {
       const semCartao = ordem.filter((t) => !useFeed.getState().cache[t.id]?.length).slice(0, GERAR_POR_RODADA);

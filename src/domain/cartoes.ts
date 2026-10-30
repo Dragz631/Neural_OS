@@ -57,10 +57,11 @@ export function pontuar(tipo: TipoCartao, acertou: boolean, combo: number): numb
 }
 
 /**
- * Ordem dos tópicos pra rodada: revisões vencidas → Target → estudados
- * recentemente. Tópico nunca estudado só entra se for o Target.
+ * Ordem dos tópicos pra rodada: o que ficou de ontem (dia cansado) → revisões
+ * vencidas → Target → estudados recentemente. Tópico nunca estudado só entra se for o Target.
  */
-export function ordemDosTopicos(topics: Topic[], hoje: LocalDate, targetId?: Id): Topic[] {
+export function ordemDosTopicos(topics: Topic[], hoje: LocalDate, targetId?: Id, prioritarios: Id[] = []): Topic[] {
+  const primeiros = prioritarios.flatMap((id) => topics.filter((t) => t.id === id));
   const estudado = (t: Topic) => !!t.lastStudiedAt || t.review.reps > 0;
   const vencidos = topics.filter((t) => estudado(t) && t.review.due <= hoje).sort((a, b) => a.review.due.localeCompare(b.review.due));
   const target = topics.filter((t) => t.id === targetId);
@@ -68,7 +69,7 @@ export function ordemDosTopicos(topics: Topic[], hoje: LocalDate, targetId?: Id)
     .filter((t) => estudado(t))
     .sort((a, b) => (b.lastStudiedAt ?? '').localeCompare(a.lastStudiedAt ?? ''));
   const vistos = new Set<Id>();
-  return [...vencidos, ...target, ...recentes].filter((t) => !vistos.has(t.id) && !!vistos.add(t.id));
+  return [...primeiros, ...vencidos, ...target, ...recentes].filter((t) => !vistos.has(t.id) && !!vistos.add(t.id));
 }
 
 /**

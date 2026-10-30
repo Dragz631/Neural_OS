@@ -6,6 +6,7 @@ import { CalendarioCard } from './CalendarioCard';
 import { EntregasCard } from './EntregasCard';
 import { FaixaMaterias } from './FaixaMaterias';
 import { FeedCartoes } from './feed/FeedCartoes';
+import { LembreteWidget } from './LembreteWidget';
 import { LigacaoDoDia } from './LigacaoDoDia';
 import { MissoesHoje } from './MissoesHoje';
 import { PerfilResumo } from './PerfilResumo';
@@ -29,6 +30,7 @@ export default function Lobby() {
         <div className="space-y-4">
           <TargetTerminal />
           <MissoesHoje />
+          <LembreteWidget />
         </div>
       </div>
 

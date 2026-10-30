@@ -43,7 +43,7 @@ export function adaptDay(
   const lowEnergy = checkin.energy === 1;
   const adjusted: AdaptedItem[] = pending.map((i) =>
     lowEnergy && HEAVY.includes(i.kind)
-      ? { ...i, kind: 'leitura', minutes: Math.min(i.minutes, 15), shortened: true }
+      ? { ...i, kind: 'leitura', minutes: Math.min(i.minutes, 10), shortened: true }
       : { ...i },
   );
 
