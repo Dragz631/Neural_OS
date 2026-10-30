@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BatteryLow, CalendarDays, Check, Zap } from 'lucide-react';
 import { KIND_META, useToday } from '../../hooks/useToday';
 import { useNav } from '../../store/nav';
@@ -13,17 +14,20 @@ export function MissoesHoje() {
   const setCheckin = useStudy((s) => s.setCheckin);
   const go = useNav((s) => s.go);
   const cansado = checkin?.energy === 1;
+  const [perguntando, setPerguntando] = useState(false);
   const feitas = missions.filter((m) => m.done).length;
   const total = missions.reduce((s, m) => s + m.minutes, 0);
 
-  // "Cheguei do trabalho": energia baixa no check-in de hoje → o dia vira versão mini.
-  const alternarFadiga = () => {
-    if (cansado) {
-      setCheckin({ date: today, energy: 2, minutesAvailable: checkin?.minutesAvailable ?? 60 });
-      toast({ title: 'Fadiga desligada', description: 'Plano normal de volta.' });
+  // "Cheguei do trabalho": guarda a hora e pergunta como ele chegou. Cansado → dia em versão mini.
+  const chegou = (bem: boolean) => {
+    const chegadaEm = checkin?.chegadaEm ?? new Date().toTimeString().slice(0, 5);
+    setPerguntando(false);
+    if (bem) {
+      setCheckin({ date: today, energy: 2, minutesAvailable: checkin?.minutesAvailable ?? 60, chegadaEm });
+      toast({ title: `Chegou às ${chegadaEm}`, description: 'Plano normal de hoje.', variant: 'success' });
     } else {
-      setCheckin({ date: today, energy: 1, minutesAvailable: Math.min(checkin?.minutesAvailable ?? 30, 30) });
-      toast({ title: 'Modo mini ligado', description: 'Só o essencial hoje: blocos curtos, sem aula pesada.', variant: 'success' });
+      setCheckin({ date: today, energy: 1, minutesAvailable: Math.min(checkin?.minutesAvailable ?? 30, 30), chegadaEm });
+      toast({ title: `Chegou às ${chegadaEm}: modo mini`, description: 'Só o essencial: blocos curtos, sem aula pesada.', variant: 'success' });
     }
   };
 
@@ -33,11 +37,11 @@ export function MissoesHoje() {
       actions={
         <>
           <Button
-            onClick={alternarFadiga}
-            className={cn('px-2 py-1 text-[10px]', cansado && 'border-danger bg-danger/15 text-danger')}
-            title="Chegou cansado? O dia vira versão mini (5–15 min por bloco)."
+            onClick={() => (cansado ? chegou(true) : setPerguntando((p) => !p))}
+            className={cn('px-2 py-1 text-[10px]', cansado && 'border-warn bg-warn/15 text-warn')}
+            title="Avise que chegou: guarda a hora e, se estiver cansado, o dia vira versão mini (5–15 min por bloco)."
           >
-            <BatteryLow size={12} /> {cansado ? 'Fadiga ativa' : 'Cheguei do trabalho'}
+            <BatteryLow size={12} /> {cansado ? `Modo mini · ${checkin?.chegadaEm ?? ''}` : checkin?.chegadaEm ? `Chegou ${checkin.chegadaEm}` : 'Cheguei do trabalho'}
           </Button>
           <Button onClick={() => go('horario')} className="px-2 py-1 text-[10px]" title="Ajustar energia e tempo no Molda-Horário">
             <CalendarDays size={12} />
@@ -45,6 +49,17 @@ export function MissoesHoje() {
         </>
       }
     >
+      {perguntando && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-accent/40 bg-accent/5 p-2 text-xs">
+          <span className="text-fg">Como você chegou?</span>
+          <Button className="px-2 py-1 text-[10px]" onClick={() => chegou(true)}>
+            Tô bem
+          </Button>
+          <Button className="px-2 py-1 text-[10px]" onClick={() => chegou(false)}>
+            Tô cansado
+          </Button>
+        </div>
+      )}
       {missions.length === 0 ? (
         <Empty>
           Nada planejado pra hoje e nenhuma revisão vencida.

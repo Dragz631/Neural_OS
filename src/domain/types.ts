@@ -125,6 +125,8 @@ export interface DayCheckin {
   date: LocalDate;
   energy: Energy;
   minutesAvailable: number;
+  /** Hora em que avisou "cheguei do trabalho" (HH:MM). */
+  chegadaEm?: string;
 }
 
 export interface Profile {
