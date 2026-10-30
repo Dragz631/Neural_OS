@@ -1,4 +1,4 @@
-import { RefreshCw } from 'lucide-react';
+import { LogIn, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Button } from './ui';
 
@@ -11,9 +11,15 @@ interface Fontes {
   notebooklm: { conectado: boolean; cadernos?: { id: string; titulo: string }[]; erro?: string };
 }
 
+interface Login {
+  fase: 'parado' | 'janela' | 'capturando' | 'pronto' | 'erro';
+  erro?: string;
+}
+
 export function SecaoFontes({ onConexoes }: { onConexoes: () => void }) {
   const [fontes, setFontes] = useState<Fontes | null>(null);
   const [olhando, setOlhando] = useState(false);
+  const [login, setLogin] = useState<Login | null>(null);
 
   const olhar = useCallback(async (forcar = false) => {
     setOlhando(true);
@@ -31,8 +37,23 @@ export function SecaoFontes({ onConexoes }: { onConexoes: () => void }) {
     void olhar();
   }, [olhar]);
 
+  // Enquanto a janela do Google está aberta, pergunta ao servidor em que pé está.
+  useEffect(() => {
+    if (login?.fase !== 'janela' && login?.fase !== 'capturando') return;
+    const t = setInterval(async () => {
+      const novo: Login = await (await fetch('/api/notebooklm/entrar')).json();
+      setLogin(novo);
+      if (novo.fase === 'pronto') void olhar(true);
+    }, 2000);
+    return () => clearInterval(t);
+  }, [login?.fase, olhar]);
+
+  const entrar = async () => setLogin(await (await fetch('/api/notebooklm/entrar', { method: 'POST' })).json());
+
   const n = fontes?.notion;
   const b = fontes?.notebooklm;
+  const entrando = login?.fase === 'janela' || login?.fase === 'capturando';
+  const precisaLogin = /login|Authentication|expired/i.test(b?.erro ?? '');
   return (
     <section className="space-y-3 border-t border-line pt-4">
       <div className="flex items-center justify-between">
@@ -69,11 +90,18 @@ export function SecaoFontes({ onConexoes }: { onConexoes: () => void }) {
           {b?.conectado && <span className="text-muted">{b.cadernos?.length} caderno(s): {b.cadernos?.map((c) => c.titulo).join(', ')}</span>}
         </p>
         {b && !b.conectado && (
-          <p className="pl-1 text-muted">
-            {b.erro?.includes('login') || b.erro?.includes('Authentication')
-              ? 'O login do Google venceu. Peça pro Claude abrir a janela de login do NotebookLM (você entra uma vez e ele renova sozinho depois).'
-              : b.erro}
-          </p>
+          <div className="space-y-2 pl-1 text-muted">
+            <p>{precisaLogin ? 'O acesso ao Google venceu (acontece quando o app fica um tempo desligado).' : b.erro}</p>
+            {precisaLogin && (
+              <>
+                <Button variant="primary" onClick={entrar} disabled={entrando}>
+                  <LogIn size={13} /> {entrando ? 'Esperando o login…' : 'Entrar no Google'}
+                </Button>
+                {entrando && <p>Uma janela abriu no seu PC. Entre na sua conta nela; quando o NotebookLM abrir, ela fecha sozinha.</p>}
+              </>
+            )}
+            {login?.fase === 'erro' && <p className="text-warn">{login.erro}</p>}
+          </div>
         )}
       </div>
       {!fontes && !olhando && <p className="text-xs text-muted">Sem resposta do servidor do app. Ele está ligado?</p>}

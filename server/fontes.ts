@@ -19,6 +19,16 @@ export function registrarFontes(server: ViteDevServer, raiz: string) {
   const armazem = criarArmazem(raiz);
   const nlm = criarNotebookLM(raiz, armazem.lerEnv);
 
+  // Mantém a sessão do Google viva enquanto o app estiver ligado.
+  void nlm.cutucar();
+  setInterval(() => void nlm.cutucar(), 17 * 60 * 1000).unref();
+
+  // Botão "Entrar no Google": POST abre a janela, GET diz em que pé está.
+  server.middlewares.use('/api/notebooklm/entrar', async (req, res) => {
+    if (req.method === 'POST') await nlm.entrar();
+    responder(res, 200, nlm.statusLogin());
+  });
+
   server.middlewares.use('/api/fontes', async (req, res) => {
     const forcar = (req.url ?? '').includes('forcar=1');
     const notion = await (async () => {
