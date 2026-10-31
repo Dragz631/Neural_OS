@@ -122,9 +122,10 @@ export default function Sandbox() {
           {topic && (
             <Panel title={`Treinar // ${topic.title}`}>
               <NovoDesafio
+                key={topic.id}
                 topic={topic}
                 linguagem={linguagem}
-                foco={habilidades.filter((h) => foco.has(h.topic.id) && h.topic.id !== topic.id).map((h) => h.topic.title)}
+                foco={habilidades.filter((h) => foco.has(h.topic.id) && h.topic.id !== topic.id).map((h) => h.topic.id)}
                 onCriado={setAtivoId}
               />
             </Panel>

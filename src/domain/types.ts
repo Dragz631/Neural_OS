@@ -1,3 +1,4 @@
+import type { Cena } from './cena';
 import type { EntradaDiario } from './diario';
 // ─── Modelo de dados do Neural-OS v2 ─────────────────────────────────────────
 // Tudo gira em torno de MATÉRIAS e TÓPICOS que você mesmo cria.
@@ -35,6 +36,8 @@ export interface Lesson {
   tips: string[];
   generatedAt: string;
   source: 'ia' | 'manual';
+  /** Como o professor escolheu desenhar a aula no quadro (ausente nas aulas antigas). */
+  cena?: Cena;
 }
 
 export interface Topic {
@@ -91,6 +94,14 @@ export interface Challenge {
   ladder?: string[];
   createdAt: string;
   solvedAt?: string;
+  /** 'conceito' = a resposta é texto (explicar, prever, comparar); ausente = código. */
+  formato?: 'codigo' | 'conceito';
+  /** Ponto de vista do desafio (ver ANGULOS): muda a cada vez, a resposta certa não. */
+  angulo?: string;
+  /** Em que do que a pessoa estudou o desafio se baseou. */
+  baseadoEm?: string[];
+  /** Tópicos misturados além do principal (podem ser de outra matéria). */
+  topicIds?: Id[];
 }
 
 export type Priority = 'NORMAL' | 'ALTA' | 'CRÍTICA';

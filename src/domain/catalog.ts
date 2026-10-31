@@ -1,6 +1,6 @@
 // Listas fixas usadas em vários lugares.
 
-export const SUBJECT_COLORS = ['#00ff66', '#7cf0ff', '#ffb347', '#c084fc', '#ff5570', '#f7e463', '#5b9dff'];
+export const SUBJECT_COLORS = ['#00ff66', '#7cf0ff', '#ffb347', '#c084fc', '#2dd4bf', '#f7e463', '#5b9dff'];
 
 export const LANGUAGES: { id: string; label: string }[] = [
   { id: '', label: 'Sem código (teórica)' },

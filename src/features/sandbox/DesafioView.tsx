@@ -9,7 +9,9 @@ import { CANAL_COMPILADOR } from '../../domain/sandbox';
 import { gradeFromScore } from '../../domain/srs';
 import type { Challenge, Topic } from '../../domain/types';
 import { useAI } from '../../hooks/useAI';
+import { retratoDoTopico } from '../../domain/conhecimento';
 import { reviewCode } from '../../services/ai/professor';
+import { useImportacao } from '../../store/importacao';
 import { useIALigada } from '../../store/conexoes';
 import { useStudy } from '../../store/study';
 import { toast } from '../../store/toast';
@@ -43,12 +45,19 @@ export function DesafioView({ challenge, topic }: { challenge: Challenge; topic:
     run(async (signal) => {
       const anterior = challenge.review && !challenge.solvedAt ? challenge.review.issues : undefined;
       const keywords = CHALLENGE_BANK.find((b) => challenge.prompt.startsWith(b.title))?.keywords;
-      const review = aiOn ? await reviewCode(challenge, code, signal) : basicCheck(code, challenge.language, keywords);
+      const st = useStudy.getState();
+      const material = [topic.id, ...(challenge.topicIds ?? [])]
+        .map((id) => st.topics.find((t) => t.id === id))
+        .filter((t): t is Topic => !!t)
+        .map((t) => retratoDoTopico(t, { subject: st.subjects.find((x) => x.id === t.subjectId), sessions: st.sessions, contexto: useImportacao.getState().contexto[t.subjectId] }).material.slice(0, 2500))
+        .join('\n\n');
+      const review = aiOn ? await reviewCode(challenge, code, signal, material) : basicCheck(code, challenge.language, keywords);
       const nota = Math.round(review.score * fator);
       const resolvido = review.source === 'ia' && review.syntaxOk && review.logicOk && nota >= NOTA_RESOLVIDO;
       salvar({ code, review, solvedAt: resolvido ? new Date().toISOString() : challenge.solvedAt });
       if (review.source !== 'ia') return;
       gradeTopic(topic.id, gradeFromScore(nota));
+      for (const id of challenge.topicIds ?? []) gradeTopic(id, gradeFromScore(nota));
       const xp = logSession({ topicId: topic.id, minutes: minutos(), kind: 'desafio', score: nota });
       setXpGanho(xp);
       if (resolvido && anterior?.length) setErrosAntes(anterior);
@@ -87,6 +96,12 @@ export function DesafioView({ challenge, topic }: { challenge: Challenge; topic:
           }
         >
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{challenge.prompt}</p>
+          {(challenge.baseadoEm?.length || challenge.formato === 'conceito') && (
+            <p className="mt-3 border-t border-line pt-2 text-[11px] leading-snug text-muted">
+              {challenge.formato === 'conceito' && 'Responda com as suas palavras no editor, pode ser em texto. '}
+              {challenge.baseadoEm?.length ? `Saiu do que você estudou: ${challenge.baseadoEm.join(' · ')}.` : ''}
+            </p>
+          )}
         </Panel>
 
         <EditorCodigo codigo={code} linguagem={challenge.language} onChange={setCode} onCorrigir={corrigir} />

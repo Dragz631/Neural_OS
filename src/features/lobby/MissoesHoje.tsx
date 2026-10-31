@@ -86,7 +86,7 @@ export function MissoesHoje() {
                     type="button"
                     disabled={!doPlano}
                     onClick={() => togglePlanItem(weekStart, dayIdx, m.id)}
-                    className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded border', m.done ? 'border-accent bg-accent text-black' : 'border-line', !doPlano && 'opacity-30')}
+                    className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded border', m.done ? 'border-accent bg-accent text-on-accent' : 'border-line', !doPlano && 'opacity-30')}
                     aria-label="Marcar como feito"
                     title={doPlano ? 'Marcar como feito' : 'Revisões concluem quando você se avalia'}
                   >

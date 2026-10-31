@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Cpu, Settings, Zap } from 'lucide-react';
+import { Cpu, Palette, Settings, Zap } from 'lucide-react';
 import { levelFromXp } from '../domain/xp';
 import { TABS, useNav } from '../store/nav';
 import { useConexoes } from '../store/conexoes';
@@ -7,6 +7,7 @@ import { useStudy } from '../store/study';
 import { cn } from '../lib/utils';
 import { ConexoesModal } from './conexoes/ConexoesModal';
 import { SettingsModal } from './SettingsModal';
+import { TemaModal } from './TemaModal';
 
 export function Navbar() {
   const { tab, go } = useNav();
@@ -14,6 +15,7 @@ export function Navbar() {
   const professor = useConexoes((s) => s.conexoes.find((c) => c.id === (s.motores.professor ?? s.motores.dificil ?? s.motores.leve)));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [conexoesOpen, setConexoesOpen] = useState(false);
+  const [temaOpen, setTemaOpen] = useState(false);
 
   // Lê do servidor quais motores estão ligados (uma vez, ao abrir o app).
   useEffect(() => {
@@ -26,7 +28,7 @@ export function Navbar() {
       <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
         <button type="button" onClick={() => go('lobby')} className="flex items-center gap-2 text-accent">
           <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />
-          <span className="text-xs font-bold tracking-[0.3em]">NEURAL_OS</span>
+          <span className="titulo-cromo fonte-titulo text-xs font-bold tracking-[0.3em]">NEURAL_OS</span>
         </button>
 
         <div className="order-3 flex w-full gap-1 overflow-x-auto md:order-none md:w-auto md:flex-1">
@@ -37,7 +39,7 @@ export function Navbar() {
               onClick={() => go(t.id)}
               title={`Atalho: ${i + 1}`}
               className={cn(
-                'whitespace-nowrap border-b-2 px-2.5 py-1.5 text-[11px] uppercase tracking-wider transition',
+                'fonte-titulo whitespace-nowrap border-b-2 px-2.5 py-1.5 text-[11px] uppercase tracking-wider transition',
                 tab === t.id ? 'border-accent font-bold text-accent' : 'border-transparent text-muted hover:text-fg',
               )}
             >
@@ -63,6 +65,9 @@ export function Navbar() {
             <Cpu size={12} className={professor ? 'text-accent' : ''} />
             <span className="hidden sm:inline">{professor?.nome ?? 'Conectar modelo'}</span>
           </button>
+          <button type="button" onClick={() => setTemaOpen(true)} aria-label="Aparência" title="Aparência: cores, letras e efeitos" className="rounded border border-line p-1.5 text-muted hover:border-accent hover:text-accent">
+            <Palette size={12} />
+          </button>
           <button type="button" onClick={() => setSettingsOpen(true)} aria-label="Configurações" className="rounded border border-line p-1.5 text-muted hover:border-accent hover:text-accent">
             <Settings size={12} />
           </button>
@@ -77,6 +82,7 @@ export function Navbar() {
         }}
       />
       <ConexoesModal open={conexoesOpen} onClose={() => setConexoesOpen(false)} />
+      <TemaModal open={temaOpen} onClose={() => setTemaOpen(false)} />
     </nav>
   );
 }

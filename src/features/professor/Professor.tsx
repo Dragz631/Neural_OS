@@ -1,10 +1,12 @@
+import { Orbe } from '../../components/Orbe';
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, PenLine, Play, Sparkles, Square } from 'lucide-react';
+import { FileDown, PenLine, Play, Shapes, Sparkles, Square } from 'lucide-react';
 import { formatShort } from '../../domain/dates';
 import { GRADE_LABEL, gradeFromScore, isDue, type Grade } from '../../domain/srs';
-import type { Id, Topic } from '../../domain/types';
+import type { Id, Lesson, Topic } from '../../domain/types';
 import { useAI } from '../../hooks/useAI';
 import { toast } from '../../store/toast';
+import { gerarCena } from '../../services/ai/cena';
 import { evaluateExplanation, generateLesson, type ExplanationReview, type TopicContext } from '../../services/ai/professor';
 import { exportTopic } from '../../services/vault';
 import { useNav } from '../../store/nav';
@@ -126,23 +128,48 @@ function Blackboard({ topic }: { topic: Topic }) {
   const [editing, setEditing] = useState(false);
   const lesson = topic.lesson;
 
+  // O desenho é uma segunda chamada: se falhar, a aula fica e o quadro usa o desenho em colunas.
+  const desenhar = async (l: Lesson, signal: AbortSignal) => {
+    try {
+      return await gerarCena(ctx!, l, signal);
+    } catch (e) {
+      if (signal.aborted) throw e;
+      return undefined;
+    }
+  };
   const generate = () =>
     run(async (signal) => {
       const l = await generateLesson(ctx!, signal);
-      setLesson(topic.id, l);
+      setLesson(topic.id, { ...l, cena: await desenhar(l, signal) });
+    });
+  /** Mesmo conteúdo, outro jeito de desenhar: entra ao lado, sem apagar o que já está no quadro. */
+  const redesenhar = () =>
+    run(async (signal) => {
+      if (!lesson) return;
+      const cena = await desenhar(lesson, signal);
+      if (!cena) throw new Error('o professor não conseguiu desenhar de outro jeito agora, tente de novo');
+      setLesson(topic.id, { ...lesson, cena, generatedAt: new Date().toISOString() });
     });
 
   return (
-    <section className="rounded border-4 border-[#3b2a1a] bg-[#14231c] p-5 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-white/40">Quadro do Prof. A.Ilson</p>
-          <h2 className="text-xl font-bold text-[#f4f1de]">{topic.title}</h2>
+    <section className="rounded border-4 border-line bg-panel-2 p-5 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+        <div className="flex items-center gap-3">
+          <Orbe estado={loading ? 'thinking' : 'idle'} tamanho={64} />
+          <div>
+            <p className="fonte-titulo text-[10px] uppercase tracking-[0.3em] text-muted">Quadro do Prof. A.Ilson</p>
+            <h2 className="text-xl font-bold text-fg">{topic.title}</h2>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button onClick={generate} disabled={!aiOn || loading} title={aiOn ? '' : 'Ative a IA nas configurações'}>
             <Sparkles size={14} /> {loading ? 'Escrevendo…' : lesson ? 'Reescrever com IA' : 'Gerar aula com IA'}
           </Button>
+          {lesson && (
+            <Button onClick={redesenhar} disabled={!aiOn || loading} title="Mesmo conteúdo, desenhado de outro jeito">
+              <Shapes size={14} /> Desenhar de outro jeito
+            </Button>
+          )}
           <Button onClick={() => setEditing(true)}>
             <PenLine size={14} /> {lesson ? 'Editar' : 'Escrever eu mesmo'}
           </Button>
@@ -152,7 +179,7 @@ function Blackboard({ topic }: { topic: Topic }) {
       <ErrorNote error={error} />
 
       {!lesson && (
-        <p className="mb-3 text-sm text-white/60">
+        <p className="mb-3 text-sm text-muted">
           {aiOn ? 'Peça a aula: o professor desenha no quadro (e lê suas anotações e seu histórico). O quadro já é seu pra anotar.' : 'Sem IA: escreva a aula você mesmo, ou conecte um modelo. O quadro já é seu pra anotar.'}
         </p>
       )}

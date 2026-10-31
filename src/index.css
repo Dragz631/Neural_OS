@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Fontes locais (funcionam sem internet). */
+@font-face { font-family: 'JetBrains Mono'; font-weight: 400; font-style: normal; font-display: swap; src: url('/fonts/JetBrainsMono-400.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 600 800; font-style: normal; font-display: swap; src: url('/fonts/JetBrainsMono-600.woff2') format('woff2'); }
+@font-face { font-family: 'Michroma'; font-weight: 400; font-style: normal; font-display: swap; src: url('/fonts/Michroma-400.woff2') format('woff2'); }
+@font-face { font-family: 'Silkscreen'; font-weight: 400; font-style: normal; font-display: swap; src: url('/fonts/Silkscreen-400.woff2') format('woff2'); }
+@font-face { font-family: 'Silkscreen'; font-weight: 700; font-style: normal; font-display: swap; src: url('/fonts/Silkscreen-700.woff2') format('woff2'); }
+
 /* ─── Cores do tema ──────────────────────────────────────────────────────────
    Antes cada arquivo repetia #00ff66, #39ff14, #9dc197... (3 verdes diferentes).
    Agora são tokens: use bg-bg, text-fg, border-line, text-accent etc. */
@@ -11,6 +18,7 @@
   --color-fg: #b9d4b3;
   --color-muted: #6f8f69;
   --color-accent: #00ff66;
+  --color-on-accent: #000000;
   --color-warn: #ffb347;
   --color-danger: #ff5570;
   --color-info: #7cf0ff;
@@ -26,7 +34,7 @@ body {
 
 ::selection {
   background: var(--color-accent);
-  color: black;
+  color: var(--color-on-accent);
 }
 
 /* Barra de rolagem discreta */
@@ -157,4 +165,196 @@ body {
     animation: none;
     opacity: 1;
   }
+}
+
+/* ─── TEMA ────────────────────────────────────────────────────────────────────
+   O store/tema.ts põe as variáveis (cores, fonte, raio) e os atributos data-*
+   no <html>. Aqui só está o que depende deles. Quem escolhe é a pessoa. */
+:root {
+  --font-titulo: inherit;
+  --raio: 4px;
+  --vinheta: rgba(0, 0, 0, 0.55);
+}
+/* Um raio só pro app inteiro (rounded-full continua redondo). */
+.rounded,
+.rounded-sm,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl {
+  border-radius: var(--raio);
+}
+.fonte-titulo {
+  font-family: var(--font-titulo);
+}
+#root {
+  position: relative;
+  isolation: isolate;
+}
+/* Cantos de mira nos painéis (moldura "colchetes"). */
+html[data-moldura='colchetes'] .tema-panel::before,
+html[data-moldura='colchetes'] .tema-panel::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 0 solid color-mix(in srgb, var(--color-fg) 50%, transparent);
+  pointer-events: none;
+}
+html[data-moldura='colchetes'] .tema-panel::before {
+  top: -1px;
+  left: -1px;
+  border-width: 1px 0 0 1px;
+}
+html[data-moldura='colchetes'] .tema-panel::after {
+  right: -1px;
+  bottom: -1px;
+  border-width: 0 1px 1px 0;
+}
+/* Título do app em cromo. */
+html[data-cromo='on'] .titulo-cromo {
+  background: linear-gradient(180deg, #fdfdfd 0%, #c7ccd1 24%, #5f676f 49%, #e6eaee 53%, #9aa1a8 78%, #f5f7f8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
+}
+/* Sem brilho. */
+html[data-brilho='off'] .glow,
+html[data-brilho='off'] .pulse-dot,
+html[data-brilho='off'] .xp-pop {
+  box-shadow: none;
+}
+html[data-brilho='off'] .text-glow {
+  text-shadow: none;
+}
+/* Grade fina + vinheta atrás de tudo. */
+html[data-grade='on'] #root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, var(--vinheta)),
+    linear-gradient(color-mix(in srgb, var(--color-fg) 4%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, color-mix(in srgb, var(--color-fg) 4%, transparent) 1px, transparent 1px) 0 0 / 32px 32px;
+}
+/* Linhas de varredura bem leves por cima. */
+html[data-scan='on'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.05;
+  background: repeating-linear-gradient(180deg, var(--color-fg) 0 1px, transparent 1px 3px);
+}
+/* Movimento em passos (pixel): 4 quadros, curto. */
+html[data-mov='passos'] *,
+html[data-mov='passos'] *::before,
+html[data-mov='passos'] *::after {
+  transition-timing-function: steps(4, end) !important;
+  animation-timing-function: steps(4, end) !important;
+}
+html[data-mov='nenhum'] *,
+html[data-mov='nenhum'] *::before,
+html[data-mov='nenhum'] *::after {
+  transition: none !important;
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-scan='on'] body::after {
+    display: none;
+  }
+}
+/* Telas da dungeon usavam animate-fade-in sem ele existir. */
+.animate-fade-in {
+  animation: neural-fade-in 0.3s ease-out;
+}
+@keyframes neural-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ─── Excalidraw (Lousa e quadro do professor) no design system do app ────────
+   O Excalidraw tem as variáveis dele; aqui elas apontam pras do tema, em modo
+   claro e escuro. O fundo do desenho é transparente, então o fundo é o do app.
+   "html " na frente só pra ganhar do CSS do pacote, que carrega depois. */
+html .excalidraw,
+html .excalidraw.theme--dark {
+  --color-primary: var(--color-accent);
+  --color-primary-darker: color-mix(in srgb, var(--color-accent) 85%, var(--color-bg));
+  --color-primary-darkest: color-mix(in srgb, var(--color-accent) 70%, var(--color-bg));
+  --color-primary-hover: color-mix(in srgb, var(--color-accent) 85%, var(--color-fg));
+  --color-primary-light: color-mix(in srgb, var(--color-accent) 18%, var(--color-panel));
+  --color-primary-light-darker: color-mix(in srgb, var(--color-accent) 28%, var(--color-panel));
+  --color-on-primary-container: var(--color-accent);
+  --color-brand-hover: var(--color-accent);
+  --color-brand-active: var(--color-accent);
+  --color-selection: var(--color-accent);
+  --focus-highlight-color: var(--color-accent);
+  --select-highlight-color: var(--color-accent);
+  --link-color: var(--color-info);
+  --island-bg-color: var(--color-panel);
+  --island-bg-color-alt: var(--color-panel-2);
+  --popup-bg-color: var(--color-panel);
+  --popup-secondary-bg-color: var(--color-panel-2);
+  --popup-text-color: var(--color-fg);
+  --popup-text-inverted-color: var(--color-bg);
+  --sidebar-bg-color: var(--color-panel);
+  --default-bg-color: var(--color-bg);
+  --overlay-bg-color: color-mix(in srgb, var(--color-bg) 75%, transparent);
+  --input-bg-color: var(--color-bg);
+  --input-hover-bg-color: var(--color-panel-2);
+  --input-border-color: var(--color-line);
+  --input-label-color: var(--color-muted);
+  --button-hover-bg: var(--color-panel-2);
+  --button-bg: var(--color-panel-2);
+  --button-gray-1: var(--color-panel-2);
+  --button-gray-2: var(--color-line);
+  --button-gray-3: var(--color-line);
+  --text-primary-color: var(--color-fg);
+  --color-on-surface: var(--color-fg);
+  --icon-fill-color: var(--color-fg);
+  --keybinding-color: var(--color-muted);
+  --color-surface-lowest: var(--color-bg);
+  --color-surface-low: var(--color-panel);
+  --color-surface-mid: var(--color-panel-2);
+  --color-surface-high: color-mix(in srgb, var(--color-line) 60%, var(--color-panel-2));
+  --color-surface-primary-container: color-mix(in srgb, var(--color-accent) 18%, var(--color-panel));
+  --color-border-outline: var(--color-line);
+  --color-border-outline-variant: var(--color-line);
+  --color-outline: var(--color-line);
+  --list-border-color: var(--color-line);
+  --dialog-border-color: var(--color-line);
+  --sidebar-border-color: var(--color-line);
+  --default-border-color: var(--color-line);
+  --border-radius-md: var(--raio);
+  --border-radius-lg: var(--raio);
+  --ui-font: var(--font-mono);
+  /* Sem vermelho: o "perigo" do Excalidraw segue o aviso do tema. */
+  --color-danger: var(--tema-danger);
+  --color-danger-color: var(--tema-danger);
+  --color-danger-text: var(--tema-danger);
+  --color-danger-dark: color-mix(in srgb, var(--tema-danger) 80%, var(--color-bg));
+  --color-danger-darker: color-mix(in srgb, var(--tema-danger) 65%, var(--color-bg));
+  --color-danger-darkest: color-mix(in srgb, var(--tema-danger) 50%, var(--color-bg));
+  --color-danger-background: color-mix(in srgb, var(--tema-danger) 16%, var(--color-panel));
+  --color-danger-icon-background: color-mix(in srgb, var(--tema-danger) 22%, var(--color-panel));
+  --color-danger-icon-color: var(--tema-danger);
+  --button-destructive-bg-color: color-mix(in srgb, var(--tema-danger) 16%, var(--color-panel));
+  --button-destructive-color: var(--tema-danger);
+  --color-warning-color: var(--color-warn);
+  --color-warning-dark: color-mix(in srgb, var(--color-warn) 80%, var(--color-bg));
+}
+html .excalidraw {
+  font-family: var(--font-mono);
+}
+html .excalidraw .Island,
+html .excalidraw .App-menu,
+html .excalidraw .dropdown-menu,
+html .excalidraw .popover {
+  border-radius: var(--raio);
 }

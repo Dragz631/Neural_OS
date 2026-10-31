@@ -32,10 +32,10 @@ export function Panel({
   accent?: boolean;
 }) {
   return (
-    <section className={cn('relative rounded border bg-panel p-4', accent ? 'glow border-accent/70' : 'border-line', className)}>
+    <section className={cn('tema-panel relative rounded border bg-panel p-4', accent ? 'glow border-accent/70' : 'border-line', className)}>
       {(title || actions) && (
         <header className="mb-3 flex items-center justify-between gap-2 border-b border-line pb-2">
-          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-muted">
+          <h2 className="fonte-titulo flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-muted">
             <span className="pulse-dot" aria-hidden />
             <span>
               <PanelTitle title={title} />
@@ -58,9 +58,9 @@ export function Button({ variant = 'ghost', className, ...props }: ButtonHTMLAtt
       {...props}
       className={cn(
         'inline-flex items-center justify-center gap-1.5 rounded border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-40',
-        variant === 'primary' && 'border-accent bg-accent text-black hover:brightness-110',
+        variant === 'primary' && 'border-accent bg-accent text-on-accent hover:brightness-110',
         variant === 'ghost' && 'border-line text-fg hover:border-accent hover:text-accent',
-        variant === 'danger' && 'border-danger/50 text-danger hover:bg-danger hover:text-black',
+        variant === 'danger' && 'border-danger/50 text-danger hover:bg-danger hover:text-bg',
         className,
       )}
     />

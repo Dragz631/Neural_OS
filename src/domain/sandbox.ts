@@ -1,5 +1,5 @@
 import { CHALLENGE_BANK, type BankChallenge } from '../data/challengeBank';
-import { normalizar } from './importacao';
+import { radicais } from './conhecimento';
 import { DOMINADO, preRequisitoFraco } from './materias';
 import type { Topic } from './types';
 
@@ -29,16 +29,6 @@ export interface Habilidade {
 export function habilidadesDa(topics: Topic[], subjectId: string): Habilidade[] {
   const daMateria = topics.filter((t) => t.subjectId === subjectId);
   return daMateria.map((topic) => ({ topic, travadaPor: preRequisitoFraco(topic, topics), dominada: topic.mastery >= DOMINADO }));
-}
-
-const PALAVRAS_VAZIAS = new Set(['para', 'com', 'como', 'entre', 'sobre', 'basico', 'basica', 'introducao', 'nocoes', 'parte']);
-
-/** Radicais das palavras do tópico ("Classes e objetos" → classe, objet). */
-function radicais(texto: string): string[] {
-  return normalizar(texto)
-    .split(/[^a-z0-9#+]+/)
-    .filter((p) => p.length >= 4 && !PALAVRAS_VAZIAS.has(p))
-    .map((p) => p.slice(0, 6));
 }
 
 /**

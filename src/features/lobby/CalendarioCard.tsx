@@ -64,7 +64,7 @@ export function CalendarioCard() {
         <>
           <div className="flex overflow-hidden rounded border border-line text-[10px] font-bold uppercase">
             {(['semana', 'mes'] as const).map((v) => (
-              <button key={v} type="button" onClick={() => setVisao(v)} className={cn('px-2 py-0.5', visao === v ? 'bg-accent text-black' : 'text-muted hover:text-accent')}>
+              <button key={v} type="button" onClick={() => setVisao(v)} className={cn('px-2 py-0.5', visao === v ? 'bg-accent text-on-accent' : 'text-muted hover:text-accent')}>
                 {v === 'mes' ? 'Mês' : 'Semana'}
               </button>
             ))}

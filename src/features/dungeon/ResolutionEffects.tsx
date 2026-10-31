@@ -56,25 +56,25 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
   if (status === 'hit') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-fade-in font-mono">
-        <div className="relative w-full max-w-lg border-2 border-[#00ff66] bg-[#0a0f0d] p-6 text-center shadow-[0_0_50px_rgba(0,255,102,0.4)]">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#00ff66] bg-[#00ff66]/10 text-[#00ff66] shadow-[0_0_20px_rgba(0,255,102,0.8)]">
+        <div className="relative w-full max-w-lg border-2 border-accent bg-bg p-6 text-center shadow-[0_0_50px_color-mix(in_srgb,var(--color-accent)_40%,transparent)]">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent bg-accent/10 text-accent shadow-[0_0_20px_color-mix(in_srgb,var(--color-accent)_80%,transparent)]">
             <Zap className="h-8 w-8 animate-bounce" />
           </div>
 
           <div className="mt-4">
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#00ff66]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">
               // COMPILAÇÃO EFETUADA COM SUCESSO //
             </span>
-            <h3 className="mt-1 text-xl font-bold text-[#00ff66]">
+            <h3 className="mt-1 text-xl font-bold text-accent">
               CONTRA-ATAQUE SINÁPTICO CONECTADO!
             </h3>
           </div>
 
-          <p className="mt-3 text-xs text-[#9dc197] leading-relaxed border-y border-[#1b3327] py-3">
+          <p className="mt-3 text-xs text-fg leading-relaxed border-y border-line py-3">
             {explanation}
           </p>
 
-          <div className="mt-4 border border-[#00ff66]/40 bg-[#00ff66]/10 p-2.5 text-xs text-[#00ff66] font-bold">
+          <div className="mt-4 border border-accent/40 bg-accent/10 p-2.5 text-xs text-accent font-bold">
             + {stage.xpReward} XP GANHO NA MATRIZ // DANO APLICADO NO GUARDIÃO
           </div>
 
@@ -82,7 +82,7 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
             <button
               type="button"
               onClick={onContinue}
-              className="flex items-center gap-2 border-2 border-[#00ff66] bg-[#00ff66] px-8 py-3 text-xs font-bold uppercase tracking-widest text-black shadow-[0_0_15px_rgba(0,255,102,0.6)] hover:bg-[#33ff77] transition"
+              className="flex items-center gap-2 border-2 border-accent bg-accent px-8 py-3 text-xs font-bold uppercase tracking-widest text-on-accent shadow-[0_0_15px_color-mix(in_srgb,var(--color-accent)_60%,transparent)] hover:bg-accent/80 transition"
             >
               <span>AVANÇAR NA ARENA</span>
               <ArrowRight size={14} />
@@ -95,26 +95,26 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
 
   if (status === 'miss') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-red-950/80 p-4 backdrop-blur-md animate-pulse font-mono">
-        <div className="relative w-full max-w-lg border-2 border-[#ff3366] bg-[#140508] p-6 text-center shadow-[0_0_60px_rgba(255,51,102,0.6)]">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#ff3366] bg-[#ff3366]/20 text-[#ff3366] shadow-[0_0_30px_rgba(255,51,102,0.9)]">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-danger/20 p-4 backdrop-blur-md animate-pulse font-mono">
+        <div className="relative w-full max-w-lg border-2 border-danger bg-danger/10 p-6 text-center shadow-[0_0_60px_color-mix(in_srgb,var(--color-danger)_60%,transparent)]">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-danger bg-danger/20 text-danger shadow-[0_0_30px_color-mix(in_srgb,var(--color-danger)_90%,transparent)]">
             <AlertTriangle className="h-8 w-8 animate-ping" />
           </div>
 
           <div className="mt-4">
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#ff3366]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-danger">
               [ALERTA CRÍTICO: CHOQUE NEURAL // -1 HP]
             </span>
-            <h3 className="mt-1 text-xl font-bold text-[#ff3366]">
+            <h3 className="mt-1 text-xl font-bold text-danger">
               DESCARGA ELÉTRICA NA CADEIRA!
             </h3>
           </div>
 
-          <p className="mt-3 text-xs text-[#ff99aa] leading-relaxed border-y border-[#ff3366]/40 py-3">
+          <p className="mt-3 text-xs text-danger leading-relaxed border-y border-danger/40 py-3">
             {explanation}
           </p>
 
-          <div className="mt-4 border border-[#ff3366]/40 bg-[#ff3366]/10 p-2.5 text-xs text-[#ff3366]">
+          <div className="mt-4 border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger">
             Você perdeu 1 Vida. O sistema está redirecionando sua mente de volta ao Codex para revisão do ponto de falha.
           </div>
 
@@ -122,7 +122,7 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
             <button
               type="button"
               onClick={onContinue}
-              className="flex items-center gap-2 border-2 border-[#ff3366] bg-[#ff3366] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-[0_0_20px_rgba(255,51,102,0.8)] hover:bg-[#ff1744] transition"
+              className="flex items-center gap-2 border-2 border-danger bg-danger px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-[0_0_20px_color-mix(in_srgb,var(--color-danger)_80%,transparent)] hover:bg-danger transition"
             >
               <span>RETORNAR AO CODEX (REVISAR)</span>
               <ArrowRight size={14} />
@@ -136,28 +136,28 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
   if (status === 'victory') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fade-in font-mono">
-        <div className="relative w-full max-w-xl border-2 border-[#00ff66] bg-[#0a0f0d] p-8 text-center shadow-[0_0_60px_rgba(0,255,102,0.5)]">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00ff66] bg-[#00ff66]/15 text-[#00ff66] shadow-[0_0_30px_rgba(0,255,102,0.9)]">
+        <div className="relative w-full max-w-xl border-2 border-accent bg-bg p-8 text-center shadow-[0_0_60px_color-mix(in_srgb,var(--color-accent)_50%,transparent)]">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-accent bg-accent/15 text-accent shadow-[0_0_30px_color-mix(in_srgb,var(--color-accent)_90%,transparent)]">
             {stage.isBoss ? <Crown className="h-10 w-10 animate-bounce" /> : <Trophy className="h-10 w-10 animate-bounce" />}
           </div>
 
           <div className="mt-5">
-            <span className="text-xs font-bold uppercase tracking-[0.3em] text-[#00ff66]">
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-accent">
               {stage.isBoss ? '👑 CHEFE DE FASE NEUTRALIZADO!' : '⚡ GUARDIÃO DERROTADO COM SUCESSO!'}
             </span>
-            <h2 className="mt-2 text-2xl font-bold text-[#00ff66]">
+            <h2 className="mt-2 text-2xl font-bold text-accent">
               {stage.isBoss ? 'NÓ CENTRAL CONQUISTADO!' : `FASE ${stage.number} CONCLUÍDA!`}
             </h2>
           </div>
 
-          <div className="mt-4 border border-[#1b3327] bg-[#050807] p-4 text-xs text-[#9dc197] space-y-2">
-            <p className="text-sm font-bold text-[#33ff77]">{stage.synapticReward}</p>
-            <p className="text-[#9dc197]/70">
+          <div className="mt-4 border border-line bg-bg p-4 text-xs text-fg space-y-2">
+            <p className="text-sm font-bold text-accent">{stage.synapticReward}</p>
+            <p className="text-fg/70">
               O conhecimento deste nó foi gravado permanentemente na sua Árvore Neural.
             </p>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs font-bold text-[#00ff66]">
+          <div className="mt-4 flex items-center justify-center gap-4 text-xs font-bold text-accent">
             <span>+ {stage.xpReward} XP DE RECOMPENSA</span>
             <span>•</span>
             <span>NÓ DESBLOQUEADO</span>
@@ -168,7 +168,7 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
               <button
                 type="button"
                 onClick={onExportToSandbox}
-                className="flex items-center gap-1.5 border border-[#1b3327] bg-[#0d1612] px-4 py-2.5 text-xs text-[#9dc197] hover:border-[#00ff66] hover:text-[#00ff66] transition"
+                className="flex items-center gap-1.5 border border-line bg-panel px-4 py-2.5 text-xs text-fg hover:border-accent hover:text-accent transition"
               >
                 <Code2 size={14} />
                 <span>EXPERIMENTAR NA SANDBOX</span>
@@ -178,7 +178,7 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
             <button
               type="button"
               onClick={onContinue}
-              className="flex items-center gap-2 border-2 border-[#00ff66] bg-[#00ff66] px-8 py-3 text-xs font-bold uppercase tracking-widest text-black shadow-[0_0_20px_rgba(0,255,102,0.6)] hover:bg-[#33ff77] transition"
+              className="flex items-center gap-2 border-2 border-accent bg-accent px-8 py-3 text-xs font-bold uppercase tracking-widest text-on-accent shadow-[0_0_20px_color-mix(in_srgb,var(--color-accent)_60%,transparent)] hover:bg-accent/80 transition"
             >
               <span>AVANÇAR PARA A PRÓXIMA FASE</span>
               <ArrowRight size={14} />
@@ -192,21 +192,21 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
   // Game Over
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fade-in font-mono">
-      <div className="relative w-full max-w-lg border-2 border-[#ff3366] bg-[#0a0507] p-8 text-center shadow-[0_0_60px_rgba(255,51,102,0.6)]">
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#ff3366] bg-[#ff3366]/20 text-[#ff3366] shadow-[0_0_30px_rgba(255,51,102,0.9)]">
+      <div className="relative w-full max-w-lg border-2 border-danger bg-danger/10 p-8 text-center shadow-[0_0_60px_color-mix(in_srgb,var(--color-danger)_60%,transparent)]">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-danger bg-danger/20 text-danger shadow-[0_0_30px_color-mix(in_srgb,var(--color-danger)_90%,transparent)]">
           <Flame className="h-10 w-10 animate-pulse" />
         </div>
 
         <div className="mt-5">
-          <span className="text-xs font-bold uppercase tracking-[0.3em] text-[#ff3366]">
+          <span className="text-xs font-bold uppercase tracking-[0.3em] text-danger">
             [SOBRECARGA NEURAL // GAME OVER]
           </span>
-          <h2 className="mt-2 text-2xl font-bold text-[#ff3366]">
+          <h2 className="mt-2 text-2xl font-bold text-danger">
             SUAS VIDAS FORAM ESGOTADAS
           </h2>
         </div>
 
-        <p className="mt-3 text-xs text-[#9dc197] leading-relaxed border-y border-[#ff3366]/30 py-3">
+        <p className="mt-3 text-xs text-fg leading-relaxed border-y border-danger/30 py-3">
           A Cadeira de Aprendizado atingiu a temperatura crítica. O Guardião resistiu ao ataque. Recalibre suas sinapses no Tomo de Conhecimento e reinicie o desafio.
         </p>
 
@@ -214,7 +214,7 @@ export const ResolutionEffects: React.FC<ResolutionEffectsProps> = ({
           <button
             type="button"
             onClick={onRetry}
-            className="flex items-center gap-2 border-2 border-[#00ff66] bg-[#00ff66] px-8 py-3 text-xs font-bold uppercase tracking-widest text-black shadow-[0_0_20px_rgba(0,255,102,0.6)] hover:bg-[#33ff77] transition"
+            className="flex items-center gap-2 border-2 border-accent bg-accent px-8 py-3 text-xs font-bold uppercase tracking-widest text-on-accent shadow-[0_0_20px_color-mix(in_srgb,var(--color-accent)_60%,transparent)] hover:bg-accent/80 transition"
           >
             <RotateCcw size={14} />
             <span>REINICIAR DESAFIO DA FASE</span>

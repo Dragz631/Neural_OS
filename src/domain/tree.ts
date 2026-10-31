@@ -27,7 +27,7 @@ const SUBJECT_RADIUS = 160;
 const RING_STEP = 130;
 
 export function layoutTree(subjects: Subject[], topics: Topic[]): { nodes: TreeNode[]; edges: TreeEdge[] } {
-  const nodes: TreeNode[] = [{ id: 'root', kind: 'root', label: 'VOCÊ', x: 0, y: 0, color: '#00ff66' }];
+  const nodes: TreeNode[] = [{ id: 'root', kind: 'root', label: 'VOCÊ', x: 0, y: 0, color: 'var(--color-accent)' }];
   const edges: TreeEdge[] = [];
   if (subjects.length === 0) return { nodes, edges };
 

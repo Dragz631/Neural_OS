@@ -31,7 +31,7 @@ export function NextStepBar({ variant = 'bar' }: { variant?: 'bar' | 'hero' }) {
           <button
             type="button"
             onClick={fazer}
-            className="flex items-center gap-2 rounded border border-accent bg-accent px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-black hover:brightness-110"
+            className="flex items-center gap-2 rounded border border-accent bg-accent px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-on-accent hover:brightness-110"
           >
             Fazer agora <ArrowRight size={16} />
           </button>
@@ -54,7 +54,7 @@ export function NextStepBar({ variant = 'bar' }: { variant?: 'bar' | 'hero' }) {
         <button
           type="button"
           onClick={fazer}
-          className="flex items-center gap-1 rounded border border-accent bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wider text-black hover:brightness-110"
+          className="flex items-center gap-1 rounded border border-accent bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wider text-on-accent hover:brightness-110"
         >
           Fazer agora <ArrowRight size={13} />
         </button>

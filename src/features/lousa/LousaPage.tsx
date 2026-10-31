@@ -18,6 +18,8 @@ import { useBoards } from './boardsStore';
 import { describeScene } from './describeScene';
 import { lookAtBoard, type BoardLook } from './professorLook';
 import { loadScene, mirrorOnExit, mirrorToVault, saveScene } from './sceneStorage';
+import { modoQuadro, paletaQuadro } from './temaQuadro';
+import { useTema } from '../../store/tema';
 import { mapaParaElementos } from './mapaParaLousa';
 
 // Lousa = Excalidraw completo, pra pensar de forma estruturada.
@@ -129,6 +131,7 @@ export function Board({ boardId, name, topicId, desenho }: { boardId: string; na
   const updateTopic = useStudy((s) => s.updateTopic);
   const aiOn = useIALigada();
   const { run, loading, error } = useAI();
+  const modo = useTema((s) => modoQuadro(s.valores));
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   useBibliotecaNeural(api);
   const [look, setLook] = useState<BoardLook | null>(null);
@@ -141,10 +144,14 @@ export function Board({ boardId, name, topicId, desenho }: { boardId: string; na
   const initialData = useMemo(
     () =>
       loadScene(boardId).then((s) => {
-        if (s) return { elements: s.elements, appState: s.appState, files: s.files };
+        const p = paletaQuadro();
+        // Fundo transparente: quem pinta é o tema do app (o branco antigo vira transparente).
+        if (s) return { elements: s.elements, appState: { ...s.appState, viewBackgroundColor: !s.appState.viewBackgroundColor || s.appState.viewBackgroundColor === '#ffffff' ? 'transparent' : s.appState.viewBackgroundColor }, files: s.files };
         // Lousa nova vinda do "Nova matéria": desenha o mapa na primeira abertura.
         const mapa = useBoards.getState().boards.find((b) => b.id === boardId)?.mapa;
-        return mapa ? { elements: mapaParaElementos(mapa), scrollToContent: true, mapaNovo: true } : null;
+        // Traço, fonte e cantos já saem no estilo do tema.
+        const appState = { viewBackgroundColor: 'transparent', currentItemStrokeColor: p.texto, currentItemFontFamily: p.fonte, currentItemRoughness: 0, currentItemRoundness: p.arredondado ? ('round' as const) : ('sharp' as const) };
+        return mapa ? { elements: mapaParaElementos(mapa), appState, scrollToContent: true, mapaNovo: true } : { elements: [], appState };
       }),
     [boardId],
   );
@@ -270,7 +277,7 @@ export function Board({ boardId, name, topicId, desenho }: { boardId: string; na
         onExcalidrawAPI={setApi}
         initialData={initialData}
         onChange={onChange}
-        theme="dark"
+        theme={modo}
         langCode="pt-BR"
         name={name}
         renderTopRightUI={() => (
@@ -304,7 +311,6 @@ export function Board({ boardId, name, topicId, desenho }: { boardId: string; na
           <MainMenu.DefaultItems.Help />
           <MainMenu.DefaultItems.ClearCanvas />
           <MainMenu.Separator />
-          <MainMenu.DefaultItems.ToggleTheme allowSystemTheme={false} />
           <MainMenu.DefaultItems.ChangeCanvasBackground />
         </MainMenu>
         <TTDDialogTrigger />

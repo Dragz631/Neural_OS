@@ -43,7 +43,7 @@ export function MatrizHabilidades({
                 aria-checked={foco.has(topic.id)}
                 aria-label={`Cobrar ${topic.title} junto`}
                 onClick={() => onAlternarFoco(topic.id)}
-                className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border', foco.has(topic.id) ? 'border-accent bg-accent text-black' : 'border-line')}
+                className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border', foco.has(topic.id) ? 'border-accent bg-accent text-on-accent' : 'border-line')}
               >
                 {foco.has(topic.id) && <Check size={11} strokeWidth={3} />}
               </button>

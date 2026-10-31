@@ -150,23 +150,23 @@ export default function DungeonProtocol() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] font-mono text-[#9dc197]">
+    <div className="min-h-screen bg-bg font-mono text-fg">
       {/* Top Header & Track Selector */}
-      <header className="flex flex-wrap items-center justify-between border-b border-[#1b3327] bg-[#0d1612] px-4 sm:px-8 py-3 gap-4">
+      <header className="flex flex-wrap items-center justify-between border-b border-line bg-panel px-4 sm:px-8 py-3 gap-4">
         <div className="flex items-center gap-3">
-          <Sword className="h-6 w-6 text-[#00ff66]" />
+          <Sword className="h-6 w-6 text-accent" />
           <div>
-            <h1 className="text-sm font-bold uppercase tracking-[0.3em] text-[#00ff66]">
+            <h1 className="text-sm font-bold uppercase tracking-[0.3em] text-accent">
               DUNGEON PROTOCOL // FASES &amp; CHEFES
             </h1>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[#9dc197]/60">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-fg/60">
               Estudo Ativo, Batalhas de Código e Desbloqueio Sináptico
             </p>
           </div>
         </div>
 
         {/* Track Selector Buttons */}
-        <div className="flex items-center gap-1.5 border border-[#1b3327] bg-[#050807] p-1">
+        <div className="flex items-center gap-1.5 border border-line bg-bg p-1">
           {(['csharp', 'c_bases', 'lfa'] as TrackId[]).map((t) => (
             <button
               key={t}
@@ -174,8 +174,8 @@ export default function DungeonProtocol() {
               onClick={() => handleSelectTrack(t)}
               className={`px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition ${
                 activeTrack === t
-                  ? 'bg-[#00ff66] text-black shadow-[0_0_12px_rgba(0,255,102,0.6)]'
-                  : 'text-[#9dc197]/70 hover:text-[#00ff66]'
+                  ? 'bg-accent text-on-accent shadow-[0_0_12px_color-mix(in_srgb,var(--color-accent)_60%,transparent)]'
+                  : 'text-fg/70 hover:text-accent'
               }`}
             >
               [{trackLabels[t]}]
@@ -185,14 +185,14 @@ export default function DungeonProtocol() {
 
         {/* Status Indicator */}
         <div className="flex items-center gap-2">
-          <span className="border border-[#00ff66]/30 bg-[#00ff66]/10 px-3 py-1 text-xs text-[#00ff66] font-bold">
+          <span className="border border-accent/30 bg-accent/10 px-3 py-1 text-xs text-accent font-bold">
             {trackProgress.completedStageIds.length}/{stages.length} NÓS CONQUISTADOS
           </span>
         </div>
       </header>
 
       {/* Stage Progression Map / Synaptic Ladder */}
-      <div className="border-b border-[#1b3327] bg-[#050807] px-4 sm:px-8 py-3">
+      <div className="border-b border-line bg-bg px-4 sm:px-8 py-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           {stages.map((st, idx) => {
             const isCompleted = trackProgress.completedStageIds.includes(st.id);
@@ -207,18 +207,18 @@ export default function DungeonProtocol() {
                 onClick={() => handleSelectStage(idx)}
                 className={`flex items-center gap-2 border px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition shrink-0 ${
                   isSelected
-                    ? 'border-[#00ff66] bg-[#00ff66] text-black shadow-[0_0_12px_rgba(0,255,102,0.6)]'
+                    ? 'border-accent bg-accent text-on-accent shadow-[0_0_12px_color-mix(in_srgb,var(--color-accent)_60%,transparent)]'
                     : isCompleted
-                    ? 'border-[#00ff66]/60 bg-[#00ff66]/10 text-[#00ff66]'
+                    ? 'border-accent/60 bg-accent/10 text-accent'
                     : isUnlocked
-                    ? 'border-[#1b3327] bg-[#0d1612] text-[#9dc197] hover:border-[#00ff66]'
-                    : 'border-[#1b3327]/40 bg-black/40 text-[#9dc197]/30 cursor-not-allowed'
+                    ? 'border-line bg-panel text-fg hover:border-accent'
+                    : 'border-line/40 bg-black/40 text-fg/30 cursor-not-allowed'
                 }`}
               >
                 {st.isBoss ? (
-                  <Crown size={14} className={isSelected ? 'text-black' : isUnlocked ? 'text-[#ff3366]' : ''} />
+                  <Crown size={14} className={isSelected ? 'text-on-accent' : isUnlocked ? 'text-danger' : ''} />
                 ) : isCompleted ? (
-                  <CheckCircle2 size={14} className={isSelected ? 'text-black' : 'text-[#00ff66]'} />
+                  <CheckCircle2 size={14} className={isSelected ? 'text-on-accent' : 'text-accent'} />
                 ) : !isUnlocked ? (
                   <Lock size={12} />
                 ) : (

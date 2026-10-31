@@ -81,7 +81,7 @@ export default function NeuralTree() {
 
   return (
     <div className="mx-auto grid max-w-[1500px] gap-4 p-4 lg:grid-cols-[1fr_340px]">
-      <div className="relative h-[calc(100vh-120px)] min-h-[420px] overflow-hidden rounded border border-line bg-[radial-gradient(circle_at_center,#0f1e17_0%,#0a0f0d_70%)]">
+      <div className="relative h-[calc(100vh-120px)] min-h-[420px] overflow-hidden rounded border border-line bg-[radial-gradient(circle_at_center,var(--color-panel-2)_0%,var(--color-bg)_70%)]">
         <div className="absolute left-3 top-3 z-10 flex gap-2">
           <Button onClick={() => setSubjectOpen(true)}>
             <Plus size={14} /> Matéria
@@ -140,7 +140,7 @@ function NodeShape({ node, selected, due, locked, onPick }: { node: TreeNode; se
   if (node.kind === 'root') {
     return (
       <g onClick={onPick}>
-        <circle r={30} fill="#0a0f0d" stroke={node.color} strokeWidth={2} />
+        <circle r={30} fill="var(--color-bg)" stroke={node.color} strokeWidth={2} />
         <text textAnchor="middle" dy={4} fontSize={11} fill={node.color} fontWeight="bold">
           VOCÊ
         </text>
@@ -156,7 +156,7 @@ function NodeShape({ node, selected, due, locked, onPick }: { node: TreeNode; se
 
   return (
     <g transform={`translate(${node.x} ${node.y})`} onClick={onPick} className="cursor-pointer">
-      {selected && <circle r={r + 10} fill="none" stroke="#ffffff" strokeOpacity={0.5} strokeDasharray="4 4" />}
+      {selected && <circle r={r + 10} fill="none" stroke="var(--color-fg)" strokeOpacity={0.5} strokeDasharray="4 4" />}
       {due && (
         <circle r={r + 8} fill="none" stroke="var(--color-warn)" strokeWidth={2}>
           <animate attributeName="stroke-opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite" />
@@ -164,7 +164,7 @@ function NodeShape({ node, selected, due, locked, onPick }: { node: TreeNode; se
       )}
       <circle
         r={r}
-        fill={studied ? `${node.color}22` : '#0a0f0d'}
+        fill={studied ? `${node.color}22` : 'var(--color-bg)'}
         stroke={node.color}
         strokeOpacity={studied ? 1 : 0.35}
         strokeWidth={isSubject ? 3 : 2}
@@ -181,11 +181,11 @@ function NodeShape({ node, selected, due, locked, onPick }: { node: TreeNode; se
           transform="rotate(-90)"
         />
       )}
-      <text textAnchor="middle" dy={4} fontSize={isSubject ? 12 : locked ? 14 : 10} fill={studied ? '#e6ffe9' : '#6f8f69'} fontWeight={isSubject ? 'bold' : 'normal'}>
+      <text textAnchor="middle" dy={4} fontSize={isSubject ? 12 : locked ? 14 : 10} fill={studied ? 'var(--color-fg)' : 'var(--color-muted)'} fontWeight={isSubject ? 'bold' : 'normal'}>
         {isSubject ? node.label.slice(0, 10) : locked ? '🔒' : `${mastery}%`}
       </text>
       {!isSubject && (
-        <text textAnchor="middle" y={r + 18} fontSize={11} fill={studied ? '#b9d4b3' : '#6f8f69'}>
+        <text textAnchor="middle" y={r + 18} fontSize={11} fill={studied ? 'var(--color-fg)' : 'var(--color-muted)'}>
           {node.label.length > 22 ? `${node.label.slice(0, 21)}…` : node.label}
         </text>
       )}

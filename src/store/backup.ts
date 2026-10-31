@@ -1,6 +1,7 @@
 import { useDungeon } from '../features/dungeon/store';
 import { useCaixa } from './caixaEntrada';
 import { useAprendiz } from './aprendiz';
+import { useTema } from './tema';
 import { useEntregas } from './entregas';
 import { useFaculdade } from './faculdade';
 import { useImportacao } from './importacao';
@@ -19,7 +20,8 @@ export interface BackupV3 {
   presenca: string[];
   faculdade?: Pick<ReturnType<typeof useFaculdade.getState>, 'montadaEm' | 'blocos' | 'eventos' | 'cadernoDe'>;
   contextoMaterias?: Record<string, string>;
-  aprendiz?: Pick<ReturnType<typeof useAprendiz.getState>, 'respostas' | 'perfil'>;
+  aprendiz?: Pick<ReturnType<typeof useAprendiz.getState>, 'respostas' | 'perfil' | 'livre'>;
+  tema?: { baseId: string; valores: unknown };
   trofeusPagos: string[];
   dungeon: Pick<ReturnType<typeof useDungeon.getState>, 'track' | 'progress'>;
 }
@@ -34,7 +36,8 @@ export function gerarBackup(): BackupV3 {
     presenca: usePresenca.getState().dias,
     faculdade: (({ montadaEm, blocos, eventos, cadernoDe }) => ({ montadaEm, blocos, eventos, cadernoDe }))(useFaculdade.getState()),
     contextoMaterias: useImportacao.getState().contexto,
-    aprendiz: (({ respostas, perfil }) => ({ respostas, perfil }))(useAprendiz.getState()),
+    aprendiz: (({ respostas, perfil, livre }) => ({ respostas, perfil, livre }))(useAprendiz.getState()),
+    tema: (({ baseId, valores }) => ({ baseId, valores }))(useTema.getState()),
     trofeusPagos: useTrofeusPagos.getState().pagos,
     dungeon: { track, progress },
   };
@@ -50,7 +53,8 @@ export function restaurarBackup(dados: unknown) {
     usePresenca.setState({ dias: d.presenca ?? [] });
     if (d.faculdade) useFaculdade.setState(d.faculdade);
     if (d.contextoMaterias) useImportacao.setState({ contexto: d.contextoMaterias });
-    if (d.aprendiz) useAprendiz.setState(d.aprendiz);
+    if (d.aprendiz) useAprendiz.getState().carregar(d.aprendiz);
+    if (d.tema) useTema.getState().carregar(d.tema);
     useTrofeusPagos.setState({ pagos: d.trofeusPagos ?? [] });
     if (d.dungeon) useDungeon.setState(d.dungeon);
     return;

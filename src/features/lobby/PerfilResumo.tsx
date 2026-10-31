@@ -4,6 +4,7 @@ import { CalendarDays, Flame, Pencil } from 'lucide-react';
 import { toLocalDate, weekStartOf } from '../../domain/dates';
 import { levelFromXp } from '../../domain/xp';
 import { minutesByDate, streakDays, useStudy } from '../../store/study';
+import { Orbe } from '../../components/Orbe';
 import { Button, Panel, ProgressBar } from '../../components/ui';
 import { PerfilModal } from './PerfilModal';
 
@@ -27,8 +28,13 @@ export function PerfilResumo() {
         </Button>
       }
     >
-      <p className="truncate text-base font-bold text-accent">{profile.name}</p>
-      {profile.title && <p className="truncate text-[11px] text-muted">{profile.title}</p>}
+      <div className="flex items-center gap-3">
+        <Orbe tamanho={72} />
+        <div className="min-w-0">
+          <p className="truncate text-base font-bold text-accent">{profile.name}</p>
+          {profile.title && <p className="truncate text-[11px] text-muted">{profile.title}</p>}
+        </div>
+      </div>
       <div className="mb-1 mt-2 flex justify-between text-[10px] uppercase tracking-widest text-muted">
         <span>Nível {level}</span>
         <span>

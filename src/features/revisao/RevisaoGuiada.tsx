@@ -51,6 +51,7 @@ export function RevisaoGuiada({ topic }: { topic: Topic }) {
   /** O conserto de cada ponto fraco, pra mostrar de novo antes de perguntar outra vez. */
   const [consertos, setConsertos] = useState<Record<string, Diagnostico>>({});
   const [entrevista, setEntrevista] = useState(false);
+  const [direto, setDireto] = useState(false);
   const [inicioEm, setInicioEm] = useState(0);
 
   const voz = useVoz((t) => setResposta((r) => (r ? `${r} ${t}` : t)));
@@ -158,19 +159,26 @@ export function RevisaoGuiada({ topic }: { topic: Topic }) {
     <Panel
       title={`Revisão guiada // ${topic.title}`}
       actions={
-        <Button className="px-2 py-1 text-[10px]" onClick={() => setEntrevista(true)} title="Responder (ou refazer) a entrevista de como você aprende">
-          {perfil.respondidas ? 'Refazer entrevista' : 'Entrevista: como eu aprendo'}
-        </Button>
+        <div className="flex gap-1.5">
+          {perfil.respondidas > 0 && (
+            <Button className="px-2 py-1 text-[10px]" onClick={() => { setDireto(true); setEntrevista(true); }} title="Ver como o professor te entendeu e como vai ensinar">
+              Ver relatório
+            </Button>
+          )}
+          <Button className="px-2 py-1 text-[10px]" onClick={() => { setDireto(false); setEntrevista(true); }} title="Responder (ou refazer) a entrevista de como você aprende">
+            {perfil.respondidas ? 'Refazer entrevista' : 'Entrevista: como eu aprendo'}
+          </Button>
+        </div>
       }
     >
-      <EntrevistaModal open={entrevista} onClose={() => setEntrevista(false)} curta={cansado} />
+      <EntrevistaModal open={entrevista} onClose={() => setEntrevista(false)} curta={cansado && !direto} direto={direto} />
 
       {fase === 'inicio' && (
         <div className="space-y-3">
           <Onde aqui="Antes de começar" proximo="Escolha o tamanho da revisão e aperte Começar." />
           {perfil.respondidas === 0 && (
             <div className="rounded border border-info/40 bg-info/5 p-2 text-xs leading-relaxed">
-              O professor ainda não sabe como você aprende. São {cansado ? 4 : 8} perguntas rápidas, sem resposta certa, e ele passa a se adaptar a você.{' '}
+              O professor ainda não sabe como você aprende. São {cansado ? 4 : 10} perguntas rápidas, sem resposta certa, e ele passa a se adaptar a você.{' '}
               <button type="button" className="font-bold text-info underline" onClick={() => setEntrevista(true)}>
                 Fazer agora
               </button>
