@@ -95,7 +95,7 @@ export function retratoDoTopico(topic: Topic, ctx: { subject?: Subject; sessions
 
   const material = [
     temAula ? `AULA QUE O ALUNO TEVE:\n${topic.lesson!.explanation}\nPontos-chave: ${topic.lesson!.keyPoints.join('; ')}` : '',
-    temNotas ? `ANOTAÇÕES DO ALUNO:\n${topic.notes.slice(0, 3000)}` : '',
+    temNotas ? `DIÁRIO DO ALUNO (o que ele diz que entendeu; não é fonte de fato, só mostra até onde ele foi):\n${topic.notes.slice(0, 3000)}` : '',
     explicacoes.length ? `COMO O ALUNO EXPLICOU COM AS PRÓPRIAS PALAVRAS:\n${explicacoes.slice(-2).map((s) => s.note).join('\n---\n')}` : '',
     temFontes ? `TRECHOS DOS SLIDES/CADERNOS DELE SOBRE O TÓPICO:\n${fontes}` : '',
     erros.length ? `ONDE ELE JÁ ERROU OU TEVE DÚVIDA:\n${erros.join('\n')}` : '',

@@ -7,7 +7,8 @@ import type { Energy, Id, PlanItem, SessionKind, WeekPlan } from '../../domain/t
 import { useFontesSemana } from '../../hooks/useSemana';
 import { KIND_META, useToday } from '../../hooks/useToday';
 import { useNav } from '../../store/nav';
-import { newId, useStudy } from '../../store/study';
+import { newId, selectDueTopics, useStudy } from '../../store/study';
+import { tamanhoSugerido } from '../../domain/revisao';
 import { TopicSelect } from '../../components/TopicPicker';
 import { Badge, Button, Empty, Input, Panel, Select } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -44,6 +45,8 @@ function CheckinCard() {
   const go = useNav((s) => s.go);
   const energy = checkin?.energy;
   const minutes = checkin?.minutesAvailable;
+  // Tópico da revisão relâmpago: o que venceu há mais tempo, senão o Target.
+  const alvoRevisao = useStudy((s) => selectDueTopics(s.topics)[0] ?? s.topics.find((t) => t.id === s.target.topicId));
 
   const update = (patch: { energy?: Energy; minutesAvailable?: number }) =>
     setCheckin({ date: today, energy: patch.energy ?? energy ?? 2, minutesAvailable: patch.minutesAvailable ?? minutes ?? 30 });
@@ -82,6 +85,16 @@ function CheckinCard() {
             </div>
           </div>
           {checkin && <p className="text-xs text-muted">{ENERGY.find((e) => e.value === checkin.energy)?.hint}.</p>}
+          {checkin && tamanhoSugerido(checkin.energy, checkin.minutesAvailable) === 'relampago' && alvoRevisao && (
+            <div className="flex flex-wrap items-center gap-2 rounded border border-accent/40 bg-accent/5 px-2.5 py-1.5 text-xs">
+              <span className="flex-1">
+                Pouca energia ou pouco tempo hoje: uma <b>revisão relâmpago de 5 min</b> de “{alvoRevisao.title}” já conta.
+              </span>
+              <Button variant="primary" className="px-2 py-0.5 text-[10px]" onClick={() => go('professor', alvoRevisao.id)}>
+                Fazer agora
+              </Button>
+            </div>
+          )}
         </div>
 
         <div>
@@ -170,7 +183,7 @@ function WeekBoard({ weekStart, onShift }: { weekStart: string; onShift: (weeks:
           {vista === 1 ? 'Aula e prazo ficam; o estudo vira 5–10 min e o resto passa pro dia seguinte.' : vista === 2 ? 'O estudo encolhe pra uns 60%.' : 'Aulas e prazos nunca mudam, só o estudo.'}
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
+      <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         {dias.map((d, i) => (
           <DayColumn key={d.date} date={d.date} dayIdx={i} isToday={d.date === today} energia={d.energia} ajustado={d.ajustado} items={plan.days[i]} onChange={(items) => setDay(i, items)} />
         ))}
@@ -199,7 +212,7 @@ function DayColumn({ date, dayIdx, isToday, energia, ajustado, items, onChange }
   };
 
   return (
-    <div className={cn('flex min-h-[180px] flex-col rounded border bg-bg p-2', isToday ? 'border-accent/60' : 'border-line')}>
+    <div className={cn('flex flex-col rounded border bg-bg p-2', isToday ? 'border-accent/60' : 'border-line')}>
       <div className="mb-2 flex items-baseline justify-between">
         <span className={cn('text-xs font-bold uppercase', isToday ? 'text-accent' : 'text-fg')}>{WEEKDAYS[dayIdx]}</span>
         <span className="flex items-center gap-1 text-[10px] text-muted">
@@ -207,7 +220,7 @@ function DayColumn({ date, dayIdx, isToday, energia, ajustado, items, onChange }
           {formatShort(date)}
         </span>
       </div>
-      <ul className="flex-1 space-y-1.5">
+      <ul className="space-y-1.5">
         {ajustado.linhas.length === 0 && <li className="text-[11px] text-muted">Dia livre.</li>}
         {ajustado.linhas.map((l) => {
           const idPlano = l.chave.startsWith('pl-') ? l.chave.slice(3) : undefined;

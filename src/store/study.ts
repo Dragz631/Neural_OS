@@ -48,7 +48,7 @@ interface StudyActions {
   removeSubject: (id: Id) => void;
 
   addTopic: (t: Pick<Topic, 'subjectId' | 'title'> & { parentId?: Id }) => Id;
-  updateTopic: (id: Id, patch: Partial<Pick<Topic, 'title' | 'notes' | 'parentId'>>) => void;
+  updateTopic: (id: Id, patch: Partial<Pick<Topic, 'title' | 'notes' | 'parentId' | 'lesson'>>) => void;
   removeTopic: (id: Id) => void;
   setLesson: (id: Id, lesson: Lesson) => void;
   /** Registra uma revisão: atualiza domínio e agenda a próxima. */

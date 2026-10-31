@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRascunhos } from '../../store/rascunhos';
 import { Mic, MicOff, Sparkles } from 'lucide-react';
 import { toLocalDate } from '../../domain/dates';
 import { ERRO_TEXTO, notaDe, perguntasSemIA, quantasPerguntas, TAMANHOS, tamanhoSugerido, type Diagnostico, type PerguntaRevisao, type Tamanho } from '../../domain/revisao';
@@ -30,29 +31,35 @@ interface Feita {
 const COR_NIVEL = { certo: 'text-accent', quase: 'text-warn', errado: 'text-warn' } as const;
 const ROTULO_NIVEL = { certo: 'Acertou', quase: 'Quase lá', errado: 'Ainda não' } as const;
 
-export function RevisaoGuiada({ topic }: { topic: Topic }) {
+export function RevisaoGuiada({ topic, compacto = false }: { topic: Topic; compacto?: boolean }) {
   const subject = useStudy((s) => s.subjects.find((x) => x.id === topic.subjectId));
   const checkin = useStudy((s) => s.checkins[toLocalDate()]);
   const perfil = useAprendiz((s) => s.perfil);
   const aiOn = useIALigada();
   const { run, loading, error } = useAI();
 
-  const [fase, setFase] = useState<Fase>('inicio');
-  const [tamanho, setTamanho] = useState<Tamanho>(() => tamanhoSugerido(checkin?.energy, checkin?.minutesAvailable));
-  const [cansado, setCansado] = useState(checkin?.energy === 1);
-  const [slide, setSlide] = useState('');
-  const [fila, setFila] = useState<PerguntaRevisao[]>([]);
-  const [i, setI] = useState(0);
-  const [resposta, setResposta] = useState('');
-  const [feitas, setFeitas] = useState<Feita[]>([]);
-  const [diag, setDiag] = useState<Diagnostico | null>(null);
+  // Sair da aba e voltar não perde a revisão no meio: a foto fica em useRascunhos.
+  const [salvo] = useState(() => useRascunhos.getState().revisao[topic.id]);
+  const [fase, setFase] = useState<Fase>(() => (salvo && salvo.fase !== 'carregando' ? (salvo.fase as Fase) : 'inicio'));
+  const [tamanho, setTamanho] = useState<Tamanho>(() => (salvo?.tamanho as Tamanho) ?? tamanhoSugerido(checkin?.energy, checkin?.minutesAvailable));
+  const [cansado, setCansado] = useState(salvo?.cansado ?? checkin?.energy === 1);
+  const [slide, setSlide] = useState(salvo?.slide ?? '');
+  const [fila, setFila] = useState<PerguntaRevisao[]>((salvo?.fila as PerguntaRevisao[]) ?? []);
+  const [i, setI] = useState(salvo?.i ?? 0);
+  const [resposta, setResposta] = useState(salvo?.resposta ?? '');
+  const [feitas, setFeitas] = useState<Feita[]>((salvo?.feitas as Feita[]) ?? []);
+  const [diag, setDiag] = useState<Diagnostico | null>((salvo?.diag as Diagnostico) ?? null);
   const [mostrarRef, setMostrarRef] = useState(false);
-  const [mini, setMini] = useState(false);
+  const [mini, setMini] = useState(salvo?.mini ?? false);
   /** O conserto de cada ponto fraco, pra mostrar de novo antes de perguntar outra vez. */
-  const [consertos, setConsertos] = useState<Record<string, Diagnostico>>({});
+  const [consertos, setConsertos] = useState<Record<string, Diagnostico>>((salvo?.consertos as Record<string, Diagnostico>) ?? {});
   const [entrevista, setEntrevista] = useState(false);
   const [direto, setDireto] = useState(false);
-  const [inicioEm, setInicioEm] = useState(0);
+  const [inicioEm, setInicioEm] = useState(salvo?.inicioEm ?? 0);
+
+  useEffect(() => {
+    useRascunhos.getState().guardarRevisao(topic.id, fase === 'inicio' && !slide ? undefined : { fase, tamanho, cansado, slide, fila, i, resposta, feitas, diag, mini, consertos, inicioEm });
+  }, [topic.id, fase, tamanho, cansado, slide, fila, i, resposta, feitas, diag, mini, consertos, inicioEm]);
 
   const voz = useVoz((t) => setResposta((r) => (r ? `${r} ${t}` : t)));
   const sugerido = tamanhoSugerido(checkin?.energy, checkin?.minutesAvailable);
@@ -157,7 +164,7 @@ export function RevisaoGuiada({ topic }: { topic: Topic }) {
 
   return (
     <Panel
-      title={`Revisão guiada // ${topic.title}`}
+      title={compacto ? 'Fechar a aula: revisão relâmpago' : `Revisão guiada // ${topic.title}`}
       actions={
         <div className="flex gap-1.5">
           {perfil.respondidas > 0 && (
@@ -184,7 +191,7 @@ export function RevisaoGuiada({ topic }: { topic: Topic }) {
               </button>
             </div>
           )}
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className={cn('grid gap-2', !compacto && 'sm:grid-cols-3')}>
             {(Object.keys(TAMANHOS) as Tamanho[]).map((t) => (
               <button
                 key={t}

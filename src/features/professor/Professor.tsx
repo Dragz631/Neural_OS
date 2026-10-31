@@ -16,6 +16,9 @@ import { TopicModal, TopicSelect } from '../../components/TopicPicker';
 import { Badge, Button, Empty, ErrorNote, Label, Modal, Panel, Textarea } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { QuadroProfessor } from './QuadroProfessor';
+import { QuadroLivre } from './QuadroLivre';
+import { ProgressoAula } from './ProgressoAula';
+import { useRascunhos } from '../../store/rascunhos';
 import { RevisaoGuiada } from '../revisao/RevisaoGuiada';
 
 /** Junta tudo que a IA precisa saber sobre você neste tópico. */
@@ -38,14 +41,27 @@ function useTopicContext(topic?: Topic): TopicContext | undefined {
 export default function Professor() {
   const navTopicId = useNav((s) => s.topicId);
   const targetTopicId = useStudy((s) => s.target.topicId);
-  const [topicId, setTopicId] = useState<Id | undefined>(navTopicId ?? targetTopicId);
+  // Abre sempre no último tópico em que a pessoa estava (mesmo depois de sair da aba ou recarregar).
+  const [topicId, setTopicId] = useState<Id | undefined>(() => navTopicId ?? useRascunhos.getState().ultimoTopico ?? targetTopicId);
   const topic = useStudy((s) => s.topics.find((t) => t.id === topicId));
   const subjects = useStudy((s) => s.subjects);
   const [newTopicOpen, setNewTopicOpen] = useState(false);
+  const [fechando, setFechando] = useState(false);
+
+  const escolher = (id?: Id) => {
+    setTopicId(id);
+    if (id) {
+      useRascunhos.getState().lembrarTopico(id);
+      useNav.setState({ topicId: id });
+    }
+  };
 
   // Se outra aba mandou abrir um tópico específico, segue ela.
   useEffect(() => {
-    if (navTopicId) setTopicId(navTopicId);
+    if (navTopicId) {
+      setTopicId(navTopicId);
+      useRascunhos.getState().lembrarTopico(navTopicId);
+    }
   }, [navTopicId]);
 
   return (
@@ -54,7 +70,7 @@ export default function Professor() {
         <div className="flex flex-wrap items-end gap-3">
           <label className="min-w-[240px] flex-1">
             <Label>Aula de hoje</Label>
-            <TopicSelect value={topicId} onChange={setTopicId} />
+            <TopicSelect value={topicId} onChange={escolher} />
           </label>
           <Button onClick={() => setNewTopicOpen(true)}>+ Novo tópico</Button>
           {topic && <SessionTimer key={topic.id} topic={topic} />}
@@ -74,14 +90,29 @@ export default function Professor() {
         <>
           <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
             <Blackboard key={topic.id} topic={topic} />
-            <NotesPanel topic={topic} />
+            <div className="space-y-4">
+              <NotesPanel topic={topic} />
+              {/* O último passo: fechar a aula com uma revisão curta. Fica recolhido até a pessoa chamar. */}
+              <div className="rounded border border-line bg-panel">
+                <button type="button" onClick={() => setFechando((v) => !v)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left" aria-expanded={fechando}>
+                  <span>
+                    <span className="fonte-titulo block text-[10px] uppercase tracking-[0.25em] text-accent">Fechar a aula</span>
+                    <span className="text-xs text-muted">Revisão relâmpago: 3 perguntas, uns 5 min. Fixa o que você acabou de ver.</span>
+                  </span>
+                  <span className="text-accent">{fechando ? '−' : '+'}</span>
+                </button>
+                {/* Mantém montado (escondido) pra revisão em andamento não se perder ao recolher. */}
+                <div className={fechando ? 'border-t border-line p-2' : 'hidden'}>
+                  <RevisaoGuiada key={`revisao-${topic.id}`} topic={topic} compacto />
+                </div>
+              </div>
+            </div>
           </div>
-          <RevisaoGuiada key={`revisao-${topic.id}`} topic={topic} />
           <ExplainPanel key={`explain-${topic.id}`} topic={topic} />
         </>
       )}
 
-      <TopicModal open={newTopicOpen} onClose={() => setNewTopicOpen(false)} onCreated={setTopicId} />
+      <TopicModal open={newTopicOpen} onClose={() => setNewTopicOpen(false)} onCreated={escolher} />
     </div>
   );
 }
@@ -137,11 +168,15 @@ function Blackboard({ topic }: { topic: Topic }) {
       return undefined;
     }
   };
-  const generate = () =>
-    run(async (signal) => {
+  const [aba, setAba] = useState<'prof' | 'livre'>('prof');
+  const emAndamento = !!lesson && !lesson.concluidaEm && (Object.values(lesson.progresso ?? {}).some(Boolean) || !!lesson.minis?.some((m) => m.ok));
+  const generate = () => {
+    if (emAndamento && !window.confirm('Você está no meio desta aula. Reescrever apaga o progresso dos passos e dos minidesafios (as suas anotações ficam). Continuar?')) return;
+    return run(async (signal) => {
       const l = await generateLesson(ctx!, signal);
       setLesson(topic.id, { ...l, cena: await desenhar(l, signal) });
     });
+  };
   /** Mesmo conteúdo, outro jeito de desenhar: entra ao lado, sem apagar o que já está no quadro. */
   const redesenhar = () =>
     run(async (signal) => {
@@ -183,7 +218,22 @@ function Blackboard({ topic }: { topic: Topic }) {
           {aiOn ? 'Peça a aula: o professor desenha no quadro (e lê suas anotações e seu histórico). O quadro já é seu pra anotar.' : 'Sem IA: escreva a aula você mesmo, ou conecte um modelo. O quadro já é seu pra anotar.'}
         </p>
       )}
-      <QuadroProfessor topic={topic} lesson={lesson} />
+      {lesson && ctx && <ProgressoAula topic={topic} lesson={lesson} ctx={ctx} />}
+
+      <div className="mb-2 flex gap-1.5">
+        {([['prof', 'Quadro do professor'], ['livre', 'Meu quadro livre']] as const).map(([id, rotulo]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setAba(id)}
+            className={cn('fonte-titulo rounded border px-3 py-1 text-[10px] uppercase tracking-widest', aba === id ? 'border-accent bg-accent/10 text-accent' : 'border-line text-muted hover:text-fg')}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </div>
+      {/* Só o quadro ativo monta (Excalidraw escondido abre em branco). O desenho de cada um fica salvo. */}
+      {aba === 'prof' ? <QuadroProfessor topic={topic} lesson={lesson} /> : <QuadroLivre topic={topic} />}
 
       <LessonEditor key={lesson?.generatedAt ?? 'new'} open={editing} onClose={() => setEditing(false)} topic={topic} />
     </section>
@@ -203,6 +253,7 @@ function LessonEditor({ open, onClose, topic }: { open: boolean; onClose: () => 
 
   const save = () => {
     setLesson(topic.id, {
+      ...(l ? { progresso: l.progresso, minis: l.minis } : {}),
       explanation,
       keyPoints: lines(keyPoints),
       videoSearches: lines(videos),
@@ -247,6 +298,8 @@ function LessonEditor({ open, onClose, topic }: { open: boolean; onClose: () => 
   );
 }
 
+const FRASES_DIARIO = ['Assisti e entendi que', 'Não estava entendendo', 'Tentei ler, mas', 'Acho que consegui pegar'];
+
 function NotesPanel({ topic }: { topic: Topic }) {
   const updateTopic = useStudy((s) => s.updateTopic);
   const subject = useStudy((s) => s.subjects.find((x) => x.id === topic.subjectId));
@@ -267,7 +320,7 @@ function NotesPanel({ topic }: { topic: Topic }) {
 
   return (
     <Panel
-      title="Minhas anotações"
+      title="Minhas anotações (diário)"
       actions={
         <Button className="px-2 py-1 text-[10px]" onClick={toObsidian} disabled={saving}>
           <FileDown size={12} /> Obsidian
@@ -275,13 +328,30 @@ function NotesPanel({ topic }: { topic: Topic }) {
       }
       className="flex flex-col"
     >
+      <p className="mb-2 text-xs leading-relaxed text-muted">
+        Este é o seu diário de estudo: escreva <b className="text-fg">o que está fazendo e como está pensando</b>. O professor lê pra te conhecer e te ajudar. Não é a matéria: ele não aprende nem ensina a partir daqui.
+      </p>
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {FRASES_DIARIO.map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => updateTopic(topic.id, { notes: `${topic.notes.trim() ? `${topic.notes.trimEnd()}\n\n` : ''}${f} ` })}
+            className="rounded border border-line px-2 py-1 text-[10px] text-muted hover:border-accent hover:text-fg"
+          >
+            {f}…
+          </button>
+        ))}
+      </div>
       <Textarea
         value={topic.notes}
         onChange={(e) => updateTopic(topic.id, { notes: e.target.value })}
-        placeholder={'Escreva com suas palavras o que entendeu.\nO professor lê isso pra montar a aula e os desafios.'}
-        className="min-h-[320px] flex-1 font-mono text-[13px]"
+        placeholder={
+          'Assisti o vídeo no YouTube e entendi que o x do plano cartesiano é a linha deitada e o y a em pé.\n\nNão estava entendendo como uso número negativo.\n\nTentei ler o artigo, mas não está entrando na cabeça.\n\nAcho que consegui pegar o conceito: posso trocar o x por qualquer número (só os do enunciado).'
+        }
+        className="min-h-[280px] flex-1 font-mono text-[13px]"
       />
-      <p className="mt-2 text-[10px] text-muted">Salva sozinho. Aceita markdown.</p>
+      <p className="mt-2 text-[10px] text-muted">Salva sozinho. Pelo menos umas 2 linhas completam o passo "escrever" da aula.</p>
     </Panel>
   );
 }
@@ -293,7 +363,8 @@ function ExplainPanel({ topic }: { topic: Topic }) {
   const logSession = useStudy((s) => s.logSession);
   const aiOn = useIALigada();
   const { run, loading, error } = useAI();
-  const [text, setText] = useState('');
+  const text = useRascunhos((s) => s.feynman[topic.id] ?? '');
+  const setText = (t: string) => useRascunhos.getState().escreverFeynman(topic.id, t);
   const [review, setReview] = useState<ExplanationReview | null>(null);
   const [done, setDone] = useState<Grade | null>(null);
   const due = !!topic.lastStudiedAt && isDue(topic.review);

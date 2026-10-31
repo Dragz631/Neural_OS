@@ -15,6 +15,8 @@ export interface BoardMeta {
   mapa?: MapaMateria;
   /** Quadro do Prof. A.Ilson deste tópico (um por tópico; aparece também na Lousa). */
   quadroDe?: string;
+  /** Quadro livre do aluno neste tópico (em branco, só dele). */
+  livreDe?: string;
   /** Chaves das aulas já desenhadas aqui (aula nova é desenhada ao lado, uma vez só). */
   desenhados?: string[];
   elementCount: number;
@@ -34,6 +36,8 @@ interface BoardsState {
   /** Acha ou cria o quadro do tópico SEM trocar a lousa ativa da aba Lousa. */
   quadroDoTopico: (topicId: string, nome: string) => string;
   marcarDesenhado: (id: string, chave: string) => void;
+  /** Quadro em branco só do aluno, ao lado do quadro do professor (sem desenho da IA). */
+  quadroLivreDoTopico: (topicId: string, nome: string) => string;
 }
 
 export const useBoards = create<BoardsState>()(
@@ -63,6 +67,14 @@ export const useBoards = create<BoardsState>()(
         const id = newId('lousa');
         const now = new Date().toISOString();
         set((s) => ({ boards: [...s.boards, { id, name: `Quadro: ${nome}`, topicId, quadroDe: topicId, elementCount: 0, createdAt: now, updatedAt: now }] }));
+        return id;
+      },
+      quadroLivreDoTopico: (topicId, nome) => {
+        const existente = get().boards.find((b) => b.livreDe === topicId);
+        if (existente) return existente.id;
+        const id = newId('lousa');
+        const now = new Date().toISOString();
+        set((s) => ({ boards: [...s.boards, { id, name: `Livre: ${nome}`, topicId, livreDe: topicId, elementCount: 0, createdAt: now, updatedAt: now }] }));
         return id;
       },
       marcarDesenhado: (id, chave) =>

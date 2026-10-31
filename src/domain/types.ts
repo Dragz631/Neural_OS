@@ -27,6 +27,17 @@ export interface ReviewState {
   lapses: number; // quantas vezes esqueceu
 }
 
+/** Minidesafio da própria aula: o aluno responde com as palavras dele. */
+export interface MiniAula {
+  id: string;
+  pergunta: string;
+  /** Resposta-modelo, pra conferir quando não há IA. */
+  referencia: string;
+  resposta?: string;
+  /** Acertou (ou quase) na última tentativa. */
+  ok?: boolean;
+}
+
 export interface Lesson {
   explanation: string;
   keyPoints: string[];
@@ -38,6 +49,10 @@ export interface Lesson {
   source: 'ia' | 'manual';
   /** Como o professor escolheu desenhar a aula no quadro (ausente nas aulas antigas). */
   cena?: Cena;
+  /** Passos da aula que a pessoa marcou. A aula só reinicia quando tudo está feito. */
+  progresso?: { leu?: boolean; viuDesenho?: boolean; viuVideos?: boolean };
+  minis?: MiniAula[];
+  concluidaEm?: string;
 }
 
 export interface Topic {

@@ -1,12 +1,14 @@
 import { Play, Volume2, VolumeX, Zap } from 'lucide-react';
-import type { ComponentType } from 'react';
+import { useState, type ComponentType } from 'react';
 import { TIPOS_CARTAO, type Cartao, type TipoCartao } from '../../../domain/cartoes';
 import { toLocalDate } from '../../../domain/dates';
 import { Badge, Button, ErrorNote, Panel } from '../../../components/ui';
 import { cn } from '../../../lib/utils';
 import { useFeed } from '../../../store/feed';
 import { useStudy } from '../../../store/study';
-import { CartaoEscolhaView } from './CartaoEscolhaView';
+import { Fogos } from './jogos/Fogos';
+import { JogoEscolha } from './jogos/JogoEscolha';
+import { temaDoJogo } from './jogos/tema';
 import { CartaoFraseView } from './CartaoFraseView';
 import { CartaoLembraView } from './CartaoLembraView';
 import type { PropsCartao } from './comum';
@@ -15,8 +17,8 @@ import { useRodada } from './useRodada';
 
 // Tipo novo de cartão: registre em domain/cartoes.ts e o componente aqui.
 const COMPONENTES: Record<TipoCartao, ComponentType<PropsCartao<never>>> = {
-  revisao: CartaoEscolhaView,
-  micro: CartaoEscolhaView,
+  revisao: JogoEscolha,
+  micro: JogoEscolha,
   frase: CartaoFraseView,
   lembra: CartaoLembraView,
 };
@@ -88,11 +90,22 @@ function Jogando({
   combo: number;
   pop: { xp: number; chave: number } | null;
 } & Omit<PropsCartao<Cartao>, 'cartao'>) {
-  const topico = useStudy((s) => s.topics.find((t) => t.id === cartao.topicId)?.title);
+  const topicoObj = useStudy((s) => s.topics.find((t) => t.id === cartao.topicId));
+  const materia = useStudy((s) => s.subjects.find((x) => x.id === topicoObj?.subjectId));
+  const topico = topicoObj?.title;
   const Componente = COMPONENTES[cartao.tipo] as ComponentType<PropsCartao<Cartao>>;
+  const [fogos, setFogos] = useState(0);
+  const simbolos = temaDoJogo(materia?.name, materia?.language, topico).simbolos;
+
+  // Acertou: fogos e confete em ASCII por cima do cartão, em qualquer tipo.
+  const responder: PropsCartao<Cartao>['onResponder'] = (acertou, resposta) => {
+    onResponder(acertou, resposta);
+    if (acertou) setFogos(Date.now());
+  };
 
   return (
-    <div className="space-y-3">
+    // key por cartão: cada um "entra" de baixo, como o próximo vídeo de um reels.
+    <div key={cartao.id + indice} className="reel-in relative space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider">
         <div className="flex gap-1" aria-label={`Cartão ${indice + 1} de ${total}`}>
           {Array.from({ length: total }, (_, i) => (
@@ -110,7 +123,8 @@ function Jogando({
           )}
         </span>
       </div>
-      <Componente key={cartao.id + indice} cartao={cartao} onResponder={onResponder} onProximo={onProximo} />
+      <Componente cartao={cartao} onResponder={responder} onProximo={onProximo} />
+      <Fogos chave={fogos} simbolos={simbolos} />
     </div>
   );
 }

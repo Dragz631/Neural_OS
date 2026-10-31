@@ -1,4 +1,4 @@
-import type { Challenge, CodeReview, Lesson, StudySession, Subject, Topic } from '../../domain/types';
+import type { Challenge, CodeReview, Lesson, MiniAula, StudySession, Subject, Topic } from '../../domain/types';
 import type { Retrato } from '../../domain/conhecimento';
 import { aprendizParaIA } from '../../store/aprendiz';
 import { asScore, asString, asStrings, chatJSON, type ChatMessage } from './client';
@@ -20,6 +20,10 @@ export interface TopicContext {
   sessions: StudySession[]; // sessões deste tópico
 }
 
+/** As anotações do aluno dizem quem ele é e onde trava. Nunca são fonte do conteúdo da matéria. */
+export const AVISO_DIARIO =
+  'DIÁRIO DO ALUNO (o que ele diz que entendeu e onde travou). Use só pra saber quem ele é e como ajudar. NÃO é fonte de fato: nunca ensine a partir dele nem o trate como verdade da matéria; se tiver erro, corrija com o que é conhecimento comprovado.';
+
 function describe(ctx: TopicContext, comNotas = true): string {
   const { topic, subject, parents, sessions } = ctx;
   const scores = sessions.filter((s) => s.score !== undefined).slice(-5).map((s) => `${s.kind}: ${s.score}`);
@@ -30,7 +34,7 @@ function describe(ctx: TopicContext, comNotas = true): string {
     parents.length ? `Vem depois de: ${parents.map((p) => p.title).join(' ← ')}` : 'Tópico base (sem pré-requisito cadastrado).',
     `Domínio atual: ${topic.mastery}/100. Esqueceu ${topic.review.lapses} vez(es). Sessões: ${sessions.length}.`,
     scores.length ? `Últimas notas: ${scores.join(', ')}` : 'Ainda sem avaliações.',
-    !comNotas ? '' : notes ? `Anotações do aluno:\n"""\n${notes.slice(0, 4000)}\n"""` : 'O aluno ainda não fez anotações.',
+    !comNotas ? '' : notes ? `${AVISO_DIARIO}\n"""\n${notes.slice(0, 4000)}\n"""` : 'O aluno ainda não fez anotações.',
   ].join('\n');
 }
 
@@ -52,8 +56,10 @@ Formato JSON:
   "keyPoints": ["3 a 6 pontos que o aluno precisa lembrar"],
   "videoSearches": ["2 a 3 termos de busca pro YouTube, em português ou inglês"],
   "whereToResearch": ["2 a 4 fontes: documentação oficial, livro clássico, capítulo, site"],
-  "tips": ["2 a 4 dicas de professor: armadilhas comuns, como estudar isso, como cai em prova"]
-}`,
+  "tips": ["2 a 4 dicas de professor: armadilhas comuns, como estudar isso, como cai em prova"],
+  "minis": [{ "pergunta": "pergunta curta que faz a pessoa explicar/aplicar (não decorar)", "referencia": "resposta-modelo em 1-2 frases" }]
+}
+"minis": exatamente 3, só sobre o que a SUA explicação acima ensina, do mais simples ao mais difícil.`,
       },
     ],
     (raw) => {
@@ -64,12 +70,48 @@ Formato JSON:
         videoSearches: asStrings(o.videoSearches),
         whereToResearch: asStrings(o.whereToResearch),
         tips: asStrings(o.tips),
+        minis: lerMinis(o.minis),
         generatedAt: new Date().toISOString(),
         source: 'ia' as const,
       };
     },
     signal,
   );
+}
+
+function lerMinis(raw: unknown): MiniAula[] {
+  if (!Array.isArray(raw)) return [];
+  const out: MiniAula[] = [];
+  for (const m of raw.slice(0, 3)) {
+    const o = (m ?? {}) as Record<string, unknown>;
+    if (typeof o.pergunta !== 'string' || !o.pergunta.trim()) continue;
+    out.push({ id: `mini-${out.length}-${Date.now().toString(36)}`, pergunta: o.pergunta.trim(), referencia: typeof o.referencia === 'string' ? o.referencia.trim() : '' });
+  }
+  return out;
+}
+
+/** Aulas antigas ou escritas à mão não têm minidesafios: o professor monta a partir da aula. */
+export async function gerarMinis(ctx: TopicContext, lesson: Lesson, signal?: AbortSignal): Promise<MiniAula[]> {
+  const minis = await chatJSON(
+    [
+      sys('Você cria minidesafios curtos que fazem a pessoa explicar ou aplicar o que a aula ensinou.'),
+      {
+        role: 'user',
+        content: `Tópico: ${ctx.topic.title}
+
+AULA:
+${lesson.explanation}
+Pontos-chave: ${lesson.keyPoints.join(' | ')}
+
+Crie exatamente 3 minidesafios, só sobre o que esta aula ensina, do mais simples ao mais difícil. Formato JSON:
+{ "minis": [{ "pergunta": "...", "referencia": "resposta-modelo em 1-2 frases" }] }`,
+      },
+    ],
+    (raw) => lerMinis((raw as Record<string, unknown>).minis),
+    signal,
+  );
+  if (!minis.length) throw new Error('o professor não conseguiu montar os minidesafios, tente de novo');
+  return minis;
 }
 
 export interface ExplanationReview {
