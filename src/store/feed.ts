@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Cartao } from '../domain/cartoes';
+import type { JogoIA } from '../domain/jogoIA';
 import type { LigacaoDoDia } from '../domain/ligacao';
 import type { Id, LocalDate } from '../domain/types';
 
@@ -15,6 +16,10 @@ interface FeedState {
   som: boolean;
   /** Uma por dia (ver domain/ligacao.ts). */
   ligacao?: LigacaoDoDia;
+  /** Jogos que a IA criou, por id de cartão (guarda os mais recentes). `ruim` = quebrou, não usar de novo. */
+  jogos: Record<string, JogoIA & { ruim?: boolean }>;
+  guardarJogo: (cartaoId: string, jogo: JogoIA) => void;
+  marcarJogoRuim: (cartaoId: string) => void;
   guardar: (topicId: Id, cartoes: Cartao[]) => void;
   /** Tira do cache os cartões já respondidos. */
   gastar: (ids: Id[]) => void;
@@ -30,6 +35,15 @@ export const useFeed = create<FeedState>()(
       rodadas: { data: '', n: 0 },
       melhorCombo: 0,
       som: true,
+      jogos: {},
+      guardarJogo: (cartaoId, jogo) =>
+        set((s) => {
+          const todos = { ...s.jogos, [cartaoId]: jogo };
+          // Só os 25 mais novos: o código de cada um pesa uns KB.
+          const ids = Object.keys(todos).sort((a, b) => todos[b].geradoEm.localeCompare(todos[a].geradoEm));
+          return { jogos: Object.fromEntries(ids.slice(0, 25).map((id) => [id, todos[id]])) };
+        }),
+      marcarJogoRuim: (cartaoId) => set((s) => (s.jogos[cartaoId] ? { jogos: { ...s.jogos, [cartaoId]: { ...s.jogos[cartaoId], ruim: true } } } : {})),
       guardar: (topicId, cartoes) => set((s) => ({ cache: { ...s.cache, [topicId]: cartoes } })),
       gastar: (ids) =>
         set((s) => {

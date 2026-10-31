@@ -4,6 +4,8 @@ import { cartoesSemIA } from '../../../domain/cartoesSemIA';
 import { toLocalDate } from '../../../domain/dates';
 import { useAI } from '../../../hooks/useAI';
 import { gerarCartoes } from '../../../services/ai/cartoes';
+import { gerarJogo } from '../../../services/ai/jogos';
+import { temaDoJogo } from './jogos/tema';
 import { sons } from '../../../services/sons';
 import { useFeed } from '../../../store/feed';
 import { useImportacao } from '../../../store/importacao';
@@ -33,8 +35,30 @@ function respostaCerta(c: Cartao): string | undefined {
   return `${c.opcoes[c.certa]}${c.explicacao ? ` (${c.explicacao})` : ''}`;
 }
 
+/** Quanto a tela de "preparando" espera o jogo do 1º cartão antes de começar sem ele. */
+const ESPERA_PRIMEIRO_JOGO_MS = 45_000;
+
+/** Pede à IA o jogo deste cartão (só múltipla escolha). undefined = nada a fazer. Nunca lança. */
+function jogoPara(c: Cartao): Promise<void> | undefined {
+  if (c.tipo !== 'revisao' && c.tipo !== 'micro') return undefined;
+  const feed = useFeed.getState();
+  if (feed.jogos[c.id]) return undefined;
+  const estudo = useStudy.getState();
+  const topico = estudo.topics.find((t) => t.id === c.topicId);
+  const materia = estudo.subjects.find((s) => s.id === topico?.subjectId);
+  const tema = temaDoJogo(materia?.name, materia?.language, topico?.title);
+  const recentes = Object.values(feed.jogos)
+    .sort((a, b) => b.geradoEm.localeCompare(a.geradoEm))
+    .slice(0, 6)
+    .map((j) => j.nome);
+  return gerarJogo({ cartao: c, materia: materia?.name ?? '', topico: topico?.title ?? '', chefe: tema.chefe, simbolos: tema.simbolos, recentes })
+    .then((j) => useFeed.getState().guardarJogo(c.id, j))
+    .catch(() => undefined);
+}
+
 export function useRodada() {
   const ia = useAI();
+  const [criandoJogo, setCriandoJogo] = useState(false);
   const { herdadasPara } = useFontesSemana();
   const [fase, setFase] = useState<Fase>('parado');
   const [cartoes, setCartoes] = useState<Cartao[]>([]);
@@ -63,6 +87,18 @@ export function useRodada() {
 
     const cache = useFeed.getState().cache;
     const rodada = montarRodada(ordem, (t) => (cache[t.id]?.length ? cache[t.id] : cartoesSemIA(t)));
+    // Cada pergunta ganha um jogo criado pela IA. O 1º a gente espera um pouco (a pessoa vai vê-lo
+    // já); os outros saem enquanto ela joga. Se não ficar pronto, o cartão usa um jogo embutido.
+    if (rodada.length && iaLigada(useConexoes.getState().motores)) {
+      const primeiro = jogoPara(rodada[0]);
+      if (primeiro) {
+        setCriandoJogo(true);
+        await Promise.race([primeiro, new Promise<void>((ok) => setTimeout(ok, ESPERA_PRIMEIRO_JOGO_MS))]);
+        setCriandoJogo(false);
+      }
+      void rodada.slice(1).reduce((fila, c) => fila.then(() => jogoPara(c) ?? undefined), Promise.resolve());
+    }
+
     setCartoes(rodada);
     setIndice(0);
     setCombo(0);
@@ -117,5 +153,5 @@ export function useRodada() {
     else fechar();
   };
 
-  return { fase, cartao: cartoes[indice], indice, total: cartoes.length, combo, maiorCombo, resultados, pop, comecar, responder, proximo, carregando: ia.loading, erro: ia.error };
+  return { fase, cartao: cartoes[indice], indice, total: cartoes.length, combo, maiorCombo, resultados, pop, comecar, responder, proximo, carregando: ia.loading, criandoJogo, erro: ia.error };
 }

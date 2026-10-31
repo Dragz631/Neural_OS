@@ -2,15 +2,43 @@
 // comparação, mapa, linha do tempo...) e o código só faz o desenho. O professor
 // nunca dá coordenada: dá linha e coluna de uma grade pequena; o resto é cálculo.
 
+import { compilarExpressao } from './expressao';
+
 export const ESTILOS_CENA = ['fluxo', 'estados', 'passos', 'comparar', 'mapa', 'camadas', 'linha-do-tempo', 'livre'] as const;
 export type EstiloCena = (typeof ESTILOS_CENA)[number];
 
-export const TIPOS_CENA = ['caixa', 'losango', 'estado', 'estado-final', 'nota', 'texto', 'formula', 'destaque'] as const;
+export const TIPOS_CENA = ['caixa', 'losango', 'estado', 'estado-final', 'nota', 'texto', 'formula', 'destaque', 'grafico'] as const;
 export type TipoCena = (typeof TIPOS_CENA)[number];
 
 /** O papel decide a cor: a pessoa aprende a "ler" o quadro pela cor. */
 export const PAPEIS_CENA = ['conceito', 'exemplo', 'erro', 'dica', 'resultado', 'passo', 'entrada', 'saida', 'neutro'] as const;
 export type PapelCena = (typeof PAPEIS_CENA)[number];
+
+/**
+ * Plano cartesiano estilo Desmos: o professor escolhe a janela e escreve as funções
+ * ("y = x^2 - 4", "sin(x)", "x = 3") e os pontos; o código calcula e desenha.
+ */
+export interface FuncaoGrafico {
+  expr: string;
+  rotulo?: string;
+  papel?: PapelCena;
+  tracejada?: boolean;
+}
+export interface PontoGrafico {
+  x: number;
+  y: number;
+  rotulo?: string;
+  papel?: PapelCena;
+}
+export interface Grafico {
+  xmin: number;
+  xmax: number;
+  /** Sem janela vertical: o desenho calcula a partir das funções. */
+  ymin?: number;
+  ymax?: number;
+  funcoes: FuncaoGrafico[];
+  pontos: PontoGrafico[];
+}
 
 export interface ElementoCena {
   id: string;
@@ -19,6 +47,8 @@ export interface ElementoCena {
   papel: PapelCena;
   linha?: number;
   coluna?: number;
+  /** Só quando tipo = "grafico". */
+  grafico?: Grafico;
 }
 
 export interface LigacaoCena {
@@ -48,6 +78,40 @@ const MAX_TEXTO = 140;
 
 const noArray = <T extends string>(lista: readonly T[], v: unknown, padrao: T): T => (lista.includes(v as T) ? (v as T) : padrao);
 const nat = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 8 ? Math.round(v) : undefined);
+const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 1e6 ? v : undefined);
+
+/** Lê o gráfico do professor; null se não sobrou nada pra desenhar. */
+function lerGrafico(bruto: unknown): Grafico | null {
+  if (!bruto || typeof bruto !== 'object') return null;
+  const g = bruto as Record<string, unknown>;
+  const funcoes: FuncaoGrafico[] = [];
+  for (const f of (Array.isArray(g.funcoes) ? g.funcoes : []).slice(0, 4)) {
+    const o = typeof f === 'string' ? { expr: f } : (f as Record<string, unknown> | null);
+    if (!o || typeof o.expr !== 'string' || !compilarExpressao(o.expr)) continue; // não entendeu a conta: ignora em vez de desenhar errado
+    funcoes.push({
+      expr: o.expr.trim().slice(0, 120),
+      rotulo: typeof o.rotulo === 'string' && o.rotulo.trim() ? o.rotulo.trim().slice(0, 40) : undefined,
+      papel: o.papel ? noArray(PAPEIS_CENA, o.papel, 'conceito') : undefined,
+      tracejada: o.tracejada === true || o.estilo === 'tracejada',
+    });
+  }
+  const pontos: PontoGrafico[] = [];
+  for (const p of (Array.isArray(g.pontos) ? g.pontos : []).slice(0, 8)) {
+    const o = (p ?? {}) as Record<string, unknown>;
+    const x = num(o.x);
+    const y = num(o.y);
+    if (x === undefined || y === undefined) continue;
+    pontos.push({ x, y, rotulo: typeof o.rotulo === 'string' && o.rotulo.trim() ? o.rotulo.trim().slice(0, 24) : undefined, papel: o.papel ? noArray(PAPEIS_CENA, o.papel, 'resultado') : undefined });
+  }
+  if (funcoes.length === 0 && pontos.length === 0) return null;
+  let xmin = num(g.xmin) ?? -6;
+  let xmax = num(g.xmax) ?? 6;
+  if (!(xmin < xmax)) [xmin, xmax] = [-6, 6];
+  let ymin = num(g.ymin);
+  let ymax = num(g.ymax);
+  if (ymin === undefined || ymax === undefined || !(ymin < ymax)) ymin = ymax = undefined;
+  return { xmin, xmax, ymin, ymax, funcoes, pontos };
+}
 
 /** Aceita o JSON do professor e devolve uma cena segura, ou null se não dá pra desenhar nada. */
 export function lerCena(bruto: unknown): Cena | null {
@@ -59,12 +123,15 @@ export function lerCena(bruto: unknown): Cena | null {
   for (const x of lista.slice(0, MAX_ELEMENTOS)) {
     if (!x || typeof x !== 'object') continue;
     const e = x as Record<string, unknown>;
-    const texto = typeof e.texto === 'string' ? e.texto.trim().slice(0, MAX_TEXTO) : '';
+    const ehGrafico = e.tipo === 'grafico';
+    const grafico = ehGrafico ? lerGrafico(e.grafico) : null;
+    if (ehGrafico && !grafico) continue;
+    const texto = typeof e.texto === 'string' ? e.texto.trim().slice(0, MAX_TEXTO) : ehGrafico ? 'Gráfico' : '';
     if (!texto) continue;
     let id = typeof e.id === 'string' && e.id.trim() ? e.id.trim() : `e${elementos.length}`;
     if (ids.has(id)) id = `${id}-${elementos.length}`;
     ids.add(id);
-    elementos.push({ id, tipo: noArray(TIPOS_CENA, e.tipo, 'caixa'), texto, papel: noArray(PAPEIS_CENA, e.papel, 'neutro'), linha: nat(e.linha), coluna: nat(e.coluna) });
+    elementos.push({ id, tipo: noArray(TIPOS_CENA, e.tipo, 'caixa'), texto, papel: noArray(PAPEIS_CENA, e.papel, 'neutro'), linha: nat(e.linha), coluna: nat(e.coluna), ...(grafico ? { grafico } : {}) });
   }
   if (elementos.length < 2) return null;
   const ligacoes: LigacaoCena[] = [];

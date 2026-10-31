@@ -51,7 +51,13 @@ Escolha o MELHOR jeito de desenhar ISTO (não force um modelo fixo):
 - livre: combine o que precisar.
 Regras:
 1. De 4 a 10 elementos, textos CURTOS (até 8 palavras). Quem tem dificuldade de ler precisa entender pelo desenho.
-2. "tipo": caixa | losango | estado | estado-final | nota | texto | formula | destaque.
+2. "tipo": caixa | losango | estado | estado-final | nota | texto | formula | destaque | grafico.
+   "grafico" é um plano cartesiano estilo Desmos, pra funções, geometria analítica, estatística, física, qualquer coisa que se entenda VENDO a curva ou os pontos. Use quando um gráfico mostra o que o texto só diz. Formato do elemento:
+   {"id":"g","tipo":"grafico","texto":"Parábola e suas raízes","papel":"conceito","linha":0,"coluna":0,
+    "grafico":{"xmin":-5,"xmax":5,"ymin":-6,"ymax":10,
+      "funcoes":[{"expr":"x^2 - 4","rotulo":"y = x² − 4","papel":"conceito"},{"expr":"2x","papel":"exemplo","tracejada":true}],
+      "pontos":[{"x":-2,"y":0,"rotulo":"raiz"},{"x":2,"y":0,"rotulo":"raiz"}]}}
+   "expr" aceita: + - * / ^ ( ), x, pi, e, sin cos tan sqrt abs ln log exp, multiplicação implícita (2x, 3(x+1)) e "x = 3" pra reta vertical. SÓ a variável x (nada de a, b, k: troque por números). "ymin"/"ymax" são opcionais (se faltarem, a janela se ajusta). Até 4 funções e 8 pontos por gráfico. Pode misturar gráfico com caixas, fórmulas e notas na mesma cena.
 3. "papel" decide a cor: conceito | exemplo | erro | dica | resultado | passo | entrada | saida | neutro. Use "erro" pro erro comum, "dica" pro truque, "resultado" pra resposta final.
 4. "linha" e "coluna" são números de 0 a 4 numa grade. Elementos em sequência vertical ficam na mesma coluna; lado a lado, na mesma linha.
 5. "ligacoes": setas de um id pra outro. "rotulo" diz o que acontece na seta (opcional). "estilo": "tracejada" quando é só relação.

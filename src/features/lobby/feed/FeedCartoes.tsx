@@ -44,7 +44,7 @@ export function FeedCartoes() {
       }
     >
       {r.fase === 'parado' && <Inicio onComecar={r.comecar} />}
-      {r.fase === 'carregando' && <p className="py-10 text-center text-sm text-muted">{r.carregando ? 'O professor está preparando os cartões…' : 'Montando a rodada…'}</p>}
+      {r.fase === 'carregando' && <p className="py-10 text-center text-sm text-muted">{r.criandoJogo ? 'A IA está inventando o jogo da 1ª pergunta… (os outros saem enquanto você joga)' : r.carregando ? 'O professor está preparando os cartões…' : 'Montando a rodada…'}</p>}
       {r.fase === 'vazio' && <Vazio />}
       {r.fase === 'jogando' && r.cartao && (
         <Jogando cartao={r.cartao} indice={r.indice} total={r.total} combo={r.combo} pop={r.pop} onResponder={r.responder} onProximo={r.proximo} />

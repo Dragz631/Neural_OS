@@ -1,8 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import type { CartaoEscolha } from '../../../../domain/cartoes';
+import { useFeed } from '../../../../store/feed';
 import { useStudy } from '../../../../store/study';
 import { cn } from '../../../../lib/utils';
+import { JogoIACard } from './JogoIACard';
 import { CartaoEscolhaView } from '../CartaoEscolhaView';
 import { BotaoProximo, type PropsCartao } from '../comum';
 import { semMovimento, useQuadros, useTeclas } from './ascii';
@@ -21,6 +23,24 @@ export const jogoDoCartao = (c: CartaoEscolha): Jogo => JOGOS[hashTexto(c.id) % 
 export const CLASSE_ASCII = 'm-0 select-none whitespace-pre font-mono text-[13px] leading-[1.1]';
 
 export function JogoEscolha(props: PropsCartao<CartaoEscolha>) {
+  // Jogo criado pela IA pra esta pergunta? Decide na hora que o cartão aparece (não troca no meio da partida).
+  const [daIA] = useState(() => {
+    const j = useFeed.getState().jogos[props.cartao.id];
+    return j && !j.ruim ? j : undefined;
+  });
+  const [falhou, setFalhou] = useState(false);
+  if (daIA && !falhou) {
+    return (
+      <JogoIACard
+        {...props}
+        jogo={daIA}
+        onFalhou={() => {
+          useFeed.getState().marcarJogoRuim(props.cartao.id);
+          setFalhou(true);
+        }}
+      />
+    );
+  }
   const jogo = jogoDoCartao(props.cartao);
   // O quiz clássico (com fogos por cima) é o próprio cartão de sempre.
   if (jogo === 'quiz') return <CartaoEscolhaView {...props} />;
