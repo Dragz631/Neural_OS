@@ -53,8 +53,8 @@ function CheckinCard() {
 
   return (
     <Panel title={`Hoje (${WEEKDAYS[(new Date().getDay() + 6) % 7]}, ${formatShort(today)}): como você está?`}>
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="min-w-0 space-y-3">
           <div>
             <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted">Energia</p>
             <div className="flex flex-wrap gap-2">

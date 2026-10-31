@@ -88,7 +88,7 @@ export default function Professor() {
         <Empty>Escolha um tópico (ou crie um) pra o Prof. A.Ilson preparar o quadro.</Empty>
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
             <Blackboard key={topic.id} topic={topic} />
             <div className="space-y-4">
               <NotesPanel topic={topic} />
@@ -187,7 +187,7 @@ function Blackboard({ topic }: { topic: Topic }) {
     });
 
   return (
-    <section className="rounded border-4 border-line bg-panel-2 p-5 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]">
+    <section className="min-w-0 rounded border-4 border-line bg-panel-2 p-3 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)] md:p-5">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <div className="flex items-center gap-3">
           <Orbe estado={loading ? 'thinking' : 'idle'} tamanho={64} />
@@ -196,7 +196,7 @@ function Blackboard({ topic }: { topic: Topic }) {
             <h2 className="text-xl font-bold text-fg">{topic.title}</h2>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={generate} disabled={!aiOn || loading} title={aiOn ? '' : 'Ative a IA nas configurações'}>
             <Sparkles size={14} /> {loading ? 'Escrevendo…' : lesson ? 'Reescrever com IA' : 'Gerar aula com IA'}
           </Button>

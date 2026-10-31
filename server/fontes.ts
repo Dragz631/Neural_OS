@@ -39,6 +39,12 @@ export function registrarFontes(server: ViteDevServer, raiz: string) {
     responder(res, 200, nlm.statusLogin());
   });
 
+  // Botão "Instalar o NotebookLM": POST começa (ou continua), GET diz em que passo está.
+  server.middlewares.use('/api/notebooklm/instalar', async (req, res) => {
+    if (req.method === 'POST') nlm.instalar();
+    responder(res, 200, nlm.statusInstalacao());
+  });
+
   server.middlewares.use('/api/fontes', async (req, res) => {
     const forcar = (req.url ?? '').includes('forcar=1');
     const notion = await (async () => {
@@ -51,10 +57,13 @@ export function registrarFontes(server: ViteDevServer, raiz: string) {
         return { conectado: false, erro: erroDe(e) };
       }
     })();
-    const notebooklm = await nlm
-      .cadernos(forcar)
-      .then((cadernos) => ({ conectado: true, cadernos }))
-      .catch((e) => ({ conectado: false, erro: erroDe(e) }));
+    const instalado = await nlm.instalado();
+    const notebooklm = instalado
+      ? await nlm
+          .cadernos(forcar)
+          .then((cadernos) => ({ instalado, conectado: true, cadernos }))
+          .catch((e) => ({ instalado, conectado: false, erro: erroDe(e) }))
+      : { instalado, conectado: false, erro: 'O NotebookLM ainda não está instalado neste PC.' };
     responder(res, 200, { notion, notebooklm });
   });
 

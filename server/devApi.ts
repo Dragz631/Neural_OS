@@ -4,6 +4,7 @@ import type { IncomingMessage } from 'node:http';
 import type { Plugin } from 'vite';
 import { registrarConexoes } from './conexoes/rotas.ts';
 import { registrarFontes } from './fontes.ts';
+import { criarPastas, registrarPastas } from './pastas.ts';
 
 // ─── "Backend" mínimo que roda dentro do servidor do Vite ────────────────────
 // 1) IA: o navegador pede por MOTOR (/ai/motor/<leve|professor|dificil>) e o
@@ -49,9 +50,16 @@ function inside(root: string, rel: string): string | null {
 const ESTUDOS_EXT = ['.excalidraw', '.json', '.md'];
 
 export function devApi(env: DevApiEnv): Plugin {
-  const vaultRoot = env.OBSIDIAN_VAULT_PATH ? path.resolve(env.OBSIDIAN_VAULT_PATH, 'Neural-OS') : undefined;
-  const estudosBase = env.ESTUDOS_VAULT_PATH || env.OBSIDIAN_VAULT_PATH;
-  const estudosRoot = estudosBase ? path.resolve(estudosBase) : undefined;
+  // O cofre pode mudar a qualquer momento (botão "Escolher pasta" no app), então é relido a cada pedido.
+  const pastas = criarPastas(path.resolve(import.meta.dirname, '..'), env.OBSIDIAN_VAULT_PATH);
+  const vaultRootAtual = async () => {
+    const c = await pastas.cofre();
+    return c ? path.resolve(c, 'Neural-OS') : undefined;
+  };
+  const estudosRootAtual = async () => {
+    const base = env.ESTUDOS_VAULT_PATH || (await pastas.cofre());
+    return base ? path.resolve(base) : undefined;
+  };
   const excalidrawAssets = path.resolve(import.meta.dirname, '../node_modules/@excalidraw/excalidraw/dist/prod');
 
   return {
@@ -59,8 +67,10 @@ export function devApi(env: DevApiEnv): Plugin {
     configureServer(server) {
       registrarConexoes(server, path.resolve(import.meta.dirname, '..'));
       registrarFontes(server, path.resolve(import.meta.dirname, '..'));
+      registrarPastas(server, pastas);
 
-      server.middlewares.use('/api/vault/status', (_req, res) => {
+      server.middlewares.use('/api/vault/status', async (_req, res) => {
+        const vaultRoot = await vaultRootAtual();
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ configured: !!vaultRoot, folder: vaultRoot }));
       });
@@ -84,6 +94,7 @@ export function devApi(env: DevApiEnv): Plugin {
       // Mapas de matéria gerados pelo Claude a pedido do Hugo (um .json por matéria).
       server.middlewares.use('/api/estudos/mapas', async (_req, res) => {
         res.setHeader('Content-Type', 'application/json');
+        const estudosRoot = await estudosRootAtual();
         if (!estudosRoot) return res.end('[]');
         const pasta = path.join(estudosRoot, 'Neural-OS', 'import', 'mapas');
         try {
@@ -107,6 +118,7 @@ export function devApi(env: DevApiEnv): Plugin {
       // pede e grava esses dois arquivos; o app só lê (ver domain/importacao.ts).
       server.middlewares.use('/api/estudos/import', async (_req, res) => {
         res.setHeader('Content-Type', 'application/json');
+        const estudosRoot = await estudosRootAtual();
         const ler = async (arquivo: string) => {
           if (!estudosRoot) return null;
           try {
@@ -123,9 +135,10 @@ export function devApi(env: DevApiEnv): Plugin {
           res.statusCode = 405;
           return res.end('Use POST');
         }
+        const estudosRoot = await estudosRootAtual();
         if (!estudosRoot) {
           res.statusCode = 400;
-          return res.end('ESTUDOS_VAULT_PATH não configurado no .env.local');
+          return res.end('Nenhum cofre escolhido. Abra "Conectar fontes" e escolha a pasta do seu cofre.');
         }
         try {
           const body = (await readJson(req, MAX_FILE_BODY)) as { path?: unknown; content?: unknown };
@@ -152,9 +165,10 @@ export function devApi(env: DevApiEnv): Plugin {
           res.statusCode = 405;
           return res.end('Use POST');
         }
+        const vaultRoot = await vaultRootAtual();
         if (!vaultRoot) {
           res.statusCode = 400;
-          return res.end('OBSIDIAN_VAULT_PATH não configurado no .env.local');
+          return res.end('Nenhum cofre escolhido. Abra "Conectar fontes" e escolha a pasta do seu cofre.');
         }
         try {
           const body = (await readJson(req)) as { path?: unknown; content?: unknown };

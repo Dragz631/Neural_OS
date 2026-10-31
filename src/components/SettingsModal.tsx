@@ -6,7 +6,7 @@ import { useConexoes } from '../store/conexoes';
 import { useSettings } from '../store/settings';
 import { gerarBackup, restaurarBackup } from '../store/backup';
 import { toast } from '../store/toast';
-import { SecaoFontes } from './SecaoFontes';
+import { useUI } from '../store/ui';
 import { Badge, Button, Label, Modal } from './ui';
 
 export function SettingsModal({ open, onClose, onConexoes }: { open: boolean; onClose: () => void; onConexoes: () => void }) {
@@ -59,20 +59,27 @@ export function SettingsModal({ open, onClose, onConexoes }: { open: boolean; on
           </label>
         </section>
 
-        <SecaoFontes onConexoes={onConexoes} />
-
         <section className="space-y-2 border-t border-line pt-4">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-fg">Obsidian</h3>
-          {vault?.configured ? (
-            <p className="text-xs text-muted">
-              <Badge color="var(--color-accent)">conectado</Badge> <span className="break-all">{vault.folder}</span>
-            </p>
-          ) : (
-            <p className="text-xs leading-relaxed text-muted">
-              <Badge color="var(--color-warn)">desligado</Badge> Coloque <code>OBSIDIAN_VAULT_PATH</code> no <code>.env.local</code> (veja o <code>.env.example</code>) e reinicie o
-              servidor.
-            </p>
-          )}
+          <h3 className="text-xs font-bold uppercase tracking-widest text-fg">Fontes (Obsidian, Notion, NotebookLM, pastas)</h3>
+          <p className="text-xs leading-relaxed text-muted">
+            {vault?.configured ? (
+              <>
+                <Badge color="var(--color-accent)">Obsidian conectado</Badge> <span className="break-all">{vault.folder}</span>
+              </>
+            ) : (
+              <>
+                <Badge color="var(--color-warn)">Obsidian desligado</Badge> Tudo é opcional e guiado, sem mexer em arquivo nenhum.
+              </>
+            )}
+          </p>
+          <Button
+            onClick={() => {
+              onClose();
+              useUI.getState().abrir('fontes');
+            }}
+          >
+            Conectar fontes
+          </Button>
         </section>
 
         <section className="space-y-2 border-t border-line pt-4">

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Cpu, Palette, Settings, Zap } from 'lucide-react';
+import { Cpu, Link2, Palette, Settings, Zap } from 'lucide-react';
 import { levelFromXp } from '../domain/xp';
 import { TABS, useNav } from '../store/nav';
 import { useConexoes } from '../store/conexoes';
 import { useStudy } from '../store/study';
+import { useUI } from '../store/ui';
 import { cn } from '../lib/utils';
 import { ConexoesModal } from './conexoes/ConexoesModal';
+import { ConectarFontes } from './fontes/ConectarFontes';
 import { SettingsModal } from './SettingsModal';
 import { TemaModal } from './TemaModal';
 
@@ -15,7 +17,10 @@ export function Navbar() {
   const professor = useConexoes((s) => s.conexoes.find((c) => c.id === (s.motores.professor ?? s.motores.dificil ?? s.motores.leve)));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [conexoesOpen, setConexoesOpen] = useState(false);
-  const [temaOpen, setTemaOpen] = useState(false);
+  const painel = useUI((s) => s.painel);
+  const abrirPainel = useUI((s) => s.abrir);
+  const fecharPainel = useUI((s) => s.fechar);
+  const temaOpen = painel === 'tema';
 
   // Lê do servidor quais motores estão ligados (uma vez, ao abrir o app).
   useEffect(() => {
@@ -65,7 +70,17 @@ export function Navbar() {
             <Cpu size={12} className={professor ? 'text-accent' : ''} />
             <span className="hidden sm:inline">{professor?.nome ?? 'Conectar modelo'}</span>
           </button>
-          <button type="button" onClick={() => setTemaOpen(true)} aria-label="Aparência" title="Aparência: cores, letras e efeitos" className="rounded border border-line p-1.5 text-muted hover:border-accent hover:text-accent">
+          <button
+            type="button"
+            onClick={() => abrirPainel('fontes')}
+            aria-label="Conectar fontes"
+            title="Conectar fontes: Obsidian, Notion, NotebookLM e outras pastas"
+            className="flex items-center gap-1.5 rounded border border-line px-2 py-1 text-muted hover:border-accent hover:text-accent"
+          >
+            <Link2 size={12} />
+            <span className="hidden sm:inline">Fontes</span>
+          </button>
+          <button type="button" onClick={() => abrirPainel('tema')} aria-label="Aparência" title="Aparência: cores, letras e efeitos" className="rounded border border-line p-1.5 text-muted hover:border-accent hover:text-accent">
             <Palette size={12} />
           </button>
           <button type="button" onClick={() => setSettingsOpen(true)} aria-label="Configurações" className="rounded border border-line p-1.5 text-muted hover:border-accent hover:text-accent">
@@ -82,7 +97,8 @@ export function Navbar() {
         }}
       />
       <ConexoesModal open={conexoesOpen} onClose={() => setConexoesOpen(false)} />
-      <TemaModal open={temaOpen} onClose={() => setTemaOpen(false)} />
+      <TemaModal open={temaOpen} onClose={fecharPainel} />
+      <ConectarFontes open={painel === 'fontes'} onClose={fecharPainel} />
     </nav>
   );
 }

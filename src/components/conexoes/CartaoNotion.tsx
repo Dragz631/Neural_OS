@@ -44,7 +44,7 @@ export function CartaoNotion() {
         <span className="ml-auto text-[11px] text-muted">{temNotion ? 'chave ✓' : 'não conectado'}</span>
       </div>
       <p className="text-[11px] text-muted">
-        Lê a grade, as disciplinas, provas, trabalhos e o Dashboard Study. Só escreve nas notas que o professor cria (caminhos de estudo e a grade dele). Precisa da chave de uma integração interna, compartilhada com "Faculdade CC - 2026" e "Dashboard Study".
+        Lê as páginas do Notion que você liberar (matérias, provas, trabalhos) e só escreve nas notas que o professor cria. Precisa da chave de uma integração interna sua. Prefere o passo a passo? Use <b className="text-fg">Fontes</b> na barra do topo.
       </p>
       <div className="flex gap-2">
         <Input type="password" autoComplete="off" value={chave} onChange={(e) => setChave(e.target.value)} placeholder={temNotion ? 'configurada ✓ (cole outra pra trocar)' : 'cole o API token da conexão interna'} aria-label="Chave do Notion" />

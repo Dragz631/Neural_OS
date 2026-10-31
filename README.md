@@ -50,8 +50,10 @@ Quando o passo 3 estiver rodando sem erro, **pare** e mostre exatamente esta men
 >
 > 1. Abra no navegador: **http://localhost:5173**
 > 2. Na primeira vez o app está vazio de propósito. Clique em **"Criar a primeira matéria e tópico"** e escreva o que você está estudando (por exemplo: "Cálculo", "C#", "Inglês").
-> 3. **Opcional, para a IA funcionar:** clique em ⚙ (canto superior direito) → **Conexões** → escolha um provedor, cole a sua chave **direto no app** (não no chat) e aperte **Testar conexão**.
-> 4. Deixe o terminal aberto enquanto estuda. Para parar, aperte `Ctrl + C` no terminal.
+> 3. **Opcional, para a IA funcionar:** clique no botão do modelo (topo, ao lado de "Fontes") → escolha um provedor, cole a sua chave **direto no app** (não no chat) e aperte **Testar conexão**.
+> 4. **Opcional, para o professor ler as suas notas:** clique em **Fontes** (topo). Cada cartão diz o que fazer agora (Obsidian, Notion, NotebookLM e outras pastas).
+> 5. O visual é seu: no botão de paleta (topo) você muda cores, letras e efeitos.
+> 6. Deixe o terminal aberto enquanto estuda. Para parar, aperte `Ctrl + C` no terminal.
 >
 > Se algo der errado, me mande a mensagem de erro que aparece no terminal.
 
@@ -86,13 +88,19 @@ Abra http://localhost:5173. Na primeira vez o app está vazio de propósito: ele
 - **Seus dados e suas chaves são seus:** ninguém recebe o que você estuda, e as chaves nunca saem do seu `.env.local`.
 - O app roda só neste computador (`localhost`). Não abra a porta pra rede: o servidor guarda as suas chaves de IA.
 
-### Configurar IA e Obsidian
+### Conectar IA e fontes (tudo guiado dentro do app)
 
-1. Copie `.env.example` para `.env.local` e preencha o que for usar (ou deixe que o próprio app grave as chaves).
-2. Reinicie o `npm run dev`.
-3. No app: ⚙ (canto superior direito) → escolha o provedor → 🔄 buscar modelos → **Testar conexão**.
+Nada exige editar arquivo nem abrir terminal:
 
-As chaves ficam só no `.env.local` (fora do git). O navegador chama `/ai/<provedor>` e o servidor do Vite repassa com a chave (`server/devApi.ts`).
+- **IA:** botão do modelo, no topo (ou ⚙ → Conexões) → escolha o provedor → cole a chave → **Testar conexão**.
+- **Fontes:** botão **Fontes**, no topo. Cada cartão diz o que fazer agora:
+  - **Obsidian:** "Escolher a pasta do meu cofre" abre a janela do sistema e você navega até a pasta.
+  - **Outras pastas de estudo:** "Adicionar uma pasta" (o app só lê `.md` e `.txt`, nunca escreve nelas).
+  - **Notion:** passo a passo para criar a sua integração e liberar as páginas.
+  - **NotebookLM:** "Instalar" (precisa de Python 3.10+) e depois "Entrar no Google".
+- **Aparência:** botão de paleta, no topo. O tema padrão é o do Neural-OS; você muda cores, letras e efeitos, ou importa o tema de um amigo (arquivo `.json`).
+
+As chaves ficam só no `.env.local` (fora do git); o navegador nunca as vê. O servidor do Vite repassa os pedidos de IA com a chave (`server/devApi.ts`). As escolhas de pasta ficam em `fontes.local.json` (também fora do git).
 
 ### Como as abas se conectam
 

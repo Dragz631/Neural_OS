@@ -38,14 +38,27 @@ export function criarNotebookLM(raiz: string, env: () => Promise<Record<string, 
   };
   const gravarCache = async () => cache && fs.writeFile(cachePath, JSON.stringify(cache), 'utf8');
 
-  /** Onde estão a CLI, o python dela e os navegadores (dá pra trocar no .env.local). */
+  const noWindows = process.platform === 'win32';
+  const dentro = (pasta: string, nome: string) => path.join(pasta, noWindows ? 'Scripts' : 'bin', noWindows ? `${nome}.exe` : nome);
+  const existe = (p: string) => fs.access(p).then(() => true, () => false);
+
+  /**
+   * Onde estão a CLI, o python dela e os navegadores. Ordem: o que estiver no .env.local;
+   * a pasta `.notebooklm-venv` dentro do projeto (o botão "Instalar" cria ela); e, por último,
+   * o layout antigo do Hugo (3 pastas acima do projeto).
+   */
   const caminhos = async () => {
     const e = await env();
-    const pasta = e.NOTEBOOKLM_VENV || path.resolve(raiz, '..', '..', '..', '.notebooklm-venv');
-    const navegadores = e.PLAYWRIGHT_BROWSERS_PATH || path.resolve(raiz, '..', '..', '..', '.playwright-browsers');
+    const local = path.join(raiz, '.notebooklm-venv');
+    const antigo = path.resolve(raiz, '..', '..', '..', '.notebooklm-venv');
+    const pasta = e.NOTEBOOKLM_VENV || ((await existe(dentro(local, 'notebooklm'))) ? local : (await existe(dentro(antigo, 'notebooklm'))) ? antigo : local);
+    const navegadores = e.PLAYWRIGHT_BROWSERS_PATH || (pasta === antigo ? path.resolve(raiz, '..', '..', '..', '.playwright-browsers') : path.join(raiz, '.playwright-browsers'));
     return {
-      bin: path.join(pasta, 'Scripts', 'notebooklm.exe'),
-      python: path.join(pasta, 'Scripts', 'python.exe'),
+      pasta,
+      local,
+      navegadores,
+      bin: dentro(pasta, 'notebooklm'),
+      python: dentro(pasta, 'python'),
       perfil: path.join(os.homedir(), '.notebooklm', 'profiles', 'default', 'browser_profile'),
       // HEADLESS_REAUTH: quando o acesso vence, a lib tenta renovar sozinha usando a
       // sessão do Google guardada no perfil dela (sem abrir janela).
@@ -112,6 +125,60 @@ export function criarNotebookLM(raiz: string, env: () => Promise<Record<string, 
     });
   };
 
+  // ── Instalação guiada (botão "Instalar o NotebookLM") ──────────────────────
+  // Cria um ambiente Python só do app dentro do projeto (.notebooklm-venv), instala a
+  // biblioteca e baixa o navegador que ela usa pro login. Nada fora dessa pasta é mexido.
+  type Instalacao = { fase: 'parado' | 'rodando' | 'pronto' | 'erro'; passo?: string; passoN?: number; total: number; erro?: string };
+  let instalacao: Instalacao = { fase: 'parado', total: 4 };
+
+  const executar = (cmd: string, args: string[], extra: { env?: NodeJS.ProcessEnv; timeout?: number } = {}) =>
+    new Promise<string>((ok, falha) =>
+      execFile(cmd, args, { timeout: extra.timeout ?? 10 * 60_000, windowsHide: true, maxBuffer: 20_000_000, env: extra.env ?? process.env, encoding: 'utf8' }, (erro, stdout, stderr) => {
+        if (erro) return falha(Object.assign(new Error((stderr || erro.message).toString().trim().split('\n').slice(-4).join(' ')), { code: (erro as NodeJS.ErrnoException).code }));
+        ok(`${stdout}${stderr}`);
+      }),
+    );
+
+  /** Procura um Python 3.10+ no PC (o instalador do python.org põe `py`/`python` no PATH). */
+  const acharPython = async (): Promise<{ cmd: string; args: string[] } | null> => {
+    const candidatos = noWindows
+      ? [{ cmd: 'py', args: ['-3'] }, { cmd: 'python', args: [] }, { cmd: 'python3', args: [] }]
+      : [{ cmd: 'python3', args: [] }, { cmd: 'python', args: [] }];
+    for (const c of candidatos) {
+      try {
+        const v = /Python (\d+)\.(\d+)/.exec(await executar(c.cmd, [...c.args, '--version'], { timeout: 15_000 }));
+        if (v && (Number(v[1]) > 3 || (Number(v[1]) === 3 && Number(v[2]) >= 10))) return c;
+      } catch {
+        /* esse não existe: tenta o próximo */
+      }
+    }
+    return null;
+  };
+
+  const instalar = () => {
+    if (instalacao.fase === 'rodando') return;
+    instalacao = { fase: 'rodando', passo: 'Procurando o Python no seu PC', passoN: 1, total: 4 };
+    void (async () => {
+      try {
+        const py = await acharPython();
+        if (!py) throw new Error('Não achei o Python (versão 3.10 ou mais nova). Instale em python.org/downloads, marque "Add Python to PATH" no instalador, e aperte "Instalar" de novo.');
+        const { local, navegadores, ambiente } = await caminhos();
+        const pythonLocal = dentro(local, 'python');
+        instalacao = { ...instalacao, passo: 'Criando o ambiente do NotebookLM', passoN: 2 };
+        if (!(await existe(pythonLocal))) await executar(py.cmd, [...py.args, '-m', 'venv', local]);
+        instalacao = { ...instalacao, passo: 'Baixando o NotebookLM (alguns minutos)', passoN: 3 };
+        await executar(pythonLocal, ['-m', 'pip', 'install', '--disable-pip-version-check', 'notebooklm-py[browser]'], { env: ambiente });
+        instalacao = { ...instalacao, passo: 'Baixando o navegador do login (uns 150 MB, só uma vez)', passoN: 4 };
+        await executar(pythonLocal, ['-m', 'playwright', 'install', 'chromium'], { env: { ...ambiente, PLAYWRIGHT_BROWSERS_PATH: navegadores } });
+        const c = await lerCache();
+        delete c.listas.cadernos;
+        instalacao = { fase: 'pronto', total: 4 };
+      } catch (e) {
+        instalacao = { fase: 'erro', total: 4, erro: e instanceof Error ? e.message : String(e) };
+      }
+    })();
+  };
+
   /** Cutucão: a sessão do Google esfria parada; a lib pede um a cada 15-20 min. */
   const cutucar = async () => {
     const { bin, ambiente } = await caminhos();
@@ -121,6 +188,10 @@ export function criarNotebookLM(raiz: string, env: () => Promise<Record<string, 
   return {
     entrar,
     cutucar,
+    instalar,
+    statusInstalacao: () => instalacao,
+    /** A biblioteca está instalada neste PC? (não diz se está logada) */
+    instalado: async () => existe((await caminhos()).bin),
     statusLogin: () => login,
     cadernos: (forcar = false) =>
       lista('cadernos', async () => ((await rodar(['list'])).notebooks as { id: string; title: string }[]).map((n) => ({ id: n.id, titulo: n.title })), forcar) as Promise<Caderno[]>,

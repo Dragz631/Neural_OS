@@ -28,3 +28,7 @@ dist
 
 # Conexões de IA (endereços/modelos) e uso diário: ficam só neste PC
 *.local.json
+
+# Instalação local do NotebookLM (botão "Instalar" do app) e navegador do login
+.notebooklm-venv
+.playwright-browsers

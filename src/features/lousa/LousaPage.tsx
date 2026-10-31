@@ -5,6 +5,7 @@ import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
 import { Code2, GraduationCap, NotebookPen, PanelLeftClose, PanelLeftOpen, Plus, Trash2, X } from 'lucide-react';
 import { useAI } from '../../hooks/useAI';
+import { useCelular } from '../../hooks/useCelular';
 import { useNav } from '../../store/nav';
 import { useIALigada } from '../../store/conexoes';
 import { useStudy } from '../../store/study';
@@ -30,7 +31,9 @@ const MIRROR_DELAY = 3000;
 
 export default function LousaPage() {
   const { boards, activeId, create, setActive } = useBoards();
-  const [sidebar, setSidebar] = useState(true);
+  const celular = useCelular();
+  // No celular a lista de lousas começa fechada e abre como gaveta por cima da lousa.
+  const [sidebar, setSidebar] = useState(() => !(typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches));
 
   // Primeira vez: já cria uma lousa, pra nunca abrir numa tela vazia de decisão.
   useEffect(() => {
@@ -43,17 +46,25 @@ export default function LousaPage() {
   const active = boards.find((b) => b.id === activeId);
 
   return (
-    <div className="flex h-[calc(100vh-96px)] min-h-[480px]">
-      {sidebar && <BoardList onClose={() => setSidebar(false)} />}
-      <div className="relative flex-1">
+    // dvh = altura que sobra de verdade no celular (a barra do navegador some e volta); no PC segue 100vh.
+    <div className="relative flex h-[calc(100dvh-12rem)] min-h-[420px] md:h-[calc(100vh-96px)] md:min-h-[480px]">
+      {sidebar && !celular && <BoardList onClose={() => setSidebar(false)} />}
+      {sidebar && celular && (
+        // Gaveta: cobre a lousa, e tocar fora (ou escolher uma lousa) fecha.
+        <div className="absolute inset-0 z-30 flex">
+          <BoardList onClose={() => setSidebar(false)} aoEscolher={() => setSidebar(false)} className="w-[min(18rem,85%)] shadow-2xl" />
+          <button type="button" aria-label="Fechar a lista de lousas" onClick={() => setSidebar(false)} className="flex-1 bg-bg/70" />
+        </div>
+      )}
+      <div className="relative min-w-0 flex-1">
         {!sidebar && (
           <button
             type="button"
             onClick={() => setSidebar(true)}
-            className="absolute bottom-16 left-3 z-10 rounded border border-line bg-panel p-1.5 text-muted hover:text-accent"
+            className="absolute left-3 top-14 z-10 flex items-center gap-1.5 rounded border border-line bg-panel px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted hover:text-accent md:bottom-16 md:top-auto"
             title="Mostrar lousas"
           >
-            <PanelLeftOpen size={16} />
+            <PanelLeftOpen size={16} /> <span className="md:hidden">Lousas</span>
           </button>
         )}
         {active ? <Board key={active.id} boardId={active.id} name={active.name} topicId={active.topicId} /> : null}
@@ -62,12 +73,12 @@ export default function LousaPage() {
   );
 }
 
-function BoardList({ onClose }: { onClose: () => void }) {
+function BoardList({ onClose, aoEscolher, className }: { onClose: () => void; aoEscolher?: () => void; className?: string }) {
   const { boards, activeId, create, setActive, rename, remove, linkTopic } = useBoards();
   const active = boards.find((b) => b.id === activeId);
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-panel">
+    <aside className={cn('flex w-60 shrink-0 flex-col border-r border-line bg-panel', className)}>
       <div className="flex items-center justify-between border-b border-line px-3 py-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">Lousas</span>
         <div className="flex gap-1">
@@ -84,7 +95,10 @@ function BoardList({ onClose }: { onClose: () => void }) {
           <li key={b.id}>
             <button
               type="button"
-              onClick={() => setActive(b.id)}
+              onClick={() => {
+                setActive(b.id);
+                aoEscolher?.();
+              }}
               onDoubleClick={() => {
                 const name = prompt('Nome da lousa', b.name);
                 if (name?.trim()) rename(b.id, name.trim());

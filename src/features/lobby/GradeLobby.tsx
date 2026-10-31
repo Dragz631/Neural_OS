@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as PE } from 'react';
 import { GripVertical, LayoutGrid, Plus, RotateCcw, X } from 'lucide-react';
 import { ALTURA_LINHA, COLUNAS, emOrdem, encaixar, ESPACO, LINHAS, type Retangulo } from '../../domain/lobbyGrade';
+import { useCelular } from '../../hooks/useCelular';
 import { useGradeLobby } from '../../store/lobbyGrade';
 import { toast } from '../../store/toast';
 import { Button } from '../../components/ui';
@@ -12,18 +13,6 @@ import { padraoDoLobby, WIDGETS, type DefWidget } from './widgets';
 // se o lugar está ocupado, o widget volta pra onde estava.
 
 const DEF = new Map<string, DefWidget>(WIDGETS.map((w) => [w.id, w]));
-
-/** No celular a grade vira uma coluna só (sem arrastar). */
-function useCelular() {
-  const [celular, setCelular] = useState(() => (typeof window === 'undefined' ? false : window.matchMedia('(max-width: 767px)').matches));
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
-    const on = () => setCelular(mq.matches);
-    mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
-  }, []);
-  return celular;
-}
 
 type Modo = 'mover' | 'redimensionar';
 interface Arrasto {

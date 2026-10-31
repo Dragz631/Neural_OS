@@ -48,22 +48,7 @@ export interface PresetTema {
   valores: TemaValores;
 }
 
-/** Brazuka: Y2K chrome + ASCII + dither. Limão, cromo e âmbar. Nunca vermelho. */
-const BRAZUKA: TemaValores = {
-  cores: { bg: '#0b0c0d', panel: '#101214', panel2: '#15181b', line: '#2a2e32', fg: '#e8ebee', muted: '#8a9198', accent: '#c8f03a', onAccent: '#000000', warn: '#ffb000', danger: '#ff9a1f', info: '#bfe3ff' },
-  corpo: 'jetbrains',
-  titulos: 'silkscreen',
-  raio: 2,
-  moldura: 'colchetes',
-  brilho: true,
-  grade: true,
-  scanline: true,
-  cromo: true,
-  movimento: 'passos',
-  orbe: true,
-};
-
-/** O visual verde de hacker que o Neural-OS tinha antes. */
+/** O tema padrão do Neural-OS: verde de terminal. Qualquer outro visual a pessoa monta (ou importa) em "Aparência". */
 const NEURAL: TemaValores = {
   cores: { bg: '#0a0f0d', panel: '#0d1411', panel2: '#111b16', line: '#1f3a2c', fg: '#b9d4b3', muted: '#6f8f69', accent: '#00ff66', onAccent: '#000000', warn: '#ffb347', danger: '#ffb347', info: '#7cf0ff' },
   corpo: 'jetbrains',
@@ -78,44 +63,9 @@ const NEURAL: TemaValores = {
   orbe: true,
 };
 
-/** Dragz Design v21, versão escura: verdes e creme, sombra seca, sem brilho. */
-const DRAGZ_ESCURO: TemaValores = {
-  cores: { bg: '#141b10', panel: '#1f2a18', panel2: '#2a3822', line: '#3a4726', fg: '#efe9cc', muted: '#b8c2a0', accent: '#e8d78e', onAccent: '#141b10', warn: '#e8d78e', danger: '#e8b04a', info: '#9dc69c' },
-  corpo: 'jetbrains',
-  titulos: 'silkscreen',
-  raio: 0,
-  moldura: 'simples',
-  brilho: false,
-  grade: false,
-  scanline: false,
-  cromo: false,
-  movimento: 'passos',
-  orbe: false,
-};
+export const PRESETS: PresetTema[] = [{ id: 'neural', nome: 'Neural-OS', descricao: 'O tema padrão: verde de terminal. Mude o que quiser em Aparência.', valores: NEURAL }];
 
-/** Dragz Design v21, versão clara. */
-const DRAGZ_CLARO: TemaValores = {
-  cores: { bg: '#f4f1df', panel: '#e1ebd2', panel2: '#d2e0c0', line: '#c5d3ae', fg: '#1a2415', muted: '#46513f', accent: '#34502f', onAccent: '#f4f1df', warn: '#6b5b08', danger: '#8a5a00', info: '#587350' },
-  corpo: 'jetbrains',
-  titulos: 'silkscreen',
-  raio: 0,
-  moldura: 'simples',
-  brilho: false,
-  grade: false,
-  scanline: false,
-  cromo: false,
-  movimento: 'passos',
-  orbe: false,
-};
-
-export const PRESETS: PresetTema[] = [
-  { id: 'brazuka', nome: 'Brazuka', descricao: 'Y2K cromado, ASCII e dither. Limão, cromo e âmbar. O seu tema.', valores: BRAZUKA },
-  { id: 'neural', nome: 'Neural clássico', descricao: 'O verde de terminal que o app tinha antes.', valores: NEURAL },
-  { id: 'dragz-escuro', nome: 'Dragz v21 escuro', descricao: 'Verdes e creme, cantos retos, sem brilho.', valores: DRAGZ_ESCURO },
-  { id: 'dragz-claro', nome: 'Dragz v21 claro', descricao: 'A versão clara do Dragz Design: papel creme e verde.', valores: DRAGZ_CLARO },
-];
-
-export const TEMA_PADRAO = 'brazuka';
+export const TEMA_PADRAO = 'neural';
 
 export const presetPorId = (id: string): PresetTema => PRESETS.find((p) => p.id === id) ?? PRESETS[0];
 
