@@ -32,3 +32,5 @@ dist
 # Instalação local do NotebookLM (botão "Instalar" do app) e navegador do login
 .notebooklm-venv
 .playwright-browsers
+
+.ferramentas

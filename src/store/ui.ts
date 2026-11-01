@@ -3,7 +3,7 @@ import { create } from 'zustand';
 // Qual painel de configuração está aberto. Qualquer tela pode pedir pra abrir um
 // (ex.: a mensagem de boas-vindas abre a Aparência), e a barra do topo desenha o modal.
 
-export type Painel = 'tema' | 'fontes' | null;
+export type Painel = 'tema' | 'fontes' | 'celular' | null;
 
 interface UIState {
   painel: Painel;

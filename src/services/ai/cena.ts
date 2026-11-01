@@ -1,4 +1,4 @@
-import { lerCena, type Cena } from '../../domain/cena';
+import { lerCena, semGraficoFora, type Cena } from '../../domain/cena';
 import type { Lesson } from '../../domain/types';
 import { aprendizParaIA } from '../../store/aprendiz';
 import { chatJSON } from './client';
@@ -52,12 +52,13 @@ Escolha o MELHOR jeito de desenhar ISTO (não force um modelo fixo):
 Regras:
 1. De 4 a 10 elementos, textos CURTOS (até 8 palavras). Quem tem dificuldade de ler precisa entender pelo desenho.
 2. "tipo": caixa | losango | estado | estado-final | nota | texto | formula | destaque | grafico.
-   "grafico" é um plano cartesiano estilo Desmos, pra funções, geometria analítica, estatística, física, qualquer coisa que se entenda VENDO a curva ou os pontos. Use quando um gráfico mostra o que o texto só diz. Formato do elemento:
+   "grafico" é um plano cartesiano estilo Desmos. SÓ use quando a própria aula trabalha com uma função, uma equação ou pontos num plano (função, reta, parábola, geometria analítica, estatística com eixos, física com gráfico). NUNCA use em programação, paradigmas, conceitos, história, línguas, definições: nesses casos desenhe fluxo, mapa, camadas ou comparação. Em dúvida, NÃO use gráfico.
+   Quando usar: cada função tem que aparecer escrita na aula (não invente curvas pra enfeitar), no máximo 2 funções por gráfico, e um gráfico por ideia (se há duas ideias, são dois gráficos). Formato do elemento:
    {"id":"g","tipo":"grafico","texto":"Parábola e suas raízes","papel":"conceito","linha":0,"coluna":0,
     "grafico":{"xmin":-5,"xmax":5,"ymin":-6,"ymax":10,
       "funcoes":[{"expr":"x^2 - 4","rotulo":"y = x² − 4","papel":"conceito"},{"expr":"2x","papel":"exemplo","tracejada":true}],
       "pontos":[{"x":-2,"y":0,"rotulo":"raiz"},{"x":2,"y":0,"rotulo":"raiz"}]}}
-   "expr" aceita: + - * / ^ ( ), x, pi, e, sin cos tan sqrt abs ln log exp, multiplicação implícita (2x, 3(x+1)) e "x = 3" pra reta vertical. SÓ a variável x (nada de a, b, k: troque por números). "ymin"/"ymax" são opcionais (se faltarem, a janela se ajusta). Até 4 funções e 8 pontos por gráfico. Pode misturar gráfico com caixas, fórmulas e notas na mesma cena.
+   "expr" aceita: + - * / ^ ( ), x, pi, e, sin cos tan sqrt abs ln log exp, multiplicação implícita (2x, 3(x+1)) e "x = 3" pra reta vertical. SÓ a variável x (nada de a, b, k: troque por números). "ymin"/"ymax" são opcionais (se faltarem, a janela se ajusta). Até 2 funções e 8 pontos por gráfico. Pode misturar gráfico com caixas, fórmulas e notas na mesma cena.
 3. "papel" decide a cor: conceito | exemplo | erro | dica | resultado | passo | entrada | saida | neutro. Use "erro" pro erro comum, "dica" pro truque, "resultado" pra resposta final.
 4. "linha" e "coluna" são números de 0 a 4 numa grade. Elementos em sequência vertical ficam na mesma coluna; lado a lado, na mesma linha.
 5. "ligacoes": setas de um id pra outro. "rotulo" diz o que acontece na seta (opcional). "estilo": "tracejada" quando é só relação.
@@ -72,7 +73,7 @@ Responda só com o JSON no mesmo formato.`,
     (raw) => {
       const cena = lerCena(raw);
       if (!cena) throw new Error('o professor não conseguiu montar um desenho');
-      return cena;
+      return semGraficoFora(cena, `${topic.title} ${subject?.name ?? ''} ${aula.explanation}`);
     },
     signal,
   );

@@ -1,6 +1,6 @@
 import { Orbe } from '../../components/Orbe';
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, PenLine, Play, Shapes, Sparkles, Square } from 'lucide-react';
+import { FileDown, PenLine, Play, Shapes, Sparkles, Square, Trash2 } from 'lucide-react';
 import { formatShort } from '../../domain/dates';
 import { GRADE_LABEL, gradeFromScore, isDue, type Grade } from '../../domain/srs';
 import type { Id, Lesson, Topic } from '../../domain/types';
@@ -20,6 +20,9 @@ import { QuadroLivre } from './QuadroLivre';
 import { ProgressoAula } from './ProgressoAula';
 import { useRascunhos } from '../../store/rascunhos';
 import { RevisaoGuiada } from '../revisao/RevisaoGuiada';
+import { RoadmapPanel } from './RoadmapPanel';
+import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
+import { Select } from '../../components/ui';
 
 /** Junta tudo que a IA precisa saber sobre você neste tópico. */
 function useTopicContext(topic?: Topic): TopicContext | undefined {
@@ -47,9 +50,29 @@ export default function Professor() {
   const subjects = useStudy((s) => s.subjects);
   const [newTopicOpen, setNewTopicOpen] = useState(false);
   const [fechando, setFechando] = useState(false);
+  const [visao, setVisao] = useState<'aula' | 'roadmap'>('aula');
+  const [materiaRM, setMateriaRM] = useState<Id | undefined>();
+  // Matéria em foco: a escolhida no roadmap, senão a do tópico aberto, senão a primeira.
+  const materiaId = materiaRM ?? topic?.subjectId ?? subjects[0]?.id;
+  const materia = subjects.find((s) => s.id === materiaId);
+
+  const apagar = () => {
+    if (!materia) return;
+    const r = resumoDaMateria(materia.id);
+    const o = `Apagar a matéria "${materia.name}"?
+
+Vai junto: ${r.topicos} tópico(s) com aulas e anotações, ${r.lousas} lousa(s)${r.temRoadmap ? ' e o roadmap' : ''}.
+Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
+    if (!confirm(o)) return;
+    apagarMateria(materia.id);
+    setTopicId(undefined);
+    setMateriaRM(undefined);
+    toast({ title: `Matéria "${materia.name}" apagada.` });
+  };
 
   const escolher = (id?: Id) => {
     setTopicId(id);
+    setMateriaRM(undefined);
     if (id) {
       useRascunhos.getState().lembrarTopico(id);
       useNav.setState({ topicId: id });
@@ -75,6 +98,32 @@ export default function Professor() {
           <Button onClick={() => setNewTopicOpen(true)}>+ Novo tópico</Button>
           {topic && <SessionTimer key={topic.id} topic={topic} />}
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {([['aula', 'Aula'], ['roadmap', 'Roadmap']] as const).map(([id, rotulo]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setVisao(id)}
+              className={cn('fonte-titulo rounded border px-3 py-1 text-[10px] uppercase tracking-widest', visao === id ? 'border-accent bg-accent/10 text-accent' : 'border-line text-muted hover:text-fg')}
+            >
+              {rotulo}
+            </button>
+          ))}
+          {visao === 'roadmap' && subjects.length > 1 && (
+            <Select value={materiaId ?? ''} onChange={(e) => setMateriaRM(e.target.value || undefined)} className="max-w-[220px]">
+              {subjects.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </Select>
+          )}
+          {materia && (
+            <Button variant="danger" className="ml-auto px-2 py-1 text-[10px]" onClick={apagar} title="Apaga a matéria inteira: tópicos, lousas e roadmap">
+              <Trash2 size={12} /> Apagar matéria
+            </Button>
+          )}
+        </div>
         {topic && (
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted">
             <span>{topicPath(subjects, topic)}</span>
@@ -84,7 +133,20 @@ export default function Professor() {
         )}
       </Panel>
 
-      {!topic ? (
+      {visao === 'roadmap' ? (
+        materia ? (
+          <RoadmapPanel
+            key={materia.id}
+            subjectId={materia.id}
+            onEstudar={(id) => {
+              escolher(id);
+              setVisao('aula');
+            }}
+          />
+        ) : (
+          <Empty>Crie uma matéria primeiro (botão "+ Novo tópico") pra o professor montar o roadmap dela.</Empty>
+        )
+      ) : !topic ? (
         <Empty>Escolha um tópico (ou crie um) pra o Prof. A.Ilson preparar o quadro.</Empty>
       ) : (
         <>

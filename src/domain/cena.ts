@@ -113,6 +113,37 @@ function lerGrafico(bruto: unknown): Grafico | null {
   return { xmin, xmax, ymin, ymax, funcoes, pontos };
 }
 
+// Sinais de que a aula trabalha mesmo com algo num plano (função, equação, pontos).
+const SINAL_DE_PLANO = /fun[cç][aã]o|f\(x\)|\by\s*=|\bx\s*=|equa[cç][aã]o|par[aá]bola|\breta\b|plano cartesiano|eixo|coordenada|\bgr[aá]fico|seno|cosseno|logaritmo|expoencial|exponencial|derivada|integral|limite|\bx\^|x²|x\*\*/i;
+
+/**
+ * Tira os gráficos de uma cena quando a aula não fala de nada que se desenhe num plano
+ * (ex.: paradigma de programação com um plano cartesiano do lado). Prompt pede, o código garante.
+ */
+export function semGraficoFora(cena: Cena, textoDaAula: string): Cena {
+  const eMatematica = SINAL_DE_PLANO.test(textoDaAula);
+  const fora = new Set<string>();
+  const elementos: ElementoCena[] = [];
+  for (const el of cena.elementos) {
+    if (el.tipo !== 'grafico') {
+      elementos.push(el);
+      continue;
+    }
+    if (!eMatematica || !el.grafico) {
+      fora.add(el.id);
+      continue;
+    }
+    elementos.push({ ...el, grafico: { ...el.grafico, funcoes: el.grafico.funcoes.slice(0, 2) } });
+  }
+  if (fora.size === 0 && elementos.length === cena.elementos.length) return { ...cena, elementos };
+  return {
+    ...cena,
+    elementos,
+    ligacoes: cena.ligacoes.filter((l) => !fora.has(l.de) && !fora.has(l.para)),
+    anotacoes: cena.anotacoes.filter((a) => !fora.has(a.em)),
+  };
+}
+
 /** Aceita o JSON do professor e devolve uma cena segura, ou null se não dá pra desenhar nada. */
 export function lerCena(bruto: unknown): Cena | null {
   if (!bruto || typeof bruto !== 'object') return null;

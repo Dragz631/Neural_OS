@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Cpu, Link2, Palette, Settings, Zap } from 'lucide-react';
+import { Cpu, Link2, Palette, Settings, Smartphone, Zap } from 'lucide-react';
 import { levelFromXp } from '../domain/xp';
 import { TABS, useNav } from '../store/nav';
 import { useConexoes } from '../store/conexoes';
@@ -8,6 +8,7 @@ import { useUI } from '../store/ui';
 import { cn } from '../lib/utils';
 import { ConexoesModal } from './conexoes/ConexoesModal';
 import { ConectarFontes } from './fontes/ConectarFontes';
+import { AcessoCelular } from './AcessoCelular';
 import { SettingsModal } from './SettingsModal';
 import { TemaModal } from './TemaModal';
 
@@ -80,6 +81,9 @@ export function Navbar() {
             <Link2 size={12} />
             <span className="hidden sm:inline">Fontes</span>
           </button>
+          <button type="button" onClick={() => abrirPainel('celular')} aria-label="Usar no celular" title="Usar no celular, de qualquer rede, com PIN" className="rounded border border-line p-1.5 text-muted hover:border-accent hover:text-accent">
+            <Smartphone size={12} />
+          </button>
           <button type="button" onClick={() => abrirPainel('tema')} aria-label="Aparência" title="Aparência: cores, letras e efeitos" className="rounded border border-line p-1.5 text-muted hover:border-accent hover:text-accent">
             <Palette size={12} />
           </button>
@@ -99,6 +103,7 @@ export function Navbar() {
       <ConexoesModal open={conexoesOpen} onClose={() => setConexoesOpen(false)} />
       <TemaModal open={temaOpen} onClose={fecharPainel} />
       <ConectarFontes open={painel === 'fontes'} onClose={fecharPainel} />
+      <AcessoCelular open={painel === 'celular'} onClose={fecharPainel} />
     </nav>
   );
 }

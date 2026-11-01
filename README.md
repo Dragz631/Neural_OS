@@ -108,10 +108,10 @@ As chaves ficam só no `.env.local` (fora do git); o navegador nunca as vê. O s
 |---|---|
 | **Lobby** | Widgets numa grade que você arruma (arrasta e redimensiona), Target, missões, Feed de minijogos em ASCII (com IA, ela inventa um jogo por pergunta), revisões vencidas |
 | **Árvore** | Matérias → tópicos → tópicos derivados. Cresce conforme você cria e domina |
-| **Prof. A.Ilson** | Quadro (explicação, pontos-chave, vídeos, onde pesquisar, dicas) + suas anotações + "prove que entendeu" |
+| **Prof. A.Ilson** | Aula no quadro (explicação, pontos-chave, vídeos), suas anotações, "prove que entendeu" e o **Roadmap** da matéria (estilo roadmap.sh, criado pelo professor). O quadro e o roadmap ficam aqui dentro: o professor não mexe na sua Lousa |
 | **Sandbox** | Desafios do que você já estudou; correção de lógica e sintaxe sem executar |
 | **Molda-Horário** | Planejar a semana (domingo) + check-in diário de energia/tempo que ajusta o dia |
-| **Lousa** | Quadros livres (Excalidraw no tema do app). O professor também desenha aqui: fluxos, estados e gráficos de funções |
+| **Lousa** | Só suas lousas livres (Excalidraw no tema do app), organizadas em **grupos** (por matéria automático, ou os que você criar) |
 | **Dungeon** | Modo diversão de fim de semana (trilhas fixas C#, C, LFA) |
 
 Toda avaliação (explicação ou desafio) alimenta a **revisão espaçada**: o tópico volta pra revisão em 1, 3, 7… dias conforme você lembra.

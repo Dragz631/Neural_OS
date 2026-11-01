@@ -1,3 +1,4 @@
+import { apagarMateria } from '../../store/apagarMateria';
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
 import { Code2, GitBranchPlus, GraduationCap, Maximize2, Plus, Trash2 } from 'lucide-react';
 import { formatShort, toLocalDate } from '../../domain/dates';
@@ -208,7 +209,6 @@ function Legend() {
 function DetailPanel({ node, onDeleted }: { node?: TreeNode; onDeleted: () => void }) {
   const subjects = useStudy((s) => s.subjects);
   const removeTopic = useStudy((s) => s.removeTopic);
-  const removeSubject = useStudy((s) => s.removeSubject);
   const updateSubject = useStudy((s) => s.updateSubject);
   const go = useNav((s) => s.go);
   const [topicOpen, setTopicOpen] = useState(false);
@@ -247,7 +247,7 @@ function DetailPanel({ node, onDeleted }: { node?: TreeNode; onDeleted: () => vo
             className="w-full"
             onClick={() => {
               if (confirm(`Apagar "${s.name}" e TODOS os tópicos dela?`)) {
-                removeSubject(s.id);
+                apagarMateria(s.id);
                 onDeleted();
               }
             }}
