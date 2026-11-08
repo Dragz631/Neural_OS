@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as PE } from 'react';
-import { MessageCircle, PanelRightClose, PanelRightOpen, Send, Shapes, Trash2, X } from 'lucide-react';
+import { BookPlus, MessageCircle, NotebookPen, PanelRightClose, PanelRightOpen, Send, Shapes, Trash2, X } from 'lucide-react';
+import { guardarNasAnotacoes, porNaAula } from '../../store/aulaJunto';
 import { desistir, NOME_DEGRAU, novaEscada, pedeResposta, podeLiberar, subir, TENTATIVAS_PRA_LIBERAR, type Escada } from '../../domain/ajuda';
 import type { Topic } from '../../domain/types';
 import { useStudy } from '../../store/study';
@@ -28,7 +29,14 @@ const ATALHOS: { tipo: string; rotulo: string; pedido: string }[] = [
   { tipo: 'exemplo', rotulo: 'Um exemplo', pedido: 'Me dá um exemplo concreto do dia a dia.' },
   { tipo: 'analogia', rotulo: 'Analogia + emoji', pedido: 'Explica com uma analogia e uns emojis pra eu enxergar.' },
   { tipo: 'resumo', rotulo: 'Resume em 1 frase', pedido: 'Resume em uma frase só.' },
+  { tipo: 'discordo', rotulo: 'Discordo', pedido: 'Discordo disso. Me convence com um argumento ou um exemplo, ou admite se estiver errado.' },
 ];
+
+/** O pedido do aluno que gerou a resposta `i` do professor (pro bloco "Montado junto"). */
+const pedidoAntes = (msgs: MensagemChat[], i: number) => {
+  for (let k = i - 1; k >= 0; k--) if (msgs[k].de === 'aluno') return msgs[k].texto.slice(0, 120);
+  return 'pergunta ao professor';
+};
 
 /** Título do desenho no quadro: o nome do 1º bloco (ex.: "Dois dados: soma 7"), não a fala do chat. */
 const tituloDoDesenho = (m: MensagemChat) => (m.cena?.elementos.find((e) => e.tipo !== 'nota' && e.tipo !== 'texto')?.texto ?? m.cena?.elementos[0]?.texto ?? m.texto).slice(0, 60);
@@ -199,6 +207,27 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
                 <Shapes size={12} /> Pôr no quadro ({m.cena.elementos.length} {m.cena.elementos.length === 1 ? 'desenho' : 'peças'})
               </button>
             )}
+            {m.de === 'prof' && (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                <button
+                  type="button"
+                  disabled={!topic.lesson || topic.lesson.extras?.some((e) => e.em === m.em)}
+                  onClick={() => porNaAula(topic.id, { de: pedidoAntes(msgs, i), texto: m.texto, cena: m.cena, em: m.em })}
+                  className="flex items-center gap-1 rounded border border-line px-1.5 py-0.5 text-[10px] text-muted hover:border-accent hover:text-accent disabled:opacity-40"
+                  title={topic.lesson ? 'Esta resposta vira um pedaço da aula (embaixo do quadro)' : 'Gere a aula primeiro'}
+                >
+                  <BookPlus size={11} /> {topic.lesson?.extras?.some((e) => e.em === m.em) ? 'Já está na aula' : 'Pôr na aula'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => guardarNasAnotacoes(topic.id, m.texto, true)}
+                  className="flex items-center gap-1 rounded border border-line px-1.5 py-0.5 text-[10px] text-muted hover:border-accent hover:text-accent"
+                  title="Vai pras anotações citado, pra você completar com as suas palavras"
+                >
+                  <NotebookPen size={11} /> Guardar nas anotações
+                </button>
+              </div>
+            )}
           </div>
         ))}
         {loading && <p className="text-xs text-muted">O professor está pensando…</p>}
@@ -239,6 +268,17 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
             <span className="line-clamp-2">
               Sobre a parte selecionada: <span className="text-fg">{selecao}</span>
             </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                guardarNasAnotacoes(topic.id, selecao, true);
+              }}
+              className="ml-auto shrink-0 rounded border border-line px-1.5 py-0.5 text-[10px] text-muted hover:border-accent hover:text-accent"
+              title="O trecho vai citado pras anotações, pra você completar com as suas palavras"
+            >
+              Anotar isto
+            </button>
           </label>
         )}
         <div className="flex flex-wrap gap-1">

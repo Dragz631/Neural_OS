@@ -29,6 +29,7 @@ import { NovidadesNotebook } from '../../components/NovidadesNotebook';
 import { BotaoTraveiBase } from '../../components/GavetaBase';
 import { useGavetaBase } from '../../store/gavetaBase';
 import { useBases } from '../../store/bases';
+import { tirarDaAula } from '../../store/aulaJunto';
 import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
 import { Select } from '../../components/ui';
 
@@ -235,11 +236,23 @@ function Blackboard({ topic }: { topic: Topic }) {
 
   const [aba, setAba] = useState<'prof' | 'livre'>('prof');
   const emAndamento = !!lesson && !lesson.concluidaEm && (Object.values(lesson.progresso ?? {}).some(Boolean) || !!lesson.minis?.some((m) => m.ok));
-  const generate = () => {
-    if (emAndamento && !window.confirm('Você está no meio desta aula. Reescrever apaga o progresso dos passos e dos minidesafios (as suas anotações ficam). Continuar?')) return;
+  const [pedindo, setPedindo] = useState(false);
+  const [pedido, setPedido] = useState('');
+  /**
+   * Sem pedido: aula do zero (progresso dos passos recomeça). Com pedido ("mais curto", "foca em X"):
+   * a aula atual é a base, e o progresso fica. O que foi montado junto no chat sempre fica.
+   */
+  const generate = (comPedido?: string) => {
+    const p = comPedido?.trim();
+    if (!p && emAndamento && !window.confirm('Você está no meio desta aula. Reescrever do zero apaga o progresso dos passos e dos minidesafios (as suas anotações e o que vocês montaram junto ficam). Continuar?')) return;
     const c = ctx!;
-    void rodarTarefa(chave, { rotulo: `Professor preparando a aula de ${topic.title}`, aba: 'professor', topicId: topic.id, avisarPronto: `Aula de ${topic.title} pronta` }, async (signal) => {
-      const l = await generateLesson(c, signal);
+    setPedindo(false);
+    setPedido('');
+    void rodarTarefa(chave, { rotulo: p ? `Professor reescrevendo ${topic.title}: ${p.slice(0, 30)}` : `Professor preparando a aula de ${topic.title}`, aba: 'professor', topicId: topic.id, avisarPronto: `Aula de ${topic.title} pronta` }, async (signal) => {
+      const antes = useStudy.getState().topics.find((t) => t.id === topic.id)?.lesson;
+      const nova = await generateLesson(c, signal, p && antes ? { pedido: p, aulaAtual: antes } : undefined);
+      const agora = useStudy.getState().topics.find((t) => t.id === topic.id)?.lesson;
+      const l = { ...nova, ...(agora?.extras?.length ? { extras: agora.extras } : {}), ...(p && agora ? { progresso: agora.progresso, minis: agora.minis?.length ? agora.minis : nova.minis } : {}) };
       // O texto entra já: se o desenho falhar ou for cancelado, a aula não se perde.
       useStudy.getState().setLesson(topic.id, l);
       // A aula nova já usa os slides novos: o selo "material novo" sai.
@@ -267,7 +280,7 @@ function Blackboard({ topic }: { topic: Topic }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={generate} disabled={!aiOn || loading} title={aiOn ? '' : 'Ative a IA nas configurações'}>
+          <Button onClick={() => (lesson ? setPedindo((v) => !v) : generate())} disabled={!aiOn || loading} title={aiOn ? '' : 'Ative a IA nas configurações'}>
             <Sparkles size={14} /> {loading ? 'Escrevendo…' : lesson ? 'Reescrever com IA' : 'Gerar aula com IA'}
           </Button>
           {lesson && (
@@ -284,11 +297,39 @@ function Blackboard({ topic }: { topic: Topic }) {
 
       <ErrorNote error={error} />
 
+      {pedindo && lesson && !loading && (
+        <form
+          className="mb-3 space-y-2 rounded border border-accent/50 bg-accent/5 p-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (pedido.trim()) generate(pedido);
+          }}
+        >
+          <p className="text-xs text-fg">O que mudar na aula? O professor parte desta aula e mexe só no que você pedir (o seu progresso fica).</p>
+          <div className="flex flex-wrap gap-1.5">
+            {['Mais fácil', 'Mais curta', 'Com mais exemplos', 'Mais desenho, menos texto'].map((a) => (
+              <button key={a} type="button" onClick={() => generate(a)} className="rounded border border-line px-2 py-1 text-[11px] hover:border-accent hover:text-accent">
+                {a}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1.5">
+            <input value={pedido} onChange={(e) => setPedido(e.target.value)} placeholder='ex.: "foca em probabilidade condicional"' className="min-w-0 flex-1 rounded border border-line bg-bg px-2 py-1.5 text-sm text-fg" />
+            <Button variant="primary" type="submit" disabled={!pedido.trim()}>
+              Reescrever
+            </Button>
+          </div>
+          <button type="button" onClick={() => generate()} className="text-[11px] text-muted underline hover:text-fg">
+            ou reescrever do zero
+          </button>
+        </form>
+      )}
+
       {lesson && !!topic.materialNovo?.length && !loading && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-info/60 bg-info/5 p-2 text-xs">
           <span className="rounded bg-info/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-info">material novo</span>
           <span className="min-w-0 flex-1 text-muted">Chegou slide sobre isto: {topic.materialNovo.join(', ')}.</span>
-          <Button className="px-2 py-1 text-[10px]" onClick={generate} disabled={!aiOn}>
+          <Button className="px-2 py-1 text-[10px]" onClick={() => generate(`Acrescente o que o slide novo traz (${topic.materialNovo!.join(', ')}), usando ele como fonte`)} disabled={!aiOn}>
             <Sparkles size={12} /> Atualizar a aula com ele
           </Button>
         </div>
@@ -328,9 +369,37 @@ function Blackboard({ topic }: { topic: Topic }) {
       {/* Só o quadro ativo monta (Excalidraw escondido abre em branco). O desenho de cada um fica salvo. */}
       {aba === 'prof' ? <QuadroProfessor topic={topic} lesson={lesson} /> : <QuadroLivre topic={topic} />}
       {aba === 'prof' && lesson && <TermometroAula topic={topic} lesson={lesson} />}
+      {lesson && !!lesson.extras?.length && <MontadoJunto topic={topic} lesson={lesson} />}
 
       <LessonEditor key={lesson?.generatedAt ?? 'new'} open={editing} onClose={() => setEditing(false)} topic={topic} />
     </section>
+  );
+}
+
+/** O que o aluno montou junto com o professor no chat ("Pôr na aula"): parte da aula, embaixo do quadro. */
+function MontadoJunto({ topic, lesson }: { topic: Topic; lesson: Lesson }) {
+  return (
+    <div className="mt-4 space-y-2">
+      <p className="fonte-titulo text-[10px] uppercase tracking-[0.25em] text-accent">Montado junto ({lesson.extras!.length})</p>
+      {lesson.extras!.map((e) => (
+        <div key={e.id} className="rounded border border-line bg-panel p-3 text-sm">
+          <div className="mb-1 flex items-start gap-2">
+            <p className="min-w-0 flex-1 text-[11px] text-muted">
+              você pediu: <span className="text-fg">{e.de}</span>
+            </p>
+            {e.cena && (
+              <button type="button" onClick={() => useRascunhos.getState().porNoQuadro(topic.id, e.de.slice(0, 60), e.cena!)} className="flex shrink-0 items-center gap-1 text-[10px] text-accent hover:underline" title="Desenhar no quadro do professor">
+                <Shapes size={11} /> Pôr no quadro
+              </button>
+            )}
+            <button type="button" onClick={() => confirm('Tirar este pedaço da aula?') && tirarDaAula(topic.id, e.id)} className="shrink-0 text-muted hover:text-danger" title="Tirar da aula">
+              <Trash2 size={12} />
+            </button>
+          </div>
+          <p className="whitespace-pre-wrap leading-relaxed text-fg">{e.texto}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -347,7 +416,7 @@ function LessonEditor({ open, onClose, topic }: { open: boolean; onClose: () => 
 
   const save = () => {
     setLesson(topic.id, {
-      ...(l ? { progresso: l.progresso, minis: l.minis } : {}),
+      ...(l ? { progresso: l.progresso, minis: l.minis, extras: l.extras } : {}),
       explanation,
       keyPoints: lines(keyPoints),
       videoSearches: lines(videos),

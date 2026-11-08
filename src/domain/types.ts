@@ -53,6 +53,17 @@ export interface Lesson {
   progresso?: { leu?: boolean; viuDesenho?: boolean; viuVideos?: boolean };
   minis?: MiniAula[];
   concluidaEm?: string;
+  /** Pedaços que o aluno montou junto com o professor no chat ("Pôr na aula"). Sobrevivem a reescrever. */
+  extras?: ExtraAula[];
+}
+
+export interface ExtraAula {
+  id: string;
+  /** O que o aluno pediu ("Explica de um jeito mais fácil"). */
+  de: string;
+  texto: string;
+  cena?: Cena;
+  em: string;
 }
 
 export interface Topic {

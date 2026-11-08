@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from '../lib/persistir';
 import { focoParaIA } from './foco';
 import { basesParaIA } from './bases';
+import { perfilExternoParaIA } from '../lib/perfilExterno';
 import { derivarPerfil, descreverPerfil, ENTREVISTA, normalizarRespostas, PERFIL_PADRAO, type IdPergunta, type PerfilAprendiz, type Respostas } from '../domain/aprendiz';
 
 // O perfil de aprendizagem da pessoa (resultado da entrevista). Fica no navegador
@@ -110,6 +111,7 @@ const NOME_AJUSTE: Record<string, string> = {
   analogia: 'pediu analogia/emoji',
   resumo: 'pediu um resumo curto',
   pergunta: 'fez uma pergunta própria',
+  discordo: 'discordou e pediu argumento',
 };
 
 /** As lembranças mais recentes, em texto pro professor (as 6 mais novas). */
@@ -131,5 +133,5 @@ export const aprendizParaIA = () => {
   const comportamento = pedidos.length
     ? `O que ele já pediu ao professor nas aulas (comportamento do aluno, NÃO é matéria): ${pedidos.join(', ')}. Ensine já do jeito que ele mais pede (ex.: se pede muito desenho ou "mais fácil", comece desenhando e mais simples).`
     : '';
-  return [base, comportamento, memoriasParaIA(), basesParaIA(), focoParaIA()].filter(Boolean).join('\n').trim();
+  return [base, perfilExternoParaIA(), comportamento, memoriasParaIA(), basesParaIA(), focoParaIA()].filter(Boolean).join('\n').trim();
 };

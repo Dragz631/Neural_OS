@@ -109,6 +109,10 @@ Botão de celular, no topo → **Abrir acesso pelo celular**. Aparecem um endere
 - **Apagou a tela do celular no meio de uma aula?** O PC termina a aula e o celular busca quando voltar. Só o botão Cancelar (ou fechar a página) para de verdade.
 - Só a grade do Lobby e as tarefas em andamento são de cada aparelho.
 
+### Ensinar o professor como você aprende (perfil de outra IA)
+
+Já tem uma IA (ChatGPT, Claude, Gemini) que conhece o seu jeito de aprender? Peça pra ela escrever um "perfil de aprendizagem" e salve como `perfil-aprendizagem.local.md` na pasta do app (fica fora do git, só com você). O professor lê esse arquivo em toda aula, chat e prova, como ponto de partida: o que ele observar de você nas aulas vale mais. Editou o arquivo? Recarregue a página.
+
 ### Fotos de perfil personalizadas (ASCII animado)
 
 No Lobby, clique na sua foto (ou no lápis do perfil). Dá pra escolher um ícone ASCII animado, usar uma imagem sua ou transformar a sua imagem em ASCII.

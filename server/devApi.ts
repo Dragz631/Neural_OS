@@ -86,6 +86,19 @@ export function devApi(env: DevApiEnv): Plugin {
         }
       });
 
+      // Perfil de aprendizagem que o aluno trouxe (ex.: o que outra IA sabe dele): `perfil-aprendizagem.local.md`, fora do git.
+      server.middlewares.use('/api/perfil-aprendizagem', async (_req, res) => {
+        res.setHeader('Cache-Control', 'no-store');
+        try {
+          const texto = await fs.readFile(path.resolve(import.meta.dirname, '..', 'perfil-aprendizagem.local.md'), 'utf8');
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          res.end(texto.slice(0, 20_000));
+        } catch {
+          res.statusCode = 404;
+          res.end('');
+        }
+      });
+
       server.middlewares.use('/api/vault/status', async (_req, res) => {
         const vaultRoot = await vaultRootAtual();
         res.setHeader('Content-Type', 'application/json');

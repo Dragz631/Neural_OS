@@ -54,7 +54,24 @@ export function slidesDoTopico(ctx: TopicContext): string {
   return geral ? `Material da faculdade dele nesta matéria (use se tiver a ver com o tópico):\n"""\n${geral.slice(0, 3000)}\n"""` : '';
 }
 
-export async function generateLesson(ctx: TopicContext, signal?: AbortSignal): Promise<Lesson> {
+/** Reescrever com pedido ("mais curto", "foca em X"): a aula atual é a base, o pedido diz o que muda. */
+export interface PedidoReescrita {
+  pedido: string;
+  aulaAtual: Lesson;
+}
+
+function blocoReescrita(r: PedidoReescrita): string {
+  const extras = (r.aulaAtual.extras ?? []).map((e) => `- (ele pediu "${e.de}") ${e.texto.slice(0, 300)}`).join('\n');
+  return `\nREESCREVA a aula que já está no quadro, mudando SÓ o que o aluno pediu: "${r.pedido}".
+Mantenha o mesmo tema e o que já estava certo. O PEDIDO VENCE as regras de tamanho e formato abaixo: se ele pediu "mais curta", a explicação nova tem no máximo METADE da atual (hoje são ${r.aulaAtual.explanation.length} letras) e menos pontos-chave; se pediu "mais exemplos", troque teoria por exemplos concretos. Aula atual:
+"""
+${r.aulaAtual.explanation.slice(0, 4000)}
+Pontos-chave: ${r.aulaAtual.keyPoints.join('; ')}
+"""
+${extras ? `Pedaços que ele montou junto com você no chat (o jeito que funcionou pra ele; aproveite):\n${extras}\n` : ''}`;
+}
+
+export async function generateLesson(ctx: TopicContext, signal?: AbortSignal, reescrita?: PedidoReescrita): Promise<Lesson> {
   const slides = slidesDoTopico(ctx);
   return chatJSON(
     [
@@ -62,7 +79,7 @@ export async function generateLesson(ctx: TopicContext, signal?: AbortSignal): P
       {
         role: 'user',
         content: `${describe(ctx)}
-${slides ? `\n${slides}\n` : ''}
+${slides ? `\n${slides}\n` : ''}${reescrita ? blocoReescrita(reescrita) : ''}
 Escreva no quadro negro a aula deste tópico, ajustada ao nível e às anotações do aluno.
 Se as anotações tiverem erro conceitual, corrija com gentileza na explicação.
 Depois desta aula você vai DESENHAR no quadro: escreva já pensando no desenho, com o caso concreto (números, etapas, partes, quem vem antes de quem) que o desenho vai mostrar. Exemplo e analogia antes da definição formal.
