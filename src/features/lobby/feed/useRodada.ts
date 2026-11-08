@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from '../../../lib/persistir';
 import { montarRodada, notaDoTopico, ordemDosTopicos, pontuar, tamanhoDaRodada, type Cartao } from '../../../domain/cartoes';
 import { cartoesSemIA } from '../../../domain/cartoesSemIA';
 import { toLocalDate } from '../../../domain/dates';
@@ -72,16 +73,32 @@ interface RodadaState {
   criandoJogo: boolean;
 }
 
-const useRodadaStore = create<RodadaState>()(() => ({
-  fase: 'parado',
-  cartoes: [],
-  indice: 0,
-  combo: 0,
-  maiorCombo: 0,
-  resultados: [],
-  pop: null,
-  criandoJogo: false,
-}));
+// Salva no aparelho: se o celular descartar a página, você volta no mesmo cartão (não sincroniza:
+// cada aparelho tem a sua rodada; ver SO_DESTE_APARELHO em lib/sincronia.ts).
+const useRodadaStore = create<RodadaState>()(
+  persist(
+    (): RodadaState => ({
+      fase: 'parado',
+      cartoes: [],
+      indice: 0,
+      combo: 0,
+      maiorCombo: 0,
+      resultados: [],
+      pop: null,
+      criandoJogo: false,
+    }),
+    {
+      name: 'neural-os.rodada',
+      version: 1,
+      partialize: ({ pop: _pop, criandoJogo: _criando, ...resto }) => resto,
+      // Estava "carregando" quando a página caiu: a tarefa morreu junto, então volta pro começo.
+      merge: (salvo, atual): RodadaState => {
+        const s: RodadaState = { ...atual, ...(salvo as Partial<RodadaState>) };
+        return s.fase === 'carregando' ? { ...s, fase: 'parado' } : s;
+      },
+    },
+  ),
+);
 
 async function comecar(herdados: string[]) {
   const set = useRodadaStore.setState;

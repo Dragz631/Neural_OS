@@ -237,9 +237,13 @@ export function acessoRemoto(env: Record<string, string>, raiz: string): Plugin 
         return !!ate && ate > Date.now();
       };
 
-      // WebSocket (atualização ao vivo) não passa pelos middlewares: mesma regra aqui.
+      // WebSocket (atualização ao vivo do Vite) não passa pelos middlewares. De fora (celular pelo
+      // túnel), NUNCA abre: o Vite recarrega a página toda vez que essa conexão cai, e no iPhone ela
+      // cai sempre (tela apaga, troca de app, túnel corta conexão parada). Era isso que reiniciava a
+      // página "do nada" e apagava o Feed (08/11/2026). O celular não precisa dela: a sincronia do
+      // progresso é por outra via (/api/dados/eventos).
       server.httpServer?.prependListener('upgrade', (req, socket) => {
-        if (veioDeFora(req) && (!estado.url || !sessaoValida(req))) socket.destroy();
+        if (veioDeFora(req)) socket.destroy();
       });
 
       // ── O portão ────────────────────────────────────────────────────────────

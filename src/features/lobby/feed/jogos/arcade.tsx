@@ -94,6 +94,10 @@ const Tecla = ({ onClick, rotulo, children, className }: { onClick: () => void; 
       e.preventDefault();
       onClick();
     }}
+    // Teclado (Tab + Enter/espaço) não gera pointerdown: aí vale o click (detail 0 = veio do teclado).
+    onClick={(e) => {
+      if (e.detail === 0) onClick();
+    }}
     aria-label={rotulo}
     className={cn('flex h-10 min-w-10 items-center justify-center rounded border border-line px-3 text-xs font-bold uppercase hover:border-accent hover:text-accent active:bg-accent/15', className)}
   >
@@ -230,8 +234,9 @@ export function JogoInvasores({ cartao, onResponder, onProximo, tema, ms }: Prop
   const ESPACO = 8;
   const largura = (n - 1) * ESPACO + 3;
   const folga = LARGURA - largura - 2;
-  const tt = escolha === null ? t : ancora.current;
-  const ida = folga > 0 ? Math.floor(tt / 4) % (folga * 2) : 0;
+  // Tiro justo (Hugo achou que a nave "fugia"): enquanto o tiro sobe, as naves param no lugar.
+  const tt = escolha !== null ? ancora.current : tiro ? tiro.t0 : t;
+  const ida = folga > 0 ? Math.floor(tt / 6) % (folga * 2) : 0;
   const desloc = parado ? Math.floor(folga / 2) : ida < folga ? ida : folga * 2 - ida;
   const xs = Array.from({ length: n }, (_, i) => 1 + desloc + i * ESPACO);
   const Y_NAVE = 2;
@@ -255,6 +260,12 @@ export function JogoInvasores({ cartao, onResponder, onProximo, tema, ms }: Prop
     if (escolha !== null || tiro) return;
     setTiro({ x: nave + 1, t0: t });
   }, [escolha, tiro, nave, t]);
+  /** Toque na letra (celular): o canhão vai até a nave dela e atira. */
+  const mirarEAtirar = (i: number) => {
+    if (escolha !== null || tiro) return;
+    setNave(xs[i]);
+    setTiro({ x: xs[i] + 1, t0: t });
+  };
 
   useTeclas(
     useCallback(
@@ -289,18 +300,24 @@ export function JogoInvasores({ cartao, onResponder, onProximo, tema, ms }: Prop
       quadro={g.toString()}
       respondeu={escolha !== null}
       acertou={escolha === cartao.certa}
-      dica="Mova o canhão (◀ ▶) e atire (espaço) na nave da letra certa. Elas não param de andar!"
+      dica="Cada nave é uma resposta (a letra). Derrube a da resposta certa: toque na letra, ou mova o canhão (◀ ▶) e atire (espaço)."
       nome="invasores"
       onProximo={onProximo}
       controles={
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
+          {Array.from({ length: n }, (_, i) => (
+            <Tecla key={i} rotulo={`Atirar na nave ${letra(i)}`} onClick={() => mirarEAtirar(i)} className="border-accent text-accent">
+              {letra(i)}
+            </Tecla>
+          ))}
+          <span className="mx-1 self-center text-[10px] text-muted">ou</span>
           <Tecla rotulo="Esquerda" onClick={() => mover(-2)}>
             <ArrowLeft size={14} />
           </Tecla>
           <Tecla rotulo="Direita" onClick={() => mover(2)}>
             <ArrowRight size={14} />
           </Tecla>
-          <Tecla rotulo="Atirar" onClick={atirar} className="border-accent text-accent">
+          <Tecla rotulo="Atirar" onClick={atirar}>
             Atirar
           </Tecla>
         </div>

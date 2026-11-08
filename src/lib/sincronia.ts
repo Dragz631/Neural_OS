@@ -8,7 +8,7 @@ import type { StateStorage } from 'zustand/middleware';
 // importados, então a sincronia tem que rodar ANTES; ver main.tsx).
 
 /** Coisas deste aparelho que não fazem sentido no outro (tarefas em andamento, grade do Lobby do PC). */
-const SO_DESTE_APARELHO = new Set(['neural-os.tarefas', 'neural-os.lobby']);
+const SO_DESTE_APARELHO = new Set(['neural-os.tarefas', 'neural-os.lobby', 'neural-os.rodada']);
 const PREFIXO = 'neural-os.';
 const CHAVE_VERSOES = 'neural-os-sync.versoes';
 const CHAVE_APARELHO = 'neural-os-sync.aparelho';
