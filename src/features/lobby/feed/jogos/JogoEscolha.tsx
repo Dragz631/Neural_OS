@@ -9,16 +9,14 @@ import { CartaoEscolhaView } from '../CartaoEscolhaView';
 import { BotaoProximo, type PropsCartao } from '../comum';
 import { semMovimento, useQuadros, useTeclas } from './ascii';
 import { quadroBatalha, quadroChuva, quadroComilao, type Estado } from './quadros';
-import { hashTexto, temaDoJogo } from './tema';
+import { escolherMecanica, temaDoJogo, type Mecanica } from './tema';
+import { cabeForca, JogoCobra, JogoCorrida, JogoForca, JogoInvasores } from './arcade';
 
 // Cada cartão de múltipla escolha vira um minijogo em ASCII. Qual jogo? Sai do próprio cartão
 // (sempre o mesmo pro mesmo cartão). A pontuação, o combo e o diário de erro continuam sendo
 // os de sempre: o jogo só muda COMO você responde.
 
-export type Jogo = 'chuva' | 'comilao' | 'batalha' | 'quiz';
-const JOGOS: Jogo[] = ['chuva', 'comilao', 'batalha', 'quiz'];
-
-export const jogoDoCartao = (c: CartaoEscolha): Jogo => JOGOS[hashTexto(c.id) % JOGOS.length];
+export type Jogo = Mecanica;
 
 export const CLASSE_ASCII = 'm-0 select-none whitespace-pre font-mono text-[13px] leading-[1.1]';
 
@@ -29,6 +27,10 @@ export function JogoEscolha(props: PropsCartao<CartaoEscolha>) {
     return j && !j.ruim ? j : undefined;
   });
   const [falhou, setFalhou] = useState(false);
+  const topico = useStudy((s) => s.topics.find((t) => t.id === props.cartao.topicId));
+  const materia = useStudy((s) => s.subjects.find((x) => x.id === topico?.subjectId));
+  // Escolhido uma vez quando o cartão aparece (não troca no meio da partida).
+  const [jogo] = useState(() => escolherMecanica(props.cartao.id, cabeForca(props.cartao), materia?.name, materia?.language, topico?.title));
   if (daIA && !falhou) {
     return (
       <JogoIACard
@@ -41,13 +43,17 @@ export function JogoEscolha(props: PropsCartao<CartaoEscolha>) {
       />
     );
   }
-  const jogo = jogoDoCartao(props.cartao);
   // O quiz clássico (com fogos por cima) é o próprio cartão de sempre.
   if (jogo === 'quiz') return <CartaoEscolhaView {...props} />;
-  return <JogoAscii {...props} jogo={jogo} />;
+  if (jogo === 'chuva' || jogo === 'comilao' || jogo === 'batalha') return <JogoAscii {...props} jogo={jogo} />;
+  // Fliperama: quem domina mais o tópico joga mais rápido (150 ms → 95 ms por quadro).
+  const tema = temaDoJogo(materia?.name, materia?.language, topico?.title);
+  const ms = Math.round(150 - (topico?.mastery ?? 0) * 0.55);
+  const Arcade = { cobra: JogoCobra, invasores: JogoInvasores, corrida: JogoCorrida, forca: JogoForca }[jogo];
+  return <Arcade {...props} tema={tema} ms={ms} />;
 }
 
-function JogoAscii({ cartao, onResponder, onProximo, jogo }: PropsCartao<CartaoEscolha> & { jogo: Exclude<Jogo, 'quiz'> }) {
+function JogoAscii({ cartao, onResponder, onProximo, jogo }: PropsCartao<CartaoEscolha> & { jogo: 'chuva' | 'comilao' | 'batalha' }) {
   const topico = useStudy((s) => s.topics.find((t) => t.id === cartao.topicId));
   const materia = useStudy((s) => s.subjects.find((x) => x.id === topico?.subjectId));
   const tema = temaDoJogo(materia?.name, materia?.language, topico?.title);

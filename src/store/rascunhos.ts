@@ -25,6 +25,9 @@ interface RascunhosState {
   ultimoTopico?: Id;
   feynman: Record<Id, string>;
   revisao: Record<Id, RevisaoSalva>;
+  /** Molda-horário: dias abertos (data → aberto). Sem registro, só hoje abre. */
+  diasAbertos: Record<string, boolean>;
+  abrirDias: (datas: string[], aberto: boolean) => void;
   lembrarTopico: (id: Id) => void;
   escreverFeynman: (id: Id, texto: string) => void;
   guardarRevisao: (id: Id, r: RevisaoSalva | undefined) => void;
@@ -35,6 +38,8 @@ export const useRascunhos = create<RascunhosState>()(
     (set) => ({
       feynman: {},
       revisao: {},
+      diasAbertos: {},
+      abrirDias: (datas, aberto) => set((s) => ({ diasAbertos: { ...s.diasAbertos, ...Object.fromEntries(datas.map((d) => [d, aberto])) } })),
       lembrarTopico: (id) => set({ ultimoTopico: id }),
       escreverFeynman: (id, texto) =>
         set((s) => {

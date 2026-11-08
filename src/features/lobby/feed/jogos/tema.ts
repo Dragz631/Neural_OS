@@ -35,6 +35,31 @@ export function temaDoJogo(...textos: (string | undefined)[]): TemaJogo {
   return TEMAS.find((t) => t.casa.test(alvo))?.tema ?? PADRAO;
 }
 
+// Qual jogo combina com qual matéria. Línguas pedem forca (vocabulário), programação pede
+// tiro e batalha, estatística e matemática pedem corrida (decidir rápido entre faixas).
+export type Mecanica = 'chuva' | 'comilao' | 'batalha' | 'quiz' | 'cobra' | 'invasores' | 'corrida' | 'forca';
+const TODAS: Mecanica[] = ['chuva', 'comilao', 'batalha', 'quiz', 'cobra', 'invasores', 'corrida', 'forca'];
+const PREFERIDAS: { casa: RegExp; jogos: Mecanica[] }[] = [
+  { casa: /ingl|english|espanh|franc[eê]s|idioma|l[ií]ngua|portugu|gram[aá]t|vocab|reda[cç]/i, jogos: ['forca', 'chuva', 'corrida', 'batalha', 'cobra'] },
+  { casa: /estat|probab/i, jogos: ['corrida', 'chuva', 'cobra', 'batalha', 'forca'] },
+  { casa: /c#|csharp|\bc\b|c\+\+|java|python|script|html|css|front|web|react|sql|algorit|program|lfa|aut[ôo]mato/i, jogos: ['invasores', 'batalha', 'cobra', 'comilao', 'chuva', 'forca'] },
+  { casa: /c[áa]lc|derivad|integral|limite|[áa]lgebra|matem|geometr|fun[çc]/i, jogos: ['corrida', 'chuva', 'invasores', 'comilao', 'cobra'] },
+];
+
+let ultimoJogo: Mecanica | undefined;
+
+/** Escolhe o jogo do cartão: pela matéria, sem repetir o anterior. Chame uma vez por cartão. */
+export function escolherMecanica(idCartao: string, podeForca: boolean, ...textos: (string | undefined)[]): Mecanica {
+  const alvo = textos.filter(Boolean).join(' ');
+  let lista = PREFERIDAS.find((p) => p.casa.test(alvo))?.jogos ?? TODAS;
+  if (!podeForca) lista = lista.filter((j) => j !== 'forca');
+  const sem = lista.filter((j) => j !== ultimoJogo);
+  if (sem.length > 0) lista = sem;
+  const jogo = lista[hashTexto(idCartao) % lista.length];
+  ultimoJogo = jogo;
+  return jogo;
+}
+
 /** Hash simples e estável de um texto (pra escolher o jogo do cartão sem sorteio a cada render). */
 export function hashTexto(s: string): number {
   let h = 0;

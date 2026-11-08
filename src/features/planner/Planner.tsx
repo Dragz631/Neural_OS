@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { BatteryFull, BatteryLow, BatteryMedium, ChevronLeft, ChevronRight, Plus, Wand2, X } from 'lucide-react';
+import { BatteryFull, BatteryLow, BatteryMedium, ChevronDown, ChevronLeft, ChevronRight, Plus, Wand2, X } from 'lucide-react';
+import { useRascunhos } from '../../store/rascunhos';
 import { addDays, formatShort, toLocalDate, weekStartOf, WEEKDAYS } from '../../domain/dates';
 import { suggestWeek } from '../../domain/planner';
 import { aplicarEnergia, diaBase, type DiaAjustado, type TipoLinha } from '../../domain/semana';
@@ -154,6 +155,10 @@ function WeekBoard({ weekStart, onShift }: { weekStart: string; onShift: (weeks:
     return { date, energia, herdadas, ajustado: aplicarEnergia([...herdadas, ...base], energia) };
   });
   const totalEstudo = dias.reduce((s, d) => s + d.ajustado.minutosEstudo, 0);
+  const diasAbertos = useRascunhos((s) => s.diasAbertos);
+  const abrirDias = useRascunhos((s) => s.abrirDias);
+  // Fechado por padrão, menos hoje: a semana cabe numa olhada só.
+  const aberto = (date: string) => diasAbertos[date] ?? date === today;
 
   return (
     <Panel
@@ -179,13 +184,33 @@ function WeekBoard({ weekStart, onShift }: { weekStart: string; onShift: (weeks:
             {nome}
           </Button>
         ))}
-        <span className="text-muted">
+        <span className="ml-auto flex gap-1">
+          <Button className="px-2 py-0.5 text-[10px]" onClick={() => abrirDias(dates, true)}>
+            Abrir todos
+          </Button>
+          <Button className="px-2 py-0.5 text-[10px]" onClick={() => abrirDias(dates, false)}>
+            Fechar todos
+          </Button>
+        </span>
+        <span className="w-full text-muted">
           {vista === 1 ? 'Aula e prazo ficam; o estudo vira 5–10 min e o resto passa pro dia seguinte.' : vista === 2 ? 'O estudo encolhe pra uns 60%.' : 'Aulas e prazos nunca mudam, só o estudo.'}
         </span>
       </div>
-      <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {dias.map((d, i) => (
-          <DayColumn key={d.date} date={d.date} dayIdx={i} isToday={d.date === today} energia={d.energia} ajustado={d.ajustado} items={plan.days[i]} onChange={(items) => setDay(i, items)} />
+          <DayColumn
+            key={d.date}
+            date={d.date}
+            dayIdx={i}
+            isToday={d.date === today}
+            passou={d.date < today}
+            energia={d.energia}
+            ajustado={d.ajustado}
+            items={plan.days[i]}
+            onChange={(items) => setDay(i, items)}
+            aberto={aberto(d.date)}
+            alternar={() => abrirDias([d.date], !aberto(d.date))}
+          />
         ))}
       </div>
     </Panel>
@@ -194,7 +219,29 @@ function WeekBoard({ weekStart, onShift }: { weekStart: string; onShift: (weeks:
 
 const ICONE_ENERGIA = { 1: BatteryLow, 2: BatteryMedium, 3: BatteryFull } as const;
 
-function DayColumn({ date, dayIdx, isToday, energia, ajustado, items, onChange }: { date: string; dayIdx: number; isToday: boolean; energia: Energy; ajustado: DiaAjustado; items: PlanItem[]; onChange: (items: PlanItem[]) => void }) {
+function DayColumn({
+  date,
+  dayIdx,
+  isToday,
+  passou,
+  energia,
+  ajustado,
+  items,
+  onChange,
+  aberto,
+  alternar,
+}: {
+  date: string;
+  dayIdx: number;
+  isToday: boolean;
+  passou: boolean;
+  energia: Energy;
+  ajustado: DiaAjustado;
+  items: PlanItem[];
+  onChange: (items: PlanItem[]) => void;
+  aberto: boolean;
+  alternar: () => void;
+}) {
   const topics = useStudy((s) => s.topics);
   const go = useNav((s) => s.go);
   const [adding, setAdding] = useState(false);
@@ -202,6 +249,7 @@ function DayColumn({ date, dayIdx, isToday, energia, ajustado, items, onChange }
   const [kind, setKind] = useState<SessionKind>('aula');
   const [minutes, setMinutes] = useState(30);
   const Energia = ICONE_ENERGIA[energia];
+  const pendentes = passou ? ajustado.linhas.filter((l) => l.flexivel && !l.feito).length : 0;
 
   const add = (e: FormEvent) => {
     e.preventDefault();
@@ -213,14 +261,27 @@ function DayColumn({ date, dayIdx, isToday, energia, ajustado, items, onChange }
 
   return (
     <div className={cn('flex flex-col rounded border bg-bg p-2', isToday ? 'border-accent/60' : 'border-line')}>
-      <div className="mb-2 flex items-baseline justify-between">
+      {/* Cabeçalho = resumo do dia; clicar abre/fecha. */}
+      <button type="button" onClick={alternar} aria-expanded={aberto} className="flex w-full items-center gap-2 text-left">
+        {aberto ? <ChevronDown size={13} className="shrink-0 text-muted" /> : <ChevronRight size={13} className="shrink-0 text-muted" />}
         <span className={cn('text-xs font-bold uppercase', isToday ? 'text-accent' : 'text-fg')}>{WEEKDAYS[dayIdx]}</span>
-        <span className="flex items-center gap-1 text-[10px] text-muted">
+        <span className="min-w-0 flex-1 truncate text-[10px] text-muted">
+          {ajustado.linhas.length === 0 ? 'livre' : `${ajustado.linhas.length} ${ajustado.linhas.length === 1 ? 'bloco' : 'blocos'}`}
+          {ajustado.minutosEstudo > 0 && ` · ${ajustado.minutosEstudo} min`}
+        </span>
+        {pendentes > 0 && (
+          <span className="rounded border border-warn/50 px-1 text-[9px] text-warn" title="Ficou coisa sem fazer neste dia">
+            {pendentes} pendente{pendentes > 1 ? 's' : ''}
+          </span>
+        )}
+        <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted">
           {energia < 3 && <Energia size={11} className="text-warn" />}
           {formatShort(date)}
         </span>
-      </div>
-      <ul className="space-y-1.5">
+      </button>
+      {aberto && (
+        <>
+      <ul className="mt-2 space-y-1.5">
         {ajustado.linhas.length === 0 && <li className="text-[11px] text-muted">Dia livre.</li>}
         {ajustado.linhas.map((l) => {
           const idPlano = l.chave.startsWith('pl-') ? l.chave.slice(3) : undefined;
@@ -292,6 +353,8 @@ function DayColumn({ date, dayIdx, isToday, energia, ajustado, items, onChange }
         </button>
       )}
       {ajustado.minutosEstudo > 0 && <div className="mt-1 text-right text-[10px] text-muted">{ajustado.minutosEstudo} min de estudo</div>}
+        </>
+      )}
     </div>
   );
 }
