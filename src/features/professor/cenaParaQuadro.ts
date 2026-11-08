@@ -211,5 +211,14 @@ export function cenaParaEsqueletos(titulo: string, cenaOriginal: Cena): CenaDese
     esq.push({ type: 'text', x: alvo.x + alvo.w + 24, y: alvo.y - 6, text: `← ${quebrarCena(a.texto, 26).join('\n')}`, fontSize: 16, strokeColor: p.aviso, fontFamily: p.fonte });
   }
 
-  return { esqueletos: esq, largura: Math.max(ax - GAP_X, 600), altura: topo + ay - GAP_Y };
+  // Texto longo que saiu das caixas (regra: nada de parágrafo no desenho) fica aqui embaixo, pequeno.
+  let altura = topo + ay - GAP_Y;
+  if (cena.notas?.length) {
+    const texto = cena.notas.map((n) => `• ${quebrarCena(n, 70).join('\n  ')}`).join('\n');
+    esq.push({ type: 'text', x: 0, y: altura + 40, text: 'Notas (o texto inteiro das caixas)', fontSize: 16, strokeColor: p.mutado, fontFamily: p.fonte });
+    esq.push({ type: 'text', x: 0, y: altura + 66, text: texto, fontSize: 15, strokeColor: p.mutado, fontFamily: p.fonte });
+    altura += 66 + texto.split('\n').length * 15 * 1.3;
+  }
+
+  return { esqueletos: esq, largura: Math.max(ax - GAP_X, 600), altura };
 }

@@ -4,6 +4,7 @@ import { NextStepBar } from './components/NextStepBar';
 import { Toaster } from './components/Toaster';
 import { TarefasBar } from './components/TarefasBar';
 import { FocoMotor } from './components/Foco';
+import { GavetaBase } from './components/GavetaBase';
 import { useBackupAutomatico } from './hooks/useBackupAutomatico';
 import { TABS, useNav, type TabId } from './store/nav';
 
@@ -44,6 +45,7 @@ export default function App() {
       <Navbar />
       <TarefasBar />
       <FocoMotor />
+      <GavetaBase />
       {tab !== 'lobby' && <NextStepBar />}
       <main>
         <Suspense fallback={<div className="p-8 text-center text-xs text-muted">carregando…</div>}>

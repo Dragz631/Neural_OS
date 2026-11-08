@@ -26,6 +26,9 @@ import { TermometroAula } from './TermometroAula';
 import { ProvaPanel } from './ProvaPanel';
 import { ComecarFoco } from '../../components/Foco';
 import { NovidadesNotebook } from '../../components/NovidadesNotebook';
+import { BotaoTraveiBase } from '../../components/GavetaBase';
+import { useGavetaBase } from '../../store/gavetaBase';
+import { useBases } from '../../store/bases';
 import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
 import { Select } from '../../components/ui';
 
@@ -228,6 +231,7 @@ function Blackboard({ topic }: { topic: Topic }) {
   const { rodando: loading, erro: error } = useTarefa(chave);
   const [editing, setEditing] = useState(false);
   const lesson = topic.lesson;
+  const baseGuardada = useBases((s) => s.bases.find((b) => b.topicId === topic.id));
 
   const [aba, setAba] = useState<'prof' | 'livre'>('prof');
   const emAndamento = !!lesson && !lesson.concluidaEm && (Object.values(lesson.progresso ?? {}).some(Boolean) || !!lesson.minis?.some((m) => m.ok));
@@ -274,6 +278,7 @@ function Blackboard({ topic }: { topic: Topic }) {
           <Button onClick={() => setEditing(true)}>
             <PenLine size={14} /> {lesson ? 'Editar' : 'Escrever eu mesmo'}
           </Button>
+          {aiOn && <BotaoTraveiBase topicId={topic.id} />}
         </div>
       </header>
 
@@ -285,6 +290,18 @@ function Blackboard({ topic }: { topic: Topic }) {
           <span className="min-w-0 flex-1 text-muted">Chegou slide sobre isto: {topic.materialNovo.join(', ')}.</span>
           <Button className="px-2 py-1 text-[10px]" onClick={generate} disabled={!aiOn}>
             <Sparkles size={12} /> Atualizar a aula com ele
+          </Button>
+        </div>
+      )}
+
+      {baseGuardada && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-info/60 bg-info/5 p-2 text-xs">
+          <span className="min-w-0 flex-1 text-muted">
+            Você travou nesta base em {new Date(baseGuardada.criadaEm).toLocaleDateString('pt-BR')}
+            {baseGuardada.deTopico ? ` (na aula de ${baseGuardada.deTopico})` : ''}. A explicação desenhada ficou guardada.
+          </span>
+          <Button className="px-2 py-1 text-[10px]" onClick={() => useGavetaBase.getState().abrir({ baseId: baseGuardada.id })}>
+            Rever desenhado
           </Button>
         </div>
       )}

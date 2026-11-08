@@ -75,9 +75,29 @@ export interface Cena {
   elementos: ElementoCena[];
   ligacoes: LigacaoCena[];
   anotacoes: AnotacaoCena[];
+  /** Texto longo que estava numa caixa: a caixa fica curta e o texto inteiro vem aqui, embaixo do desenho. */
+  notas?: string[];
 }
 
 const MAX_ELEMENTOS = 16;
+/** Mais que isso numa caixa já é parágrafo: quem tem dificuldade de ler para no quadro. */
+export const MAX_PALAVRAS_CAIXA = 12;
+
+/**
+ * Regra do quadro: texto corrido não fica em caixa. Caixa com mais de 12 palavras
+ * fica com as 8 primeiras e "…"; o texto inteiro vai pras notas embaixo do desenho.
+ */
+export function semParagrafo(elementos: ElementoCena[]): { elementos: ElementoCena[]; notas: string[] } {
+  const notas: string[] = [];
+  const curtos = elementos.map((el) => {
+    if (el.tipo === 'formula' || el.grafico || el.diagrama) return el;
+    const palavras = el.texto.split(/\s+/).filter(Boolean);
+    if (palavras.length <= MAX_PALAVRAS_CAIXA) return el;
+    notas.push(el.texto);
+    return { ...el, texto: `${palavras.slice(0, 8).join(' ')}…` };
+  });
+  return { elementos: curtos, notas };
+}
 const MAX_TEXTO = 140;
 
 const noArray = <T extends string>(lista: readonly T[], v: unknown, padrao: T): T => (lista.includes(v as T) ? (v as T) : padrao);
@@ -208,12 +228,14 @@ export function lerCena(bruto: unknown): Cena | null {
     const a = x as Record<string, unknown>;
     if (typeof a.texto === 'string' && a.texto.trim() && typeof a.em === 'string' && ids.has(a.em)) anotacoes.push({ texto: a.texto.trim().slice(0, MAX_TEXTO), em: a.em });
   }
+  const curtos = semParagrafo(elementos);
   return falarNumeros({
     estilo: noArray(ESTILOS_CENA, o.estilo, 'livre'),
     porque: typeof o.porque === 'string' ? o.porque.trim().slice(0, 200) : '',
-    elementos,
+    elementos: curtos.elementos,
     ligacoes,
     anotacoes: anotacoes.slice(0, 4),
+    ...(curtos.notas.length ? { notas: curtos.notas } : {}),
   });
 }
 

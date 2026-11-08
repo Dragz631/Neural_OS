@@ -15,6 +15,7 @@ import { useRascunhos, type MensagemChat } from '../../store/rascunhos';
 import { useSelecaoQuadro } from '../../store/selecaoQuadro';
 import { useBoards } from '../lousa/boardsStore';
 import { Orbe } from '../../components/Orbe';
+import { useGavetaBase } from '../../store/gavetaBase';
 
 // Mini chat do professor, ao lado do quadro: pra ajustes rápidos ("mais fácil",
 // "desenha isso"), não pra aula inteira. Arrasta pra qualquer canto, prende na
@@ -241,6 +242,16 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
           </label>
         )}
         <div className="flex flex-wrap gap-1">
+          {/* Travou numa conta que a aula supõe? Parêntese desenhado, sem parar a aula nem o chat. */}
+          <button
+            type="button"
+            disabled={!aiOn}
+            onClick={() => useGavetaBase.getState().abrir({ topicId: topic.id, duvida: usarSelecao && selecao ? `não sei isso: "${selecao.slice(0, 160)}"` : undefined })}
+            className="rounded border border-info/60 px-2 py-1 text-[10px] text-info hover:bg-info/10 disabled:opacity-50"
+            title="Não sabe a conta que a aula usa? O professor explica desenhando, num parêntese"
+          >
+            {selecao && usarSelecao ? 'Não sei isso (base)' : 'Travei numa base'}
+          </button>
           {ATALHOS.map((a) => (
             <button key={a.tipo} type="button" disabled={!aiOn || loading} onClick={() => enviar(a.pedido, a.tipo)} className="rounded border border-line px-2 py-1 text-[10px] hover:border-accent hover:text-accent disabled:opacity-50">
               {a.rotulo}

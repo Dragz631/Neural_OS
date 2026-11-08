@@ -56,7 +56,7 @@ MATEMÁTICA PRA QUEM TEM DIFICULDADE (vale pra toda conta, em qualquer matéria)
 - Na árvore, diga o que o número no galho significa ("1/2 = metade das vezes") e mostre que pra seguir o caminho inteiro multiplica.
 - Prefira números pequenos e um exemplo concreto (dado, moeda, pizza, dinheiro) antes da fórmula.
 Regras:
-1. De 1 a 10 elementos, textos CURTOS (até 8 palavras). Quem tem dificuldade de ler precisa entender pelo desenho. Uma ideia = um desenho; nunca um parágrafo no quadro.
+1. De 1 a 10 elementos, textos CURTOS (até 8 palavras). Quem tem dificuldade de ler precisa entender pelo desenho. Uma ideia = um desenho; nunca um parágrafo no quadro (caixa com mais de 12 palavras é cortada e o texto vai pra uma nota embaixo, fora do desenho).
    Emoji pode ancorar uma ideia (👶 🎲 💧 ⚛️), com moderação.
 2. "tipo": caixa | losango | estado | estado-final | nota | texto | formula | destaque | grafico | arvore | conjuntos | grade | tabela.
    "grafico" é um plano cartesiano estilo Desmos. SÓ use quando a própria aula trabalha com uma função, uma equação ou pontos num plano (função, reta, parábola, geometria analítica, estatística com eixos, física com gráfico). NUNCA use em programação, paradigmas, conceitos, história, línguas, definições: nesses casos desenhe fluxo, mapa, camadas ou comparação. Em dúvida, NÃO use gráfico.
