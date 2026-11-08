@@ -71,7 +71,13 @@ Pontos-chave: ${r.aulaAtual.keyPoints.join('; ')}
 ${extras ? `Pedaços que ele montou junto com você no chat (o jeito que funcionou pra ele; aproveite):\n${extras}\n` : ''}`;
 }
 
-export async function generateLesson(ctx: TopicContext, signal?: AbortSignal, reescrita?: PedidoReescrita): Promise<Lesson> {
+/** O chute que o aluno deu antes da aula: errar antes e ver depois fixa mais. */
+function blocoChute(titulo: string, chute: string): string {
+  return `\nANTES DA AULA o aluno chutou o que acha que é "${titulo}": "${chute.slice(0, 400)}".
+Comece a explicação respondendo o chute dele, com carinho e sem julgamento: o que ele já acertou (diga!) e o que não é bem assim. Depois siga a aula a partir dali.\n`;
+}
+
+export async function generateLesson(ctx: TopicContext, signal?: AbortSignal, reescrita?: PedidoReescrita, chute?: string): Promise<Lesson> {
   const slides = slidesDoTopico(ctx);
   return chatJSON(
     [
@@ -79,7 +85,7 @@ export async function generateLesson(ctx: TopicContext, signal?: AbortSignal, re
       {
         role: 'user',
         content: `${describe(ctx)}
-${slides ? `\n${slides}\n` : ''}${reescrita ? blocoReescrita(reescrita) : ''}
+${slides ? `\n${slides}\n` : ''}${reescrita ? blocoReescrita(reescrita) : ''}${chute?.trim() ? blocoChute(ctx.topic.title, chute) : ''}
 Escreva no quadro negro a aula deste tópico, ajustada ao nível e às anotações do aluno.
 Se as anotações tiverem erro conceitual, corrija com gentileza na explicação.
 Depois desta aula você vai DESENHAR no quadro: escreva já pensando no desenho, com o caso concreto (números, etapas, partes, quem vem antes de quem) que o desenho vai mostrar. Exemplo e analogia antes da definição formal.

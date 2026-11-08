@@ -161,7 +161,9 @@ As chaves ficam só no `.env.local` (fora do git); o navegador nunca as vê. O s
 | **Lousa** | Só suas lousas livres (Excalidraw no tema do app), organizadas em **grupos** (por matéria automático, ou os que você criar) |
 | **Dungeon** | Modo diversão de fim de semana (trilhas fixas C#, C, LFA) |
 
-Toda avaliação (explicação ou desafio) alimenta a **revisão espaçada**: o tópico volta pra revisão em 1, 3, 7… dias conforme você lembra.
+Toda avaliação (explicação ou desafio) alimenta a **revisão espaçada**: o tópico volta pra revisão em 1, 3, 7… dias conforme você lembra. Revisão vencida volta como **pergunta**, não como releitura: o tópico abre pedindo pra você tentar lembrar (3 perguntas) antes de reler, porque puxar da memória é o que fixa.
+
+Antes da primeira aula de um tópico, o professor pede um **chute** de 1 frase ("o que você acha que é?"). É opcional, e a aula começa respondendo o seu chute: o que você acertou e o que não é bem assim.
 
 ### Estrutura
 

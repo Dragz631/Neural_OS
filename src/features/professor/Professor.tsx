@@ -59,6 +59,8 @@ export default function Professor() {
   const subjects = useStudy((s) => s.subjects);
   const [newTopicOpen, setNewTopicOpen] = useState(false);
   const [fechando, setFechando] = useState(false);
+  /** Tópico em que ele escolheu "reler mesmo assim" (vale só pra esse tópico, nesta visita). */
+  const [releu, setReleu] = useState<Id | undefined>();
   const [visao, setVisao] = useState<'aula' | 'roadmap'>('aula');
   const ctxChat = useTopicContext(topic);
   const emProva = useRascunhos((s) => !!topic && s.provaAberta === topic.id);
@@ -66,6 +68,8 @@ export default function Professor() {
   // Matéria em foco: a escolhida no roadmap, senão a do tópico aberto, senão a primeira.
   const materiaId = materiaRM ?? topic?.subjectId ?? subjects[0]?.id;
   const materia = subjects.find((s) => s.id === materiaId);
+  // Revisão vencida volta como PERGUNTA, não como releitura: o quadro espera até ele tentar lembrar.
+  const revisaoPrimeiro = !!topic?.lastStudiedAt && !!topic.lesson && isDue(topic.review) && releu !== topic.id;
 
   const apagar = () => {
     if (!materia) return;
@@ -174,11 +178,33 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
-            <Blackboard key={topic.id} topic={topic} />
+            {revisaoPrimeiro ? (
+              <section className="flex min-h-[320px] flex-col items-center justify-center gap-3 rounded border-4 border-warn/50 bg-panel-2 p-6 text-center">
+                <p className="fonte-titulo text-[10px] uppercase tracking-[0.3em] text-warn">Revisão vencida</p>
+                <h2 className="text-xl font-bold text-fg">{topic.title}</h2>
+                <p className="max-w-md text-sm text-muted">
+                  Antes de reler, <b className="text-fg">tenta lembrar</b>. Puxar da memória sozinho é o que fixa; reler dá a sensação de que sabe, mas não treina. São 3 perguntas, uns 5 min.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      setFechando(true);
+                      setTimeout(() => document.getElementById('revisao-relampago')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                    }}
+                  >
+                    Começar pela revisão
+                  </Button>
+                  <Button onClick={() => setReleu(topic.id)}>Reler a aula mesmo assim</Button>
+                </div>
+              </section>
+            ) : (
+              <Blackboard key={topic.id} topic={topic} />
+            )}
             <div className="space-y-4">
-              <NotesPanel topic={topic} />
+              {!revisaoPrimeiro && <NotesPanel topic={topic} />}
               {/* O último passo: fechar a aula com uma revisão curta. Fica recolhido até a pessoa chamar. */}
-              <div className="rounded border border-line bg-panel">
+              <div id="revisao-relampago" className={cn('rounded border bg-panel', revisaoPrimeiro ? 'border-warn' : 'border-line')}>
                 <button type="button" onClick={() => setFechando((v) => !v)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left" aria-expanded={fechando}>
                   <span>
                     <span className="fonte-titulo block text-[10px] uppercase tracking-[0.25em] text-accent">Fechar a aula</span>
@@ -197,7 +223,7 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
         </>
       )}
 
-      {visao === 'aula' && topic && !emProva && <ChatProfessor key={topic.id} topic={topic} ctx={ctxChat} />}
+      {visao === 'aula' && topic && !emProva && !revisaoPrimeiro && <ChatProfessor key={topic.id} topic={topic} ctx={ctxChat} />}
       <TopicModal open={newTopicOpen} onClose={() => setNewTopicOpen(false)} onCreated={escolher} />
     </div>
   );
@@ -242,15 +268,20 @@ function Blackboard({ topic }: { topic: Topic }) {
    * Sem pedido: aula do zero (progresso dos passos recomeça). Com pedido ("mais curto", "foca em X"):
    * a aula atual é a base, e o progresso fica. O que foi montado junto no chat sempre fica.
    */
-  const generate = (comPedido?: string) => {
+  const [chute, setChute] = useState('');
+  const generate = (comPedido?: string, comChute?: string) => {
     const p = comPedido?.trim();
+    const ch = comChute?.trim();
+    // O chute fica no diário: dá pra comparar depois com o que a aula ensinou.
+    if (ch) useStudy.getState().addDiario(topic.id, { tipo: 'conceito', original: `Chute antes da aula: ${ch}` });
+    setChute('');
     if (!p && emAndamento && !window.confirm('Você está no meio desta aula. Reescrever do zero apaga o progresso dos passos e dos minidesafios (as suas anotações e o que vocês montaram junto ficam). Continuar?')) return;
     const c = ctx!;
     setPedindo(false);
     setPedido('');
     void rodarTarefa(chave, { rotulo: p ? `Professor reescrevendo ${topic.title}: ${p.slice(0, 30)}` : `Professor preparando a aula de ${topic.title}`, aba: 'professor', topicId: topic.id, avisarPronto: `Aula de ${topic.title} pronta` }, async (signal) => {
       const antes = useStudy.getState().topics.find((t) => t.id === topic.id)?.lesson;
-      const nova = await generateLesson(c, signal, p && antes ? { pedido: p, aulaAtual: antes } : undefined);
+      const nova = await generateLesson(c, signal, p && antes ? { pedido: p, aulaAtual: antes } : undefined, ch);
       const agora = useStudy.getState().topics.find((t) => t.id === topic.id)?.lesson;
       const l = { ...nova, ...(agora?.extras?.length ? { extras: agora.extras } : {}), ...(p && agora ? { progresso: agora.progresso, minis: agora.minis?.length ? agora.minis : nova.minis } : {}) };
       // O texto entra já: se o desenho falhar ou for cancelado, a aula não se perde.
@@ -280,7 +311,7 @@ function Blackboard({ topic }: { topic: Topic }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => (lesson ? setPedindo((v) => !v) : generate())} disabled={!aiOn || loading} title={aiOn ? '' : 'Ative a IA nas configurações'}>
+          <Button onClick={() => setPedindo((v) => !v)} disabled={!aiOn || loading} title={aiOn ? '' : 'Ative a IA nas configurações'}>
             <Sparkles size={14} /> {loading ? 'Escrevendo…' : lesson ? 'Reescrever com IA' : 'Gerar aula com IA'}
           </Button>
           {lesson && (
@@ -296,6 +327,28 @@ function Blackboard({ topic }: { topic: Topic }) {
       </header>
 
       <ErrorNote error={error} />
+
+      {pedindo && !lesson && !loading && (
+        <form
+          className="mb-3 space-y-2 rounded border border-info/50 bg-info/5 p-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            generate(undefined, chute);
+          }}
+        >
+          <p className="text-sm text-fg">
+            Antes da aula, um chute: <b>o que você acha que é {topic.title}?</b>
+          </p>
+          <p className="text-[11px] text-muted">1 frase, do seu jeito. Errar aqui é ótimo: o professor começa a aula pelo seu chute, e ver onde errou fixa mais do que só ler.</p>
+          <input value={chute} onChange={(e) => setChute(e.target.value)} autoFocus placeholder="acho que é…" className="w-full rounded border border-line bg-bg px-2 py-1.5 text-sm text-fg" />
+          <div className="flex gap-2">
+            <Button variant="primary" type="submit" disabled={!chute.trim()}>
+              <Sparkles size={14} /> Chutei, gera a aula
+            </Button>
+            <Button onClick={() => generate()}>Pular o chute</Button>
+          </div>
+        </form>
+      )}
 
       {pedindo && lesson && !loading && (
         <form
