@@ -6,7 +6,7 @@ import type { Id, LocalDate, Topic } from './types';
 //
 // Tipo novo de cartão = 1 entrada em TIPOS_CARTAO + 1 componente no feed.
 
-export type TipoCartao = 'revisao' | 'micro' | 'frase' | 'lembra';
+export type TipoCartao = 'revisao' | 'micro' | 'frase' | 'lembra' | 'ordem';
 
 interface Base {
   id: Id;
@@ -38,13 +38,22 @@ export interface CartaoLembra extends Base {
   resposta: string;
 }
 
-export type Cartao = CartaoEscolha | CartaoFrase | CartaoLembra;
+/** Monte em ordem: os passos vêm embaralhados e você toca na sequência certa. */
+export interface CartaoOrdem extends Base {
+  tipo: 'ordem';
+  /** Os passos NA ORDEM CERTA (a tela embaralha). 3 a 6, curtos. */
+  passos: string[];
+  explicacao: string;
+}
+
+export type Cartao = CartaoEscolha | CartaoFrase | CartaoLembra | CartaoOrdem;
 
 export const TIPOS_CARTAO: Record<TipoCartao, { rotulo: string; xp: number }> = {
   revisao: { rotulo: 'Revisão ativa', xp: 5 },
   micro: { rotulo: 'Micro-desafio', xp: 8 },
   frase: { rotulo: 'Explique em 1 frase', xp: 6 },
   lembra: { rotulo: 'Lembra e confere', xp: 4 },
+  ordem: { rotulo: 'Monte em ordem', xp: 7 },
 };
 
 export const TAMANHO_RODADA = 5;

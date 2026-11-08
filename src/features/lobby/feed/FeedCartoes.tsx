@@ -8,6 +8,7 @@ import { useFeed } from '../../../store/feed';
 import { useStudy } from '../../../store/study';
 import { Fogos } from './jogos/Fogos';
 import { JogoEscolha } from './jogos/JogoEscolha';
+import { JogoOrdem } from './jogos/JogoOrdem';
 import { temaDoJogo } from './jogos/tema';
 import { CartaoFraseView } from './CartaoFraseView';
 import { CartaoLembraView } from './CartaoLembraView';
@@ -21,6 +22,7 @@ const COMPONENTES: Record<TipoCartao, ComponentType<PropsCartao<never>>> = {
   micro: JogoEscolha,
   frase: CartaoFraseView,
   lembra: CartaoLembraView,
+  ordem: JogoOrdem,
 };
 
 /** Feed do Lobby: rodadas de 5 cartões de 1 minuto, com combo e XP. */

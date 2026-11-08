@@ -41,6 +41,16 @@ export interface JanelaChat {
   y: number;
 }
 
+export type Marca = 'ok' | 'confuso';
+
+export interface PedidoChat {
+  topicId: Id;
+  pedido: string;
+  tipo: string;
+  sobre?: string;
+  chave: number;
+}
+
 interface RascunhosState {
   ultimoTopico?: Id;
   feynman: Record<Id, string>;
@@ -58,6 +68,13 @@ interface RascunhosState {
   limparChat: (topicId: Id) => void;
   moverChat: (j: Partial<JanelaChat>) => void;
   porNoQuadro: (topicId: Id, titulo: string, cena: Cena) => void;
+  /** Termômetro da aula: em cada parte do desenho, 🙂 (entendi) ou 😕 (não entrou). Zera quando a aula muda. */
+  termometro: Record<Id, { aula: string; marcas: Record<string, Marca> }>;
+  marcarParte: (topicId: Id, aula: string, parte: string, marca: Marca | undefined) => void;
+  /** Pedido feito de fora do chat (ex.: o 😕 do termômetro). O chat abre, manda e limpa. Não fica salvo. */
+  pedidoChat?: PedidoChat;
+  pedirAoChat: (p: Omit<PedidoChat, 'chave'>) => void;
+  limparPedidoChat: () => void;
   lembrarTopico: (id: Id) => void;
   escreverFeynman: (id: Id, texto: string) => void;
   guardarRevisao: (id: Id, r: RevisaoSalva | undefined) => void;
@@ -81,6 +98,17 @@ export const useRascunhos = create<RascunhosState>()(
         }),
       moverChat: (j) => set((s) => ({ chatJanela: { ...s.chatJanela, ...j } })),
       porNoQuadro: (topicId, titulo, cena) => set((s) => ({ paraQuadro: { ...s.paraQuadro, [topicId]: { chave: `chat:${Date.now()}`, titulo, cena } } })),
+      termometro: {},
+      marcarParte: (topicId, aula, parte, marca) =>
+        set((s) => {
+          const atual = s.termometro[topicId];
+          const marcas = { ...(atual?.aula === aula ? atual.marcas : {}) };
+          if (marca) marcas[parte] = marca;
+          else delete marcas[parte];
+          return { termometro: { ...s.termometro, [topicId]: { aula, marcas } } };
+        }),
+      pedirAoChat: (p) => set({ pedidoChat: { ...p, chave: Date.now() } }),
+      limparPedidoChat: () => set({ pedidoChat: undefined }),
       abrirDias: (datas, aberto) => set((s) => ({ diasAbertos: { ...s.diasAbertos, ...Object.fromEntries(datas.map((d) => [d, aberto])) } })),
       lembrarTopico: (id) => set({ ultimoTopico: id }),
       escreverFeynman: (id, texto) =>
@@ -98,6 +126,11 @@ export const useRascunhos = create<RascunhosState>()(
           return { revisao };
         }),
     }),
-    { name: 'neural-os.rascunhos', version: 1 },
+    {
+      name: 'neural-os.rascunhos',
+      version: 1,
+      // O pedido pendente do chat não vai pro disco: recarregar a página não pode reenviar pergunta.
+      partialize: ({ pedidoChat: _pedido, ...resto }) => resto,
+    },
   ),
 );

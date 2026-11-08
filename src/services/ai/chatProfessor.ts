@@ -2,6 +2,7 @@ import { lerCena, semGraficoFora, type Cena } from '../../domain/cena';
 import type { Motor } from '../../domain/conexoes';
 import type { Lesson } from '../../domain/types';
 import { aprendizParaIA } from '../../store/aprendiz';
+import { useConexoes } from '../../store/conexoes';
 import type { MensagemChat } from '../../store/rascunhos';
 import { GUIA_DESENHO } from './cena';
 import { chatJSON } from './client';
@@ -20,11 +21,38 @@ export interface RespostaChat {
   cena?: Cena;
 }
 
-export async function perguntarAoProfessor(
-  p: { ctx: TopicContext; aula?: Lesson; sobre?: string; historico: MensagemChat[]; pergunta: string },
-  signal?: AbortSignal,
-  motor: Motor = querDesenho(p.pergunta) ? 'dificil' : 'leve',
-): Promise<RespostaChat> {
+/** Quanto o chat espera o motor leve antes de passar a pergunta pro difícil. */
+export const ESPERA_LEVE_MS = 40_000;
+/** Depois que o leve estoura o tempo, o chat fica esse tempo indo direto pro difícil. */
+const PAUSA_LEVE_MS = 15 * 60_000;
+let leveLentoAte = 0;
+
+type Pedido = { ctx: TopicContext; aula?: Lesson; sobre?: string; historico: MensagemChat[]; pergunta: string };
+
+/**
+ * Chat é ajuste rápido: não dá pra esperar 3 minutos. Pergunta de texto vai pro leve; se ele
+ * não responder em 40 s (a NVIDIA às vezes fica lenta), a mesma pergunta vai pro difícil.
+ */
+export async function perguntarAoProfessor(p: Pedido, signal?: AbortSignal, motor?: Motor): Promise<RespostaChat> {
+  const { motores } = useConexoes.getState();
+  const escolhido: Motor = motor ?? (querDesenho(p.pergunta) && motores.dificil ? 'dificil' : 'leve');
+  if (escolhido !== 'leve' || !motores.dificil) return perguntar(p, signal, escolhido);
+  // O leve acabou de estourar o tempo? Por um tempo nem tenta: vai direto pro difícil.
+  if (Date.now() < leveLentoAte) return perguntar(p, signal, 'dificil');
+  const pressa = new AbortController();
+  const relogio = setTimeout(() => pressa.abort(), ESPERA_LEVE_MS);
+  try {
+    return await perguntar(p, signal ? AbortSignal.any([signal, pressa.signal]) : pressa.signal, 'leve');
+  } catch (e) {
+    if (signal?.aborted || !pressa.signal.aborted) throw e;
+    leveLentoAte = Date.now() + PAUSA_LEVE_MS;
+    return perguntar(p, signal, 'dificil');
+  } finally {
+    clearTimeout(relogio);
+  }
+}
+
+async function perguntar(p: Pedido, signal: AbortSignal | undefined, motor: Motor): Promise<RespostaChat> {
   const { topic, subject } = p.ctx;
   const conversa = p.historico
     .slice(-6)

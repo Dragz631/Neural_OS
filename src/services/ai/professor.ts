@@ -2,16 +2,15 @@ import type { Challenge, CodeReview, Lesson, MiniAula, StudySession, Subject, To
 import type { Retrato } from '../../domain/conhecimento';
 import { aprendizParaIA } from '../../store/aprendiz';
 import { asScore, asString, asStrings, chatJSON, type ChatMessage } from './client';
+import { PROFESSOR } from './persona';
 
 // ─── Prof. A.Ilson ───────────────────────────────────────────────────────────
 // Todas as conversas com a IA passam por aqui. Cada pedido leva o SEU contexto:
 // anotações, nota das últimas sessões, quantas vezes esqueceu. É isso que faz
 // a aula ser sobre você, e não um texto genérico.
 
-const PERSONA = `Você é o Prof. A.Ilson, professor universitário de computação e exatas.
-Estilo: direto, prático, exigente mas encorajador. Você reforça o que o aluno já faz bem
-e usa isso como ponte pro que falta. Sempre em português do Brasil.
-Nunca invente links ou URLs. Quando recomendar vídeos, dê TERMOS DE BUSCA pro YouTube.`;
+// Uma persona só pra aula, desenho, chat e correção: o professor de QUALQUER matéria (persona.ts).
+const PERSONA = PROFESSOR;
 
 export interface TopicContext {
   topic: Topic;
@@ -50,6 +49,7 @@ export async function generateLesson(ctx: TopicContext, signal?: AbortSignal): P
 
 Escreva no quadro negro a aula deste tópico, ajustada ao nível e às anotações do aluno.
 Se as anotações tiverem erro conceitual, corrija com gentileza na explicação.
+Depois desta aula você vai DESENHAR no quadro: escreva já pensando no desenho, com o caso concreto (números, etapas, partes, quem vem antes de quem) que o desenho vai mostrar. Exemplo e analogia antes da definição formal.
 Formato JSON:
 {
   "explanation": "explicação clara em 2-4 parágrafos curtos, com exemplo concreto",

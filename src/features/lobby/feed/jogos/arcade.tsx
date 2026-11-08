@@ -5,6 +5,7 @@ import { cn } from '../../../../lib/utils';
 import { BotaoProximo, type PropsCartao } from '../comum';
 import { ALTURA, Grade, LARGURA, semMovimento, useQuadros, useTeclas } from './ascii';
 import type { TemaJogo } from './tema';
+import { semAcento } from './regras';
 
 // Jogos de "fliperama" do Feed: cobrinha, invasores, corrida de faixas e forca.
 // Diferente dos quadros de quadros.ts, estes têm estado próprio (posição, tiro, cobra),
@@ -403,16 +404,7 @@ export function JogoCorrida({ cartao, onResponder, onProximo, tema, ms }: PropsA
 
 // ── Forca ───────────────────────────────────────────────────────────────────
 
-const semAcento = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 const MAX_ERROS = 6;
-
-/** A resposta certa dá forca? Termo curto, até 3 palavras, quase só letras. */
-export function cabeForca(c: CartaoEscolha): boolean {
-  const r = (c.opcoes[c.certa] ?? '').trim();
-  if (r.length < 3 || r.length > 18 || r.split(/\s+/).length > 3) return false;
-  const letras = semAcento(r).replace(/[^A-Z]/g, '').length;
-  return letras >= 3 && letras / r.replace(/\s/g, '').length >= 0.8 && !c.codigo;
-}
 
 const BONECO = [
   ['  +---+  ', '  |   |  ', '      |  ', '      |  ', '      |  ', ' ======  '],

@@ -25,7 +25,8 @@ const EXEMPLO = `{
 }`;
 
 /** Como o professor desenha: tipos, diagramas e regras. Usado na aula e no chat. */
-export const GUIA_DESENHO = `Escolha o MELHOR jeito de desenhar ISTO (não force um modelo fixo):
+export const GUIA_DESENHO = `Todo texto do desenho em português do Brasil ("Início", "Fim", "acabou a lista?"); só código e nomes técnicos ficam como são (range(5), print).
+Escolha o MELHOR jeito de desenhar ISTO (não force um modelo fixo):
 - fluxo: decisão e passos de um algoritmo (losangos pra "se", caixas pros passos).
 - estados: algo que muda com o tempo (variável na memória, autômato, objeto). Use "estado" e "estado-final", e escreva o valor ou a regra nas ligações.
 - passos: resolução passo a passo (matemática, fatoração, conta): cada passo numa caixa, "formula" pras contas, "destaque" ou papel "resultado" pra resposta.

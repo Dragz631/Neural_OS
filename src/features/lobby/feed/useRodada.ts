@@ -32,6 +32,7 @@ const GERAR_POR_RODADA = 2;
 function respostaCerta(c: Cartao): string | undefined {
   if (c.tipo === 'lembra') return c.resposta;
   if (c.tipo === 'frase') return c.referencia;
+  if (c.tipo === 'ordem') return `${c.passos.join(' → ')}${c.explicacao ? ` (${c.explicacao})` : ''}`;
   return `${c.opcoes[c.certa]}${c.explicacao ? ` (${c.explicacao})` : ''}`;
 }
 

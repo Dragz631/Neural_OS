@@ -12,6 +12,8 @@ import { useSettings } from '../../store/settings';
 // devolvia uma resposta pronta escondida, e você achava que a IA tinha respondido.
 
 export class AIError extends Error {}
+/** O motor não respondeu a tempo (diferente de cancelado ou de resposta errada). */
+export class AITempo extends AIError {}
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -32,7 +34,7 @@ export async function chat(messages: ChatMessage[], signal?: AbortSignal, motor:
     signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   }).catch((e: unknown) => {
     const name = e instanceof Error ? e.name : '';
-    if (name === 'TimeoutError') throw new AIError('A IA demorou demais pra responder.');
+    if (name === 'TimeoutError') throw new AITempo('A IA demorou demais pra responder.');
     if (name === 'AbortError') throw new AIError('Cancelado.');
     throw new AIError('Não consegui falar com o servidor. O "npm run dev" está rodando?');
   });
@@ -59,11 +61,19 @@ export async function chatJSON<T>(messages: ChatMessage[], parse: (raw: unknown)
     { role: 'user', content: 'Responda APENAS com um objeto JSON válido, sem texto antes ou depois, sem ```.' },
   ];
   // Errou o formato? Tenta de novo no mesmo motor; na 2ª falha do professor, chama o difícil.
+  // Estourou o tempo (provedor lento)? Não adianta insistir nele: vai direto pro difícil.
   const tentativas: Motor[] = motor === 'professor' ? ['professor', 'professor', 'dificil'] : motor === 'leve' ? ['leve', 'professor'] : [motor];
+  const temDificil = () => !!useConexoes.getState().motores.dificil;
   let ultimoErro = '';
   for (const m of tentativas) {
-    if (m === 'dificil' && !useConexoes.getState().motores.dificil) break;
-    const text = await chat(withRule, signal, m);
+    if (m === 'dificil' && !temDificil()) break;
+    let text: string;
+    try {
+      text = await chat(withRule, signal, m);
+    } catch (e) {
+      if (e instanceof AITempo && m !== 'dificil' && temDificil() && !signal?.aborted) return chatJSON(messages, parse, signal, 'dificil');
+      throw e;
+    }
     const json = extractJSONObject(text);
     if (!json) {
       ultimoErro = 'A IA não devolveu JSON.';

@@ -106,9 +106,9 @@ As chaves ficam só no `.env.local` (fora do git); o navegador nunca as vê. O s
 
 | Aba | Pra quê |
 |---|---|
-| **Lobby** | Widgets numa grade que você arruma (arrasta e redimensiona), Target, missões, Feed de minijogos em ASCII (chuva, comilão, batalha, cobrinha, invasores, corrida, forca; a matéria escolhe o jogo, e com IA ela inventa um por pergunta), revisões vencidas |
+| **Lobby** | Widgets numa grade que você arruma (arrasta e redimensiona), Target, missões, Feed de minijogos em ASCII (chuva, comilão, batalha, cobrinha, invasores, corrida, forca e "monte em ordem" pra passos e processos; a matéria escolhe o jogo, e com IA ela inventa um por pergunta), revisões vencidas |
 | **Árvore** | Matérias → tópicos → tópicos derivados. Cresce conforme você cria e domina |
-| **Prof. A.Ilson** | Professor de qualquer matéria, que explica desenhando (fluxo, árvore, conjuntos, grade, tabela, gráfico). Aula no quadro, suas anotações, "prove que entendeu", **chat de ajustes** ("mais fácil", "desenha isso", selecione uma parte do quadro) e o **Roadmap** da matéria. O quadro e o roadmap ficam aqui dentro: o professor não mexe na sua Lousa |
+| **Prof. A.Ilson** | Professor de qualquer matéria, que explica desenhando (fluxo, árvore, conjuntos, grade, tabela, gráfico). Aula no quadro, suas anotações, "prove que entendeu", **chat de ajustes** ("mais fácil", "desenha isso", selecione uma parte do quadro), **termômetro** 🙂/😕 em cada parte da aula (o 😕 pede outra explicação no chat) e o **Roadmap** da matéria. O quadro e o roadmap ficam aqui dentro: o professor não mexe na sua Lousa |
 | **Sandbox** | Desafios do que você já estudou; correção de lógica e sintaxe sem executar |
 | **Molda-Horário** | Planejar a semana (domingo) + check-in diário de energia/tempo que ajusta o dia. Os dias ficam recolhidos numa linha-resumo; hoje abre sozinho |
 | **Lousa** | Só suas lousas livres (Excalidraw no tema do app), organizadas em **grupos** (por matéria automático, ou os que você criar) |

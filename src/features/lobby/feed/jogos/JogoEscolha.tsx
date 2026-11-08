@@ -10,7 +10,8 @@ import { BotaoProximo, type PropsCartao } from '../comum';
 import { semMovimento, useQuadros, useTeclas } from './ascii';
 import { quadroBatalha, quadroChuva, quadroComilao, type Estado } from './quadros';
 import { escolherMecanica, temaDoJogo, type Mecanica } from './tema';
-import { cabeForca, JogoCobra, JogoCorrida, JogoForca, JogoInvasores } from './arcade';
+import { JogoCobra, JogoCorrida, JogoForca, JogoInvasores } from './arcade';
+import { cabeForca } from './regras';
 
 // Cada cartão de múltipla escolha vira um minijogo em ASCII. Qual jogo? Sai do próprio cartão
 // (sempre o mesmo pro mesmo cartão). A pontuação, o combo e o diário de erro continuam sendo

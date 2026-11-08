@@ -22,6 +22,7 @@ import { useRascunhos } from '../../store/rascunhos';
 import { RevisaoGuiada } from '../revisao/RevisaoGuiada';
 import { RoadmapPanel } from './RoadmapPanel';
 import { ChatProfessor } from './ChatProfessor';
+import { TermometroAula } from './TermometroAula';
 import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
 import { Select } from '../../components/ui';
 
@@ -299,6 +300,7 @@ function Blackboard({ topic }: { topic: Topic }) {
       </div>
       {/* Só o quadro ativo monta (Excalidraw escondido abre em branco). O desenho de cada um fica salvo. */}
       {aba === 'prof' ? <QuadroProfessor topic={topic} lesson={lesson} /> : <QuadroLivre topic={topic} />}
+      {aba === 'prof' && lesson && <TermometroAula topic={topic} lesson={lesson} />}
 
       <LessonEditor key={lesson?.generatedAt ?? 'new'} open={editing} onClose={() => setEditing(false)} topic={topic} />
     </section>

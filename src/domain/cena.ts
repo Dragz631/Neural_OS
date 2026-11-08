@@ -147,6 +147,28 @@ export function semGraficoFora(cena: Cena, textoDaAula: string): Cena {
   };
 }
 
+// Modelos menores teimam em "Start"/"End" nos fluxogramas. Rótulo que é SÓ uma dessas palavras vira português.
+const ROTULOS_PT: Record<string, string> = {
+  start: 'Início',
+  begin: 'Início',
+  inicio: 'Início',
+  end: 'Fim',
+  stop: 'Fim',
+  finish: 'Fim',
+  yes: 'Sim',
+  no: 'Não',
+  // Fora de propósito: True/False/input/next podem ser código de verdade (Python), e código fica como é.
+};
+
+/** Traduz rótulo de uma palavra só ("Start", "END.", "Yes") e deixa todo o resto como veio. */
+export function emPortugues(texto: string): string {
+  const chave = texto
+    .toLowerCase()
+    .replace(/[.!:]+$/, '')
+    .trim();
+  return ROTULOS_PT[chave] ?? texto;
+}
+
 /** Aceita o JSON do professor e devolve uma cena segura, ou null se não dá pra desenhar nada. */
 export function lerCena(bruto: unknown): Cena | null {
   if (!bruto || typeof bruto !== 'object') return null;
@@ -163,7 +185,7 @@ export function lerCena(bruto: unknown): Cena | null {
     const ehDiagrama = TIPOS_DIAGRAMA.includes(e.tipo as TipoDiagrama);
     const diagrama = ehDiagrama ? lerDiagrama(e.tipo as TipoDiagrama, e[e.tipo as string] ?? e.dados) : null;
     if (ehDiagrama && !diagrama) continue; // dado quebrado: some o diagrama, não o desenho inteiro
-    const texto = typeof e.texto === 'string' ? e.texto.trim().slice(0, MAX_TEXTO) : ehGrafico || ehDiagrama ? ' ' : '';
+    const texto = typeof e.texto === 'string' ? emPortugues(e.texto.trim().slice(0, MAX_TEXTO)) : ehGrafico || ehDiagrama ? ' ' : '';
     if (!texto) continue;
     let id = typeof e.id === 'string' && e.id.trim() ? e.id.trim() : `e${elementos.length}`;
     if (ids.has(id)) id = `${id}-${elementos.length}`;
@@ -177,7 +199,7 @@ export function lerCena(bruto: unknown): Cena | null {
     if (!x || typeof x !== 'object') continue;
     const l = x as Record<string, unknown>;
     if (typeof l.de !== 'string' || typeof l.para !== 'string' || l.de === l.para || !ids.has(l.de) || !ids.has(l.para)) continue;
-    ligacoes.push({ de: l.de, para: l.para, rotulo: typeof l.rotulo === 'string' && l.rotulo.trim() ? l.rotulo.trim().slice(0, 40) : undefined, tracejada: l.estilo === 'tracejada' || l.tracejada === true });
+    ligacoes.push({ de: l.de, para: l.para, rotulo: typeof l.rotulo === 'string' && l.rotulo.trim() ? emPortugues(l.rotulo.trim().slice(0, 40)) : undefined, tracejada: l.estilo === 'tracejada' || l.tracejada === true });
   }
   const anotacoes: AnotacaoCena[] = [];
   for (const x of Array.isArray(o.anotacoes) ? o.anotacoes : []) {

@@ -26,6 +26,9 @@ const ATALHOS: { tipo: string; rotulo: string; pedido: string }[] = [
   { tipo: 'resumo', rotulo: 'Resume em 1 frase', pedido: 'Resume em uma frase só.' },
 ];
 
+/** Título do desenho no quadro: o nome do 1º bloco (ex.: "Dois dados: soma 7"), não a fala do chat. */
+const tituloDoDesenho = (m: MensagemChat) => (m.cena?.elementos.find((e) => e.tipo !== 'nota' && e.tipo !== 'texto')?.texto ?? m.cena?.elementos[0]?.texto ?? m.texto).slice(0, 60);
+
 const L = 360;
 const A = 500;
 
@@ -55,10 +58,10 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
   const desde = topic.lesson ? new Date(topic.lesson.generatedAt).getTime() : 0;
   const ajustesAula = msgs.filter((m) => m.de === 'aluno' && new Date(m.em).getTime() >= desde).length;
 
-  const enviar = (pedido: string, tipo = 'pergunta') => {
+  const enviar = (pedido: string, tipo = 'pergunta', sobreFixo?: string) => {
     const p = pedido.trim();
     if (!p || loading || !ctx) return;
-    const sobre = usarSelecao && selecao ? selecao : undefined;
+    const sobre = sobreFixo ?? (usarSelecao && selecao ? selecao : undefined);
     const historico = msgs;
     const eu: MensagemChat = { de: 'aluno', texto: p, sobre, em: new Date().toISOString() };
     useRascunhos.getState().falarNoChat(topic.id, eu);
@@ -69,6 +72,16 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
       useRascunhos.getState().falarNoChat(topic.id, { de: 'prof', texto: r.texto, cena: r.cena, em: new Date().toISOString() });
     });
   };
+
+  // Pedido que veio de fora (o 😕 do termômetro): abre o chat e manda, sobre aquela parte.
+  const pedidoFora = useRascunhos((s) => (s.pedidoChat?.topicId === topic.id ? s.pedidoChat : undefined));
+  useEffect(() => {
+    if (!pedidoFora || loading || !ctx || !aiOn) return;
+    useRascunhos.getState().limparPedidoChat();
+    mover({ aberto: true });
+    enviar(pedidoFora.pedido, pedidoFora.tipo, pedidoFora.sobre);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só reage a um pedido novo (ou ao fim do anterior)
+  }, [pedidoFora?.chave, loading, ctx, aiOn]);
 
   // Posição da janela flutuante (padrão: canto de baixo à direita), sempre dentro da tela.
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
@@ -153,7 +166,7 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
             {m.cena && (
               <button
                 type="button"
-                onClick={() => useRascunhos.getState().porNoQuadro(topic.id, m.texto.slice(0, 60), m.cena!)}
+                onClick={() => useRascunhos.getState().porNoQuadro(topic.id, tituloDoDesenho(m), m.cena!)}
                 className="mt-1.5 flex items-center gap-1 rounded border border-accent/60 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-accent hover:bg-accent/10"
               >
                 <Shapes size={12} /> Pôr no quadro ({m.cena.elementos.length} {m.cena.elementos.length === 1 ? 'desenho' : 'peças'})

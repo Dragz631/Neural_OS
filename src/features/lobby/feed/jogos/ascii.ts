@@ -56,6 +56,9 @@ export function useTeclas(tratar: (tecla: string) => void) {
       const alvo = e.target as HTMLElement | null;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA' || alvo.tagName === 'SELECT' || alvo.isContentEditable)) return;
+      // Enter/espaço fora de um botão é do jogo. Sem isso, o Enter que responde também "clica"
+      // o botão Próximo que aparece já focado, e a pessoa pula a explicação sem ver.
+      if ((e.key === 'Enter' || e.key === ' ') && !(alvo instanceof Element && alvo.closest('button, a'))) e.preventDefault();
       tratar(e.key.toLowerCase());
     };
     window.addEventListener('keydown', on);
