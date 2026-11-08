@@ -4,7 +4,7 @@
 // (ou passar da grade), nada se mexe e o widget volta pro lugar.
 
 export const COLUNAS = 12;
-export const LINHAS = 30;
+export const LINHAS = 36;
 export const ALTURA_LINHA = 56;
 export const ESPACO = 12;
 

@@ -1,4 +1,8 @@
-import { ArrowRight, RotateCcw } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, RotateCcw, Zap } from 'lucide-react';
+import { PartidaTabuada } from '../../../components/Tabuada';
+import { dificeis } from '../../../domain/tabuada';
+import { useTabuada } from '../../../store/tabuada';
 import { Button } from '../../../components/ui';
 import { useNextStep } from '../../../hooks/useNextStep';
 import { useNav } from '../../../store/nav';
@@ -11,6 +15,9 @@ export function FimDeRodada({ resultados, maiorCombo, onMais }: { resultados: Re
   const xp = resultados.reduce((soma, r) => soma + r.xp, 0);
   const acertos = resultados.filter((r) => r.acertou).length;
   const erros = resultados.length - acertos;
+  // Surpresa: tem conta difícil? Sempre aparece. Senão, em metade das rodadas.
+  const [relampago] = useState(() => dificeis(useTabuada.getState().fatos).length > 0 || Math.random() < 0.5);
+  const [tabuada, setTabuada] = useState(false);
 
   return (
     <div className="space-y-4 text-center">
@@ -21,6 +28,20 @@ export function FimDeRodada({ resultados, maiorCombo, onMais }: { resultados: Re
         <Placar valor={`x${maiorCombo}`} rotulo="maior combo" />
       </div>
       {erros > 0 && <p className="text-xs text-muted">{erros === 1 ? 'O erro foi' : `Os ${erros} erros foram`} pro diário do tópico: é o que mais ensina na revisão.</p>}
+      {relampago && (
+        <div className="rounded border border-info/50 bg-info/5 p-3">
+          {!tabuada ? (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <p className="text-sm text-fg">Bônus: tabuada relâmpago, 5 contas.</p>
+              <Button onClick={() => setTabuada(true)}>
+                <Zap size={13} /> Bora
+              </Button>
+            </div>
+          ) : (
+            <PartidaTabuada quantas={5} />
+          )}
+        </div>
+      )}
       <div className="rounded border border-accent/50 bg-accent/5 p-3 text-left">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">Agora, o próximo passo</p>
         <p className="mt-1 font-bold text-fg">{step.title}</p>

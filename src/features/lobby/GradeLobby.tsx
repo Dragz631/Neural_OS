@@ -99,7 +99,8 @@ export function GradeLobby() {
   const estiloGrade: CSSProperties = {
     display: 'grid',
     gridTemplateColumns: `repeat(${COLUNAS}, minmax(0, 1fr))`,
-    gridTemplateRows: `repeat(${LINHAS}, ${ALTURA_LINHA}px)`,
+    // Arrumando: a grade inteira (pra ter onde soltar). Usando: só até o último widget, sem vazio embaixo.
+    gridTemplateRows: `repeat(${editando ? LINHAS : Math.max(1, ...itens.map((i) => i.y + i.h))}, ${ALTURA_LINHA}px)`,
     gap: ESPACO,
   };
 
