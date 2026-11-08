@@ -66,11 +66,16 @@ export interface Topic {
   lesson?: Lesson; // o que o Prof. A.Ilson escreveu no quadro
   /** Diário do tópico: dúvidas, erros e conceitos, com data (ver domain/diario.ts). */
   log?: EntradaDiario[];
+  /** Títulos dos slides novos (NotebookLM) que esta aula ainda não usa: aparece "Atualizar aula". */
+  materialNovo?: MaterialNovo;
   createdAt: string;
   lastStudiedAt?: string;
 }
 
 export type SessionKind = 'aula' | 'leitura' | 'desafio' | 'revisao' | 'explicacao';
+
+/** (no Topic) Slides novos do NotebookLM que têm a ver com este tópico e a aula ainda não usa. */
+export type MaterialNovo = string[];
 
 export interface StudySession {
   id: Id;

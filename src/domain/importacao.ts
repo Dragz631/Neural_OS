@@ -90,6 +90,41 @@ export const normalizar = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const PALAVRAS_VAZIAS = new Set(['para', 'como', 'sobre', 'entre', 'com', 'dos', 'das', 'uma', 'introducao', 'aula', 'parte', 'conceitos', 'basico', 'basicos']);
+
+/** Palavras que identificam um assunto (4+ letras, sem acento, sem "introdução", "aula"...). */
+export function palavrasChave(texto: string): string[] {
+  return [...new Set(normalizar(texto).replace(/[^a-z0-9 ]+/g, ' ').split(' ').filter((p) => p.length >= 4 && !PALAVRAS_VAZIAS.has(p)))];
+}
+
+/**
+ * Os slides do NotebookLM que combinam com o tópico (pelo título do tópico e dos pais),
+ * do mais parecido ao menos, cortados em `max` caracteres no total. Vazio = nenhum combina.
+ */
+export function fontesDoTopico(fontes: Record<string, { titulo: string; texto: string }> | undefined, tituloTopico: string, pais: string[] = [], max = 6000): { titulo: string; trecho: string }[] {
+  if (!fontes) return [];
+  const chave = palavrasChave([tituloTopico, ...pais].join(' '));
+  if (!chave.length) return [];
+  const pontuadas = Object.values(fontes)
+    .map((f) => {
+      const titulo = normalizar(f.titulo);
+      const corpo = normalizar(f.texto.slice(0, 8000));
+      const pontos = chave.reduce((s, p) => s + (titulo.includes(p) ? 5 : 0) + Math.min(5, corpo.split(p).length - 1), 0);
+      return { f, pontos };
+    })
+    .filter((x) => x.pontos >= 3)
+    .sort((a, b) => b.pontos - a.pontos);
+  const out: { titulo: string; trecho: string }[] = [];
+  let resto = max;
+  for (const { f } of pontuadas.slice(0, 3)) {
+    if (resto < 400) break;
+    const trecho = f.texto.slice(0, resto);
+    out.push({ titulo: f.titulo, trecho });
+    resto -= trecho.length;
+  }
+  return out;
+}
+
 /** Mesmo nome, ignorando acento/maiúscula, ou um contém o outro ("C#" ~ "C# / POO"). */
 export function mesmoNome(a: string, b: string): boolean {
   const x = normalizar(a);

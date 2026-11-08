@@ -3,6 +3,7 @@ import { Map as MapaIcon, Sparkles } from 'lucide-react';
 import { acharTopico, type ItemRoadmap, type TipoItem } from '../../domain/roadmap';
 import { gerarRoadmap } from '../../services/ai/roadmap';
 import { rodarTarefa, useTarefa } from '../../store/tarefas';
+import { slidesDaMateria } from '../../lib/notebookVivo';
 import { useIALigada } from '../../store/conexoes';
 import { useRoadmaps } from '../../store/roadmaps';
 import { useStudy } from '../../store/study';
@@ -38,7 +39,8 @@ export function RoadmapPanel({ subjectId, onEstudar }: { subjectId: string; onEs
     const materia = subject.name;
     const topicosAtuais = daMateria.map((t) => t.title);
     void rodarTarefa(chave, { rotulo: `Professor montando o roadmap de ${materia}`, aba: 'professor', avisarPronto: `Roadmap de ${materia} pronto` }, async (signal) => {
-      const r = await gerarRoadmap({ materia, topicosAtuais }, signal);
+      // Os slides da faculdade (NotebookLM) entram: o roadmap cobre o que a matéria realmente dá.
+      const r = await gerarRoadmap({ materia, topicosAtuais, slides: slidesDaMateria(subjectId) }, signal);
       useRoadmaps.getState().salvar(subjectId, r);
     });
   };
@@ -92,6 +94,7 @@ export function RoadmapPanel({ subjectId, onEstudar }: { subjectId: string; onEs
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 className="text-sm font-bold text-accent">
                   {i + 1}. {etapa.titulo}
+                  {etapa.nova && <span className="ml-2 rounded bg-info/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-info">novo · slide</span>}
                 </h3>
                 {etapa.itens.length > 0 && (
                   <span className="text-[11px] text-muted">
@@ -121,6 +124,7 @@ export function RoadmapPanel({ subjectId, onEstudar }: { subjectId: string; onEs
                       {feito ? '✓ ' : ''}
                       {it.titulo}
                       <span className="ml-1.5 text-[10px] uppercase tracking-wide text-muted">{ROTULO[it.tipo]}</span>
+                      {it.novo && !etapa.nova && <span className="ml-1.5 rounded bg-info/20 px-1 text-[9px] uppercase text-info">novo</span>}
                       {t && !feito && t.mastery > 0 && <ProgressBar value={t.mastery} />}
                     </button>
                   );

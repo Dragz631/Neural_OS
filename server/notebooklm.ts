@@ -214,8 +214,12 @@ export function criarNotebookLM(raiz: string, env: () => Promise<Record<string, 
       const c = await lerCache();
       if (c.textos[fonte]) return c.textos[fonte];
       const t = String((await rodar(['source', 'fulltext', fonte, '-n', caderno])).content ?? '');
-      c.textos[fonte] = t;
-      await gravarCache();
+      // Vazio NÃO fica em cache: o NotebookLM às vezes não tem o texto (PDF só de imagem, upload
+      // que falhou). Se a pessoa reenviar o arquivo, a próxima leitura pega o texto novo.
+      if (t.trim()) {
+        c.textos[fonte] = t;
+        await gravarCache();
+      }
       return t;
     },
 

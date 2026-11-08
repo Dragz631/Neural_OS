@@ -1,4 +1,5 @@
 import { NextStepBar } from '../../components/NextStepBar';
+import { NovidadesNotebook } from '../../components/NovidadesNotebook';
 import { ChamadaFaculdade } from '../faculdade/ChamadaFaculdade';
 import { GradeLobby } from './GradeLobby';
 import { PrimeirasImpressoes } from './PrimeirasImpressoes';
@@ -15,6 +16,7 @@ export default function Lobby() {
       <PrimeirasImpressoes />
       <NextStepBar variant="hero" />
       <ChamadaFaculdade />
+      <NovidadesNotebook />
       <GradeLobby />
     </div>
   );

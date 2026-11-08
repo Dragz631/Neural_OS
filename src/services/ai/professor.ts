@@ -1,6 +1,8 @@
 import type { Challenge, CodeReview, Lesson, MiniAula, StudySession, Subject, Topic } from '../../domain/types';
 import type { Retrato } from '../../domain/conhecimento';
 import { aprendizParaIA } from '../../store/aprendiz';
+import { useImportacao } from '../../store/importacao';
+import { fontesDoTopico } from '../../domain/importacao';
 import { asScore, asString, asStrings, chatJSON, type ChatMessage } from './client';
 import { PROFESSOR } from './persona';
 
@@ -39,14 +41,28 @@ function describe(ctx: TopicContext, comNotas = true): string {
 
 const sys = (extra = ''): ChatMessage => ({ role: 'system', content: `${PERSONA}\n${aprendizParaIA()}\n${extra}` });
 
+/**
+ * Os slides da faculdade que combinam com este tópico (NotebookLM). Sem slide que combine,
+ * usa o contexto geral da matéria. Vazio = aula sem material da faculdade.
+ */
+export function slidesDoTopico(ctx: TopicContext): string {
+  const imp = useImportacao.getState();
+  const fontes = fontesDoTopico(imp.porFonte[ctx.topic.subjectId], ctx.topic.title, ctx.parents.map((p) => p.title));
+  if (fontes.length)
+    return `SLIDES DA FACULDADE DELE sobre isto (NotebookLM). Use como FONTE PRINCIPAL da aula, com os termos e exemplos deles, e cite o slide pelo nome ("no slide X..."):\n${fontes.map((f) => `### ${f.titulo}\n${f.trecho}`).join('\n\n')}`;
+  const geral = imp.contexto[ctx.topic.subjectId];
+  return geral ? `Material da faculdade dele nesta matéria (use se tiver a ver com o tópico):\n"""\n${geral.slice(0, 3000)}\n"""` : '';
+}
+
 export async function generateLesson(ctx: TopicContext, signal?: AbortSignal): Promise<Lesson> {
+  const slides = slidesDoTopico(ctx);
   return chatJSON(
     [
       sys(),
       {
         role: 'user',
         content: `${describe(ctx)}
-
+${slides ? `\n${slides}\n` : ''}
 Escreva no quadro negro a aula deste tópico, ajustada ao nível e às anotações do aluno.
 Se as anotações tiverem erro conceitual, corrija com gentileza na explicação.
 Depois desta aula você vai DESENHAR no quadro: escreva já pensando no desenho, com o caso concreto (números, etapas, partes, quem vem antes de quem) que o desenho vai mostrar. Exemplo e analogia antes da definição formal.

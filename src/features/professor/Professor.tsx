@@ -25,6 +25,7 @@ import { ChatProfessor } from './ChatProfessor';
 import { TermometroAula } from './TermometroAula';
 import { ProvaPanel } from './ProvaPanel';
 import { ComecarFoco } from '../../components/Foco';
+import { NovidadesNotebook } from '../../components/NovidadesNotebook';
 import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
 import { Select } from '../../components/ui';
 
@@ -139,6 +140,8 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
         )}
       </Panel>
 
+      <NovidadesNotebook subjectId={materia?.id} />
+
       {visao === 'roadmap' ? (
         materia ? (
           <RoadmapPanel
@@ -235,6 +238,8 @@ function Blackboard({ topic }: { topic: Topic }) {
       const l = await generateLesson(c, signal);
       // O texto entra já: se o desenho falhar ou for cancelado, a aula não se perde.
       useStudy.getState().setLesson(topic.id, l);
+      // A aula nova já usa os slides novos: o selo "material novo" sai.
+      useStudy.getState().updateTopic(topic.id, { materialNovo: undefined });
       await desenharNaAula(c, topic.id, signal);
     });
   };
@@ -273,6 +278,16 @@ function Blackboard({ topic }: { topic: Topic }) {
       </header>
 
       <ErrorNote error={error} />
+
+      {lesson && !!topic.materialNovo?.length && !loading && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-info/60 bg-info/5 p-2 text-xs">
+          <span className="rounded bg-info/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-info">material novo</span>
+          <span className="min-w-0 flex-1 text-muted">Chegou slide sobre isto: {topic.materialNovo.join(', ')}.</span>
+          <Button className="px-2 py-1 text-[10px]" onClick={generate} disabled={!aiOn}>
+            <Sparkles size={12} /> Atualizar a aula com ele
+          </Button>
+        </div>
+      )}
 
       {!lesson && (
         <p className="mb-3 text-sm text-muted">

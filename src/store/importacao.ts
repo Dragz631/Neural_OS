@@ -12,7 +12,13 @@ interface ImportacaoState {
   contexto: Record<Id, string>;
   marcarVisto: (ids: string[]) => void;
   juntarContexto: (subjectId: Id, texto: string) => void;
+  /** Texto de cada slide/fonte do NotebookLM, por matéria (pra aula escolher o slide do tópico). */
+  porFonte: Record<Id, Record<string, { titulo: string; texto: string }>>;
+  guardarFonte: (subjectId: Id, fonteId: string, titulo: string, texto: string) => void;
 }
+
+/** Limite por fonte guardada (as aulas usam um trecho; o roadmap, o começo). */
+const MAX_FONTE = 12_000;
 
 /** Limite do contexto guardado por matéria (vai inteiro em prompt). */
 const MAX_CONTEXTO = 8000;
@@ -22,6 +28,9 @@ export const useImportacao = create<ImportacaoState>()(
     (set) => ({
       vistos: [],
       contexto: {},
+      porFonte: {},
+      guardarFonte: (subjectId, fonteId, titulo, texto) =>
+        set((s) => ({ porFonte: { ...s.porFonte, [subjectId]: { ...(s.porFonte[subjectId] ?? {}), [fonteId]: { titulo, texto: texto.slice(0, MAX_FONTE) } } } })),
       marcarVisto: (ids) => set((s) => ({ vistos: [...new Set([...s.vistos, ...ids])] })),
       juntarContexto: (subjectId, texto) =>
         set((s) => {

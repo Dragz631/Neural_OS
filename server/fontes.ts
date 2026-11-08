@@ -77,7 +77,8 @@ export function registrarFontes(server: ViteDevServer, raiz: string) {
         for (const c of await nlm.cadernos()) cadernos.push({ ...c, fontes: await nlm.fontes(c.id) });
         return responder(res, 200, { cadernos });
       }
-      if (url.pathname === '/fontes' && caderno) return responder(res, 200, { fontes: await nlm.fontes(caderno) });
+      // ?forcar=1: pula o cache de 10 min (o app confere se chegou slide novo).
+      if (url.pathname === '/fontes' && caderno) return responder(res, 200, { fontes: await nlm.fontes(caderno, url.searchParams.get('forcar') === '1') });
       if (url.pathname === '/texto' && caderno && url.searchParams.get('fonte')) return responder(res, 200, { texto: await nlm.texto(caderno, url.searchParams.get('fonte')!) });
       return responder(res, 404, { erro: 'Rota do NotebookLM não encontrada.' });
     } catch (e) {
