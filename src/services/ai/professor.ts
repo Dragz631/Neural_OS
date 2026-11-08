@@ -72,9 +72,17 @@ ${extras ? `Pedaços que ele montou junto com você no chat (o jeito que funcion
 }
 
 /** O chute que o aluno deu antes da aula: errar antes e ver depois fixa mais. */
+/** "Não faço ideia", "nunca vi": ele disse que não sabe nada (isso também é informação valiosa). */
+export const chuteNaoSabe = (chute: string) =>
+  chute.trim().split(/\s+/).length <= 5 && !/acho|talvez|parece|seria|deve ser/i.test(chute) && /^\s*(n[aã]o (sei|fa[cç]o ideia|lembro|tenho ideia)|nunca (vi|ouvi)|nada|sei l[aá]|\?+)(?=[\s.,!?]|$)/i.test(chute);
+
 function blocoChute(titulo: string, chute: string): string {
+  if (chuteNaoSabe(chute))
+    return `\nANTES DA AULA o aluno disse que NÃO SABE nada sobre "${titulo}" ("${chute.slice(0, 200)}"). Isso é ótimo de saber: comece do zero absoluto.
+Diga que não saber é o ponto de partida normal. Abra com uma situação do dia a dia dele (sem nenhum termo técnico), só depois dê o nome das coisas, um termo novo por vez, cada um explicado na hora. Nada de supor base.\n`;
   return `\nANTES DA AULA o aluno chutou o que acha que é "${titulo}": "${chute.slice(0, 400)}".
-Comece a explicação respondendo o chute dele, com carinho e sem julgamento: o que ele já acertou (diga!) e o que não é bem assim. Depois siga a aula a partir dali.\n`;
+O chute mostra COMO ele pensa e de onde partir: use as palavras e a ideia dele como ponte.
+Comece a explicação respondendo o chute, com carinho e sem julgamento: o que ele já acertou (diga!) e o que não é bem assim, e por quê. Se o chute mostrar uma ideia errada comum, desmonte ela com um exemplo. Se ele já sabe bastante, não repita o básico: avance. Depois siga a aula a partir dali.\n`;
 }
 
 export async function generateLesson(ctx: TopicContext, signal?: AbortSignal, reescrita?: PedidoReescrita, chute?: string): Promise<Lesson> {

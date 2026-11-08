@@ -341,6 +341,14 @@ function Blackboard({ topic }: { topic: Topic }) {
           </p>
           <p className="text-[11px] text-muted">1 frase, do seu jeito. Errar aqui é ótimo: o professor começa a aula pelo seu chute, e ver onde errou fixa mais do que só ler.</p>
           <input value={chute} onChange={(e) => setChute(e.target.value)} autoFocus placeholder="acho que é…" className="w-full rounded border border-line bg-bg px-2 py-1.5 text-sm text-fg" />
+          <div className="flex flex-wrap gap-1.5">
+            {['Não faço ideia', 'Já ouvi falar, mas não sei explicar', 'Acho que sei, quero conferir'].map((a) => (
+              <button key={a} type="button" onClick={() => setChute(a)} className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:border-info hover:text-info">
+                {a}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted">"Não faço ideia" também vale: o professor começa do zero, sem supor nada.</p>
           <div className="flex gap-2">
             <Button variant="primary" type="submit" disabled={!chute.trim()}>
               <Sparkles size={14} /> Chutei, gera a aula
