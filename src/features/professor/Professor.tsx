@@ -30,6 +30,7 @@ import { BotaoTraveiBase } from '../../components/GavetaBase';
 import { useGavetaBase } from '../../store/gavetaBase';
 import { useBases } from '../../store/bases';
 import { tirarDaAula } from '../../store/aulaJunto';
+import { treinar } from '../../store/musculos';
 import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
 import { Select } from '../../components/ui';
 
@@ -274,6 +275,7 @@ function Blackboard({ topic }: { topic: Topic }) {
     const ch = comChute?.trim();
     // O chute fica no diário: dá pra comparar depois com o que a aula ensinou.
     if (ch) useStudy.getState().addDiario(topic.id, { tipo: 'conceito', original: `Chute antes da aula: ${ch}` });
+    if (ch) treinar('raciocinio');
     setChute('');
     if (!p && emAndamento && !window.confirm('Você está no meio desta aula. Reescrever do zero apaga o progresso dos passos e dos minidesafios (as suas anotações e o que vocês montaram junto ficam). Continuar?')) return;
     const c = ctx!;

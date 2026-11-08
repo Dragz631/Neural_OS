@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from '../lib/persistir';
 import { focoParaIA } from './foco';
 import { basesParaIA } from './bases';
+import { musculosParaIA } from './musculos';
 import { perfilExternoParaIA } from '../lib/perfilExterno';
 import { derivarPerfil, descreverPerfil, ENTREVISTA, normalizarRespostas, PERFIL_PADRAO, type IdPergunta, type PerfilAprendiz, type Respostas } from '../domain/aprendiz';
 
@@ -133,5 +134,5 @@ export const aprendizParaIA = () => {
   const comportamento = pedidos.length
     ? `O que ele já pediu ao professor nas aulas (comportamento do aluno, NÃO é matéria): ${pedidos.join(', ')}. Ensine já do jeito que ele mais pede (ex.: se pede muito desenho ou "mais fácil", comece desenhando e mais simples).`
     : '';
-  return [base, perfilExternoParaIA(), comportamento, memoriasParaIA(), basesParaIA(), focoParaIA()].filter(Boolean).join('\n').trim();
+  return [base, perfilExternoParaIA(), comportamento, memoriasParaIA(), basesParaIA(), focoParaIA(), musculosParaIA()].filter(Boolean).join('\n').trim();
 };

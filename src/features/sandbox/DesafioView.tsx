@@ -19,6 +19,7 @@ import { toast } from '../../store/toast';
 import { EditorCodigo } from './EditorCodigo';
 import { Diagnostico, Sucesso } from './ResultadoCorrecao';
 import { TerminalCorrecao } from './TerminalCorrecao';
+import { treinar } from '../../store/musculos';
 
 /** Nota mínima (já com o desconto das dicas) pra contar como resolvido. */
 const NOTA_RESOLVIDO = 70;
@@ -56,6 +57,7 @@ export function DesafioView({ challenge, topic }: { challenge: Challenge; topic:
       const nota = Math.round(review.score * fator);
       const resolvido = review.source === 'ia' && review.syntaxOk && review.logicOk && nota >= NOTA_RESOLVIDO;
       salvar({ code, review, solvedAt: resolvido ? new Date().toISOString() : challenge.solvedAt });
+      if (resolvido) treinar('resolucao', 2);
       if (review.source !== 'ia') return;
       gradeTopic(topic.id, gradeFromScore(nota));
       for (const id of challenge.topicIds ?? []) gradeTopic(id, gradeFromScore(nota));

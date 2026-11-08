@@ -16,6 +16,7 @@ import type { Topic } from '../../domain/types';
 import { Badge, Button, ErrorNote, Panel, Textarea } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { EntrevistaModal } from './Entrevista';
+import { treinar } from '../../store/musculos';
 
 // Revisão guiada. Regras: (1) a pessoa sempre sabe onde está e o que fazer agora;
 // (2) o professor descobre ONDE o raciocínio quebrou e conserta só aquilo;
@@ -140,6 +141,7 @@ export function RevisaoGuiada({ topic, compacto = false }: { topic: Topic; compa
       const nota = certas === feitas.length ? 'bom' : certas * 2 >= feitas.length ? 'dificil' : 'errei';
       const score = Math.round(feitas.reduce((s, f) => s + notaDe(f.diag.nivel), 0) / Math.max(feitas.length, 1));
       useStudy.getState().gradeTopic(topic.id, nota);
+      treinar('memoria', 1);
       const certasPelaIA = feitas.filter((f) => f.ia && f.diag.nivel === 'certo').length;
       const porIA = feitas.some((f) => f.ia);
       const xp = useStudy.getState().logSession({

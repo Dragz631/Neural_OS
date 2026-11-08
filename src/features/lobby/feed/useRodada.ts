@@ -14,6 +14,7 @@ import { iaLigada, useConexoes } from '../../../store/conexoes';
 import { useStudy } from '../../../store/study';
 import { rodarTarefa, useTarefa } from '../../../store/tarefas';
 import { useFontesSemana } from '../../../hooks/useSemana';
+import { treinar } from '../../../store/musculos';
 
 // Lógica de uma rodada do feed: monta 5 cartões, conta combo e XP, manda erro
 // pro diário do tópico e, no fim, reagenda a revisão dos tópicos vencidos.
@@ -150,6 +151,7 @@ function responder(acertou: boolean, resposta: string) {
   const s = useRodadaStore.getState();
   const cartao = s.cartoes[s.indice];
   if (!cartao) return;
+  if (acertou) treinar('memoria', 0.5);
   const novoCombo = acertou ? s.combo + 1 : 0;
   // "Lembra e confere" é você que diz se lembrou: conta pro combo e pra revisão, mas não paga XP.
   const xp = cartao.tipo === 'lembra' ? 0 : pontuar(cartao.tipo, acertou, novoCombo);

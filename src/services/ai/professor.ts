@@ -168,10 +168,14 @@ export interface ExplanationReview {
   correction: string;
 }
 
-export async function evaluateExplanation(ctx: TopicContext, explanation: string, signal?: AbortSignal): Promise<ExplanationReview> {
+export async function evaluateExplanation(ctx: TopicContext, explanation: string, signal?: AbortSignal, formato: 'explicar' | 'ensinar' = 'explicar'): Promise<ExplanationReview> {
+  const comoFoi =
+    formato === 'ensinar'
+      ? 'Isto foi um "ENSINA DE VOLTA": o aluno ensinou um colega confuso (o Zé), numa conversa. Avalie SÓ as falas do aluno: explicou certo? respondeu as dúvidas do Zé? percebeu e CORRIGIU os erros que o Zé afirmou? Deixar um erro do Zé passar é lacuna. O resumo final do Zé mostra o que a explicação dele transmitiu.'
+      : 'Você está avaliando uma explicação no estilo Técnica Feynman: o aluno explica com as próprias palavras.';
   return chatJSON(
     [
-      sys('Você está avaliando uma explicação no estilo Técnica Feynman: o aluno explica com as próprias palavras.'),
+      sys(comoFoi),
       {
         role: 'user',
         content: `${describe(ctx)}

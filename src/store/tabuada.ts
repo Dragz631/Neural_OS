@@ -3,6 +3,7 @@ import { persist } from '../lib/persistir';
 import { toLocalDate } from '../domain/dates';
 import { chaveDe, registrarResposta, xpDoAcerto, type Conta, type FatoTabuada } from '../domain/tabuada';
 import { useStudy } from './study';
+import { treinar } from './musculos';
 
 // Como você vai em cada conta da tabuada. Salvo e sincronizado (o celular vê o mesmo mapa).
 
@@ -29,6 +30,7 @@ export const useTabuada = create<TabuadaState>()(
         const xp = certo ? xpDoAcerto(ms, xpHoje) : 0;
         set((s) => ({ fatos: { ...s.fatos, [k]: registrarResposta(s.fatos[k], certo, ms) }, xpDia: { data: hoje, xp: xpHoje + xp } }));
         if (xp) useStudy.getState().addXp(xp);
+        if (certo) treinar('memoria', 0.2);
         return xp;
       },
       alternarDivisao: () => set((s) => ({ divisao: !s.divisao })),

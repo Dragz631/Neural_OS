@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react';
-import { EyeOff, GraduationCap, MessageCircleQuestion, RotateCcw, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { EyeOff, GraduationCap, MessageCircleQuestion, RotateCcw, Send, Sparkles } from 'lucide-react';
+import { useAI } from '../../hooks/useAI';
+import { treinar } from '../../store/musculos';
+import { conversaParaCorrigir, falaDoZe, NOME_ZE, primeiraFalaDoZe, RODADAS_ENSINO, type FalaEnsino } from '../../services/ai/ensinaDeVolta';
 import { toLocalDate, formatShort } from '../../domain/dates';
 import { aprovou, NOTA_MINIMA, parecidoDemais } from '../../domain/prova';
 import { GRADE_LABEL, gradeFromScore, isDue, type Grade } from '../../domain/srs';
@@ -70,19 +73,26 @@ export function ProvaPanel({ topic, ctx }: { topic: Topic; ctx?: TopicContext })
     setAviso('Colar não vale na prova: escreva com as suas palavras. Travar é normal, é ali que está a lacuna.');
   };
 
+  const [formato, setFormato] = useState<'explicar' | 'ensinar'>('explicar');
+  const [conversa, setConversa] = useState<FalaEnsino[]>(() => [{ de: 'ze', texto: primeiraFalaDoZe(topic.title) }]);
+  const minhas = conversa.filter((f) => f.de === 'eu');
+
+  /** Entrega pra correção: a explicação, ou a conversa inteira com o Zé ("ensina de volta"). */
   const entregar = () => {
     if (!ctx) return;
-    if (parecidoDemais(text, textoDaAula(topic.lesson))) {
+    const ensinar = formato === 'ensinar';
+    const meu = ensinar ? minhas.map((f) => f.texto).join('\n') : text;
+    if (parecidoDemais(meu, textoDaAula(topic.lesson))) {
       setAviso('Ficou quase igual ao texto da aula. Isso é decorar, não explicar: reescreva como você contaria pra um amigo, com um exemplo seu.');
       return;
     }
     setAviso(undefined);
     const c = ctx;
-    const texto = text;
+    const texto = ensinar ? conversaParaCorrigir(conversa) : text;
     const vencida = due;
     const materia = ctx.subject?.name ?? '';
     void rodarTarefa(chave, { rotulo: `Professor corrigindo a sua prova de ${topic.title}`, aba: 'professor', topicId: topic.id, avisarPronto: `Prova de ${topic.title} corrigida` }, async (signal) => {
-      const r = await evaluateExplanation(c, texto, signal);
+      const r = await evaluateExplanation(c, texto, signal, ensinar ? 'ensinar' : 'explicar');
       const st = useStudy.getState();
       const hoje = toLocalDate();
       const aprovadas = st.sessions.filter((s) => s.topicId === topic.id && ehProva(s) && s.avaliadoPor !== 'eu' && aprovou(s.score ?? 0));
@@ -90,6 +100,11 @@ export function ProvaPanel({ topic, ctx }: { topic: Topic; ctx?: TopicContext })
       st.gradeTopic(topic.id, gradeFromScore(r.score));
       st.logSession({ topicId: topic.id, minutes: 5, kind: vencida ? 'revisao' : 'explicacao', score: r.score, note: texto.slice(0, 500), avaliadoPor: 'ia', xp, lacunas: r.gaps, pontosFortes: r.strengths, correcao: r.correction });
       useRascunhos.getState().abrirProva(undefined);
+      // Músculos: explicar do seu jeito é abstração; corrigir o Zé é julgamento; revisão vencida é memória.
+      treinar('abstracao', 2);
+      if (ensinar) treinar('julgamento', 1);
+      if (vencida) treinar('memoria', 1);
+      if (ensinar) setConversa([{ de: 'ze', texto: primeiraFalaDoZe(topic.title) }]);
       if (aprovou(r.score)) {
         useRascunhos.getState().escreverFeynman(topic.id, '');
         toast({ title: `Passou: ${r.score}${xp ? ` · +${xp} XP` : ''}`, description: xp ? 'O professor vai lembrar de como você aprendeu.' : 'Sem XP: você já tinha passado hoje (ou a revisão não estava vencida).', variant: 'success' });
@@ -134,9 +149,25 @@ export function ProvaPanel({ topic, ctx }: { topic: Topic; ctx?: TopicContext })
 
       {(aberta || rodando) && (
         <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {([['explicar', 'Explicar por escrito'], ['ensinar', `Ensinar o ${NOME_ZE} (colega confuso)`]] as const).map(([id, rotulo]) => (
+              <button
+                key={id}
+                type="button"
+                disabled={rodando}
+                onClick={() => setFormato(id)}
+                className={cn('rounded border px-2.5 py-1 text-[11px]', formato === id ? 'border-accent bg-accent/10 text-accent' : 'border-line text-muted hover:text-fg')}
+              >
+                {rotulo}
+              </button>
+            ))}
+          </div>
           <p className="flex items-center gap-2 text-[11px] text-warn">
-            <EyeOff size={13} /> A aula está escondida. Escreva o que você lembra: o que é, pra que serve e um exemplo seu.
+            <EyeOff size={13} /> {formato === 'ensinar' ? `A aula está escondida. O ${NOME_ZE} não entendeu nada: ensine ele. Cuidado, às vezes ele afirma uma coisa errada pra ver se você corrige.` : 'A aula está escondida. Escreva o que você lembra: o que é, pra que serve e um exemplo seu.'}
           </p>
+          {formato === 'ensinar' ? (
+            <EnsinarZe ctx={ctx} conversa={conversa} setConversa={setConversa} bloqueado={rodando} onColar={bloquearColar} />
+          ) : (
           <Textarea
             rows={7}
             value={text}
@@ -147,11 +178,17 @@ export function ProvaPanel({ topic, ctx }: { topic: Topic; ctx?: TopicContext })
             disabled={rodando}
             autoFocus
           />
-          {aviso && <p className="rounded border border-warn/60 bg-warn/10 p-2 text-xs text-warn">{aviso}</p>}
+          )}
+          {aviso &&<p className="rounded border border-warn/60 bg-warn/10 p-2 text-xs text-warn">{aviso}</p>}
           <ErrorNote error={erro ?? null} />
           <div className="flex flex-wrap items-center gap-2">
             {aiOn ? (
-              <Button variant="primary" onClick={entregar} disabled={rodando || text.trim().length < 40} title={text.trim().length < 40 ? 'Escreva pelo menos umas 2 frases' : ''}>
+              <Button
+                variant="primary"
+                onClick={entregar}
+                disabled={rodando || (formato === 'ensinar' ? minhas.length < 2 : text.trim().length < 40)}
+                title={formato === 'ensinar' ? (minhas.length < 2 ? `Responda o ${NOME_ZE} pelo menos 2 vezes` : '') : text.trim().length < 40 ? 'Escreva pelo menos umas 2 frases' : ''}
+              >
                 <Sparkles size={14} /> {rodando ? 'Professor corrigindo… (pode sair da aba)' : 'Entregar pro professor corrigir'}
               </Button>
             ) : (
@@ -175,6 +212,83 @@ export function ProvaPanel({ topic, ctx }: { topic: Topic; ctx?: TopicContext })
 
       {ultima && !aberta && !rodando && <ResultadoProva s={ultima} onRever={() => reverFaltou(ultima)} />}
     </Panel>
+  );
+}
+
+/** A conversa do "ensina de volta": você explica, o Zé pergunta (ou solta um erro pra você corrigir). */
+function EnsinarZe({
+  ctx,
+  conversa,
+  setConversa,
+  bloqueado,
+  onColar,
+}: {
+  ctx?: TopicContext;
+  conversa: FalaEnsino[];
+  setConversa: (c: FalaEnsino[]) => void;
+  bloqueado: boolean;
+  onColar: (e: React.ClipboardEvent | React.DragEvent) => void;
+}) {
+  const { run, loading, error } = useAI();
+  const [texto, setTexto] = useState('');
+  const fim = useRef<HTMLDivElement>(null);
+  const minhas = conversa.filter((f) => f.de === 'eu').length;
+  const acabou = minhas >= RODADAS_ENSINO && conversa.at(-1)?.de === 'ze';
+  useEffect(() => {
+    void fim.current?.scrollIntoView({ block: 'nearest' });
+  }, [conversa.length, loading]);
+
+  const responder = () => {
+    const t = texto.trim();
+    if (!t || !ctx || loading) return;
+    const nova = [...conversa, { de: 'eu' as const, texto: t }];
+    setConversa(nova);
+    setTexto('');
+    void run(async (signal) => {
+      const fala = await falaDoZe(ctx, nova, signal);
+      setConversa([...nova, { de: 'ze', texto: fala }]);
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="max-h-72 space-y-2 overflow-y-auto rounded border border-line bg-bg p-2 text-sm">
+        {conversa.map((f, i) => (
+          <div key={i} className={cn('max-w-[88%] rounded px-2.5 py-1.5', f.de === 'eu' ? 'ml-auto bg-accent/15' : 'bg-panel-2')}>
+            <p className="text-[10px] uppercase tracking-wider text-muted">{f.de === 'eu' ? 'você' : `${NOME_ZE} 🤔`}</p>
+            <p className="whitespace-pre-wrap leading-snug">{f.texto}</p>
+          </div>
+        ))}
+        {loading && <p className="text-xs text-muted">{NOME_ZE} está pensando…</p>}
+        <div ref={fim} />
+      </div>
+      {error && <p className="text-xs text-warn">{error}</p>}
+      {acabou ? (
+        <p className="text-xs text-info">O {NOME_ZE} disse o que entendeu. Se ele entendeu errado, a sua explicação deixou um buraco. Entregue pro professor corrigir.</p>
+      ) : (
+        <div className="flex gap-1.5">
+          <Textarea
+            rows={3}
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            onPaste={onColar}
+            onDrop={onColar}
+            disabled={bloqueado || loading}
+            placeholder={`Explique pro ${NOME_ZE} com as suas palavras…`}
+            className="flex-1"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) responder();
+            }}
+          />
+          <Button onClick={responder} disabled={!texto.trim() || loading || bloqueado} title="Ctrl+Enter também manda">
+            <Send size={14} /> Responder
+          </Button>
+        </div>
+      )}
+      <p className="text-[10px] text-muted">
+        {minhas}/{RODADAS_ENSINO} explicações. Com 2 já dá pra entregar.
+      </p>
+    </div>
   );
 }
 

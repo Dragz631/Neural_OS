@@ -5,6 +5,7 @@ import type { Id } from '../domain/types';
 import { useCelular } from '../hooks/useCelular';
 import { cn } from '../lib/utils';
 import { useBases } from '../store/bases';
+import { treinar } from '../store/musculos';
 import { useIALigada } from '../store/conexoes';
 import { CHAVE_BASE as CHAVE, explicarBase as explicar, explicarDeOutroJeito as outroJeito, useGavetaBase } from '../store/gavetaBase';
 import { useTarefa } from '../store/tarefas';
@@ -152,6 +153,7 @@ function VerBase({ baseId }: { baseId: string }) {
     if (respostaCerta(resposta, explicacao.pergunta.resposta)) {
       setResultado('certo');
       useBases.getState().acertou(base.id);
+      treinar('raciocinio');
     } else {
       setResultado('errado');
       setErros((e) => e + 1);

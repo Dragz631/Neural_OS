@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { treinar } from './musculos';
 import { persist } from '../lib/persistir';
 import { toLocalDate } from '../domain/dates';
 import { applyGrade, isDue, newReviewState, nextMastery, type Grade } from '../domain/srs';
@@ -187,7 +188,10 @@ export const useStudy = create<StudyData & StudyActions>()(
 
       setTarget: (target) => set({ target }),
 
-      setWeekPlan: (plan) => set((s) => ({ plans: { ...s.plans, [plan.weekStart]: plan } })),
+      setWeekPlan: (plan) => {
+        set((s) => ({ plans: { ...s.plans, [plan.weekStart]: plan } }));
+        treinar('planejamento', 2);
+      },
       setCheckin: (c) => set((s) => ({ checkins: { ...s.checkins, [c.date]: c } })),
       togglePlanItem: (weekStart, dayIdx, itemId) =>
         set((s) => {

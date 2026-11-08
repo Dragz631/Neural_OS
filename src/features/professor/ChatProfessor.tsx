@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as PE } from 'react';
 import { BookPlus, MessageCircle, NotebookPen, PanelRightClose, PanelRightOpen, Send, Shapes, Trash2, X } from 'lucide-react';
 import { guardarNasAnotacoes, porNaAula } from '../../store/aulaJunto';
+import { treinar } from '../../store/musculos';
 import { desistir, NOME_DEGRAU, novaEscada, pedeResposta, podeLiberar, subir, TENTATIVAS_PRA_LIBERAR, type Escada } from '../../domain/ajuda';
 import type { Topic } from '../../domain/types';
 import { useStudy } from '../../store/study';
@@ -93,6 +94,9 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
     const eu: MensagemChat = { de: 'aluno', texto: p, sobre, em: new Date().toISOString() };
     useRascunhos.getState().falarNoChat(topic.id, eu);
     useAprendiz.getState().registrarAjuste(tipo);
+    // Discordar = julgamento; responder na escada com o que acha (tentativa) = raciocínio.
+    if (tipo === 'discordo') treinar('julgamento');
+    else if (tipo === 'pergunta' && atual) treinar('raciocinio');
     setTexto('');
     void run(async (signal) => {
       // A escada só vale pra pergunta de exercício. Pedido de ajuste ("mais fácil", "rever o que faltou")

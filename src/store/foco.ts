@@ -3,6 +3,7 @@ import { persist } from '../lib/persistir';
 import { toLocalDate } from '../domain/dates';
 import { blocosQueCabem, depoisDaPausa, depoisDoFoco, novaSessao, proximoFoco, RITMOS, ritmoPelaEnergia, type IdRitmo, type SessaoFoco } from '../domain/foco';
 import { useStudy } from './study';
+import { treinar } from './musculos';
 
 // O estudo guiado (pomodoro) em andamento. É salvo e sincronizado: o celular mostra o
 // mesmo relógio do PC. Qualquer aparelho pode virar a fase quando o tempo acaba; se os
@@ -62,6 +63,7 @@ export const useFoco = create<FocoState>()(
           // O tempo de foco entra no seu histórico (sequência, horas da semana). Não paga XP.
           if (s.topicId) useStudy.getState().logSession({ topicId: s.topicId, minutes: m, kind: 'aula' });
           set({ sessao: depoisDoFoco(s), dias: somarDia(get().dias, s.data, { blocos: 1, minutos: m }) });
+          treinar('planejamento', 0.5);
         } else if (s.fase === 'pausa' || s.fase === 'longa') set({ sessao: depoisDaPausa(s) });
       },
       pularPausa: () => {

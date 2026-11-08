@@ -42,13 +42,13 @@ export const useGradeLobby = create<GradeState>()(
     // v3 (08/11/2026): widget "Foco" (estudo guiado) entra no primeiro espaço livre de quem já arrumou.
     {
       name: 'neural-os.lobby',
-      version: 5,
+      version: 6,
       migrate: (estado, versao) => {
         if (versao < 2) return { itens: [], iniciado: false } as never;
         let s = estado as { itens: ItemGrade[]; iniciado: boolean };
         if (!s.iniciado) return s as never;
-        // Widget novo entra no primeiro espaço livre (v3: Foco; v4/v5, 08/11/2026: Tabuada, com a grade maior).
-        for (const [id, w, h] of [['foco', 5, 3], ['tabuada', 3, 6]] as const) {
+        // Widget novo entra no primeiro espaço livre (v3: Foco; v4/v5, 08/11/2026: Tabuada, com a grade maior; v6: Músculos do cérebro).
+        for (const [id, w, h] of [['foco', 5, 3], ['tabuada', 3, 6], ['musculos', 4, 5]] as const) {
           if (s.itens.some((i) => i.id === id)) continue;
           const livre = primeiroLivre(s.itens, w, h);
           if (livre) s = { ...s, itens: [...s.itens, { id, ...livre }] };
