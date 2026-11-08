@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { montarRodada, notaDoTopico, ordemDosTopicos, pontuar, type Cartao } from '../../../domain/cartoes';
+import { montarRodada, notaDoTopico, ordemDosTopicos, pontuar, tamanhoDaRodada, type Cartao } from '../../../domain/cartoes';
 import { cartoesSemIA } from '../../../domain/cartoesSemIA';
 import { toLocalDate } from '../../../domain/dates';
 import { gerarCartoes } from '../../../services/ai/cartoes';
@@ -109,7 +109,11 @@ async function comecar(herdados: string[]) {
   }
 
   const cache = useFeed.getState().cache;
-  const rodada = montarRodada(ordem, (t) => (cache[t.id]?.length ? cache[t.id] : cartoesSemIA(t)));
+  // Quantos cartões: surpresa, mas esperta (energia de hoje + revisões atrasadas). Não é anunciado.
+  const hoje = toLocalDate();
+  const atrasadas = estudo.topics.filter((t) => (t.lastStudiedAt || t.review.reps > 0) && t.review.due < hoje).length;
+  const n = tamanhoDaRodada(estudo.checkins[hoje]?.energy, atrasadas);
+  const rodada = montarRodada(ordem, (t) => (cache[t.id]?.length ? cache[t.id] : cartoesSemIA(t)), n);
   // Cada pergunta ganha um jogo criado pela IA. O 1º a gente espera um pouco (a pessoa vai vê-lo
   // já); os outros saem enquanto ela joga. Se não ficar pronto, o cartão usa um jogo embutido.
   if (rodada.length && iaLigada(useConexoes.getState().motores)) {

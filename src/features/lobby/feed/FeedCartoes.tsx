@@ -25,7 +25,7 @@ const COMPONENTES: Record<TipoCartao, ComponentType<PropsCartao<never>>> = {
   ordem: JogoOrdem,
 };
 
-/** Feed do Lobby: rodadas de 5 cartões de 1 minuto, com combo e XP. */
+/** Feed do Lobby: rodadas surpresa (de 3 a 8 cartões, o app decide), com combo e XP. */
 export function FeedCartoes() {
   const r = useRodada();
   const som = useFeed((s) => s.som);
@@ -49,7 +49,7 @@ export function FeedCartoes() {
       {r.fase === 'carregando' && <p className="py-10 text-center text-sm text-muted">{r.criandoJogo ? 'A IA está inventando o jogo da 1ª pergunta… (os outros saem enquanto você joga)' : r.carregando ? 'O professor está preparando os cartões…' : 'Montando a rodada…'}</p>}
       {r.fase === 'vazio' && <Vazio />}
       {r.fase === 'jogando' && r.cartao && (
-        <Jogando cartao={r.cartao} indice={r.indice} total={r.total} combo={r.combo} pop={r.pop} onResponder={r.responder} onProximo={r.proximo} />
+        <Jogando cartao={r.cartao} indice={r.indice} combo={r.combo} pop={r.pop} onResponder={r.responder} onProximo={r.proximo} />
       )}
       {r.fase === 'fim' && <FimDeRodada resultados={r.resultados} maiorCombo={r.maiorCombo} onMais={r.comecar} />}
       {r.fase !== 'jogando' && <ErrorNote error={r.erro} />}
@@ -60,7 +60,7 @@ export function FeedCartoes() {
 function Inicio({ onComecar }: { onComecar: () => void }) {
   return (
     <div className="space-y-3 py-6 text-center">
-      <p className="text-sm text-muted">5 cartões rápidos do que você já estudou: revisão, micro-desafio e "explique em 1 frase". Acertos seguidos multiplicam o XP.</p>
+      <p className="text-sm text-muted">Uma rodada surpresa do que você já estudou. Acertos seguidos multiplicam o XP.</p>
       <Button variant="primary" onClick={onComecar}>
         <Play size={13} /> Começar rodada
       </Button>
@@ -80,7 +80,6 @@ function Vazio() {
 function Jogando({
   cartao,
   indice,
-  total,
   combo,
   pop,
   onResponder,
@@ -88,7 +87,6 @@ function Jogando({
 }: {
   cartao: Cartao;
   indice: number;
-  total: number;
   combo: number;
   pop: { xp: number; chave: number } | null;
 } & Omit<PropsCartao<Cartao>, 'cartao'>) {
@@ -109,11 +107,10 @@ function Jogando({
     // key por cartão: cada um "entra" de baixo, como o próximo vídeo de um reels.
     <div key={cartao.id + indice} className="reel-in relative space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider">
-        <div className="flex gap-1" aria-label={`Cartão ${indice + 1} de ${total}`}>
-          {Array.from({ length: total }, (_, i) => (
-            <span key={i} className={cn('h-1.5 w-6 rounded-full', i < indice ? 'bg-accent' : i === indice ? 'bg-accent/60' : 'bg-line')} />
-          ))}
-        </div>
+        {/* Surpresa: mostra só quantos já foram, nunca quantos faltam. */}
+        <span className="font-bold text-accent" aria-label={`Cartão ${indice + 1}`}>
+          #{indice + 1}
+        </span>
         <span className="text-muted">{TIPOS_CARTAO[cartao.tipo].rotulo}</span>
         {topico && <span className="truncate text-muted/70">· {topico}</span>}
         <span key={combo} className={cn('relative ml-auto flex items-center gap-1 rounded border px-2 py-0.5 font-bold', combo >= 2 ? 'combo-glow border-accent text-accent' : 'border-line text-muted')}>

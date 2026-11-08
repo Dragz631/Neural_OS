@@ -95,7 +95,30 @@ export function montarRodada(ordem: Topic[], cartoesDe: (t: Topic) => Cartao[], 
       if (rodada.length === n) break;
     }
   }
-  return rodada;
+  return variarTipos(rodada);
+}
+
+/**
+ * Rodada surpresa (Hugo, 08/11/2026): o app não anuncia quantos cartões vêm. Ele decide,
+ * esperto: energia do check-in (cansado = menos), revisões atrasadas (+1) e um pouco de sorte.
+ * Nunca 1 só: no mínimo 3.
+ */
+export function tamanhoDaRodada(energia: 1 | 2 | 3 | undefined, atrasadas: number, sorte = Math.random()): number {
+  const [min, max] = energia === 1 ? [3, 4] : energia === 3 ? [5, 7] : [4, 6];
+  const n = min + Math.floor(sorte * (max - min + 1));
+  return Math.min(8, n + (atrasadas >= 3 ? 1 : 0));
+}
+
+/** Embaralha de leve pra dois cartões do mesmo tipo não virem seguidos (quando dá). */
+export function variarTipos(cartoes: Cartao[]): Cartao[] {
+  const resto = [...cartoes];
+  const out: Cartao[] = [];
+  while (resto.length) {
+    const anterior = out[out.length - 1]?.tipo;
+    const i = resto.findIndex((c) => c.tipo !== anterior);
+    out.push(resto.splice(i === -1 ? 0 : i, 1)[0]);
+  }
+  return out;
 }
 
 /**
