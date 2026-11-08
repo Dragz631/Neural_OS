@@ -24,23 +24,8 @@ const EXEMPLO = `{
   "anotacoes": [{"texto":"repare: o nome não muda","em":"a"}]
 }`;
 
-export async function gerarCena(ctx: TopicContext, aula: Pick<Lesson, 'explanation' | 'keyPoints'>, signal?: AbortSignal): Promise<Cena> {
-  const { topic, subject } = ctx;
-  return chatJSON(
-    [
-      {
-        role: 'system',
-        content: `${PROFESSOR}\n${aprendizParaIA()}\nAgora você desenha no quadro negro. Pense como um professor que desenha: o desenho tem que mostrar o que a explicação só diz. Escolha o diagrama que deixa o abstrato VISÍVEL pra este assunto, seja ele qual for.`,
-      },
-      {
-        role: 'user',
-        content: `Matéria: ${subject?.name ?? 'não informada'}. Tópico: ${topic.title}.
-Aula que você acabou de escrever:
-"""
-${aula.explanation}
-Pontos-chave: ${aula.keyPoints.join('; ')}
-"""
-Escolha o MELHOR jeito de desenhar ISTO (não force um modelo fixo):
+/** Como o professor desenha: tipos, diagramas e regras. Usado na aula e no chat. */
+export const GUIA_DESENHO = `Escolha o MELHOR jeito de desenhar ISTO (não force um modelo fixo):
 - fluxo: decisão e passos de um algoritmo (losangos pra "se", caixas pros passos).
 - estados: algo que muda com o tempo (variável na memória, autômato, objeto). Use "estado" e "estado-final", e escreva o valor ou a regra nas ligações.
 - passos: resolução passo a passo (matemática, fatoração, conta): cada passo numa caixa, "formula" pras contas, "destaque" ou papel "resultado" pra resposta.
@@ -78,7 +63,25 @@ Regras:
 5. "ligacoes": setas de um id pra outro. "rotulo" diz o que acontece na seta (opcional). "estilo": "tracejada" quando é só relação.
 6. "anotacoes": até 3 comentários curtos de professor ao lado de um elemento ("repare nisso").
 7. Use só o que a aula diz. Não invente fatos.
-8. "porque": UMA frase dizendo por que você escolheu desenhar assim.
+8. "porque": UMA frase dizendo por que você escolheu desenhar assim.`;
+
+export async function gerarCena(ctx: TopicContext, aula: Pick<Lesson, 'explanation' | 'keyPoints'>, signal?: AbortSignal): Promise<Cena> {
+  const { topic, subject } = ctx;
+  return chatJSON(
+    [
+      {
+        role: 'system',
+        content: `${PROFESSOR}\n${aprendizParaIA()}\nAgora você desenha no quadro negro. Pense como um professor que desenha: o desenho tem que mostrar o que a explicação só diz. Escolha o diagrama que deixa o abstrato VISÍVEL pra este assunto, seja ele qual for.`,
+      },
+      {
+        role: 'user',
+        content: `Matéria: ${subject?.name ?? 'não informada'}. Tópico: ${topic.title}.
+Aula que você acabou de escrever:
+"""
+${aula.explanation}
+Pontos-chave: ${aula.keyPoints.join('; ')}
+"""
+${GUIA_DESENHO}
 Exemplo do formato (de outro assunto):
 ${EXEMPLO}
 Responda só com o JSON no mesmo formato.`,

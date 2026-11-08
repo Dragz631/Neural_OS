@@ -21,6 +21,7 @@ import { ProgressoAula } from './ProgressoAula';
 import { useRascunhos } from '../../store/rascunhos';
 import { RevisaoGuiada } from '../revisao/RevisaoGuiada';
 import { RoadmapPanel } from './RoadmapPanel';
+import { ChatProfessor } from './ChatProfessor';
 import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
 import { Select } from '../../components/ui';
 
@@ -51,6 +52,7 @@ export default function Professor() {
   const [newTopicOpen, setNewTopicOpen] = useState(false);
   const [fechando, setFechando] = useState(false);
   const [visao, setVisao] = useState<'aula' | 'roadmap'>('aula');
+  const ctxChat = useTopicContext(topic);
   const [materiaRM, setMateriaRM] = useState<Id | undefined>();
   // Matéria em foco: a escolhida no roadmap, senão a do tópico aberto, senão a primeira.
   const materiaId = materiaRM ?? topic?.subjectId ?? subjects[0]?.id;
@@ -174,6 +176,7 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
         </>
       )}
 
+      {visao === 'aula' && topic && <ChatProfessor key={topic.id} topic={topic} ctx={ctxChat} />}
       <TopicModal open={newTopicOpen} onClose={() => setNewTopicOpen(false)} onCreated={escolher} />
     </div>
   );

@@ -21,6 +21,7 @@ import { lookAtBoard, type BoardLook } from './professorLook';
 import { loadScene, mirrorOnExit, mirrorToVault, saveScene } from './sceneStorage';
 import { modoQuadro, paletaQuadro } from './temaQuadro';
 import { useTema } from '../../store/tema';
+import { useSelecaoQuadro } from '../../store/selecaoQuadro';
 import { mapaParaElementos } from './mapaParaLousa';
 import { roadmapParaElementos } from './roadmapParaLousa';
 
@@ -246,6 +247,7 @@ export function Board({ boardId, name, topicId, desenho }: { boardId: string; na
   const mirrorTimer = useRef<number | undefined>(undefined);
   // Última mudança ainda não gravada (pra salvar na hora de sair da aba).
   const pending = useRef<{ elements: readonly ExcalidrawElement[]; appState: AppState; files: BinaryFiles } | null>(null);
+  const selecaoAnterior = useRef('');
 
   // initialData aceita Promise: o Excalidraw espera o IndexedDB carregar.
   const initialData = useMemo(
@@ -326,6 +328,20 @@ export function Board({ boardId, name, topicId, desenho }: { boardId: string; na
   );
 
   const onChange = (elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+    // Seleção mudou: o chat do professor passa a saber de qual parte a pessoa está falando.
+    const ids = Object.keys(appState.selectedElementIds).filter((k) => appState.selectedElementIds[k]);
+    const chaveSel = ids.sort().join(',');
+    if (chaveSel !== selecaoAnterior.current) {
+      selecaoAnterior.current = chaveSel;
+      const sel = useSelecaoQuadro.getState();
+      if (!ids.length) {
+        if (sel.boardId === boardId) sel.limpar();
+      } else {
+        const marcados = new Set(ids);
+        const els = elements.filter((e) => !e.isDeleted && (marcados.has(e.id) || (e.type === 'text' && 'containerId' in e && e.containerId && marcados.has(e.containerId))));
+        sel.definir(boardId, describeScene(els).text);
+      }
+    }
     pending.current = { elements, appState, files };
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {

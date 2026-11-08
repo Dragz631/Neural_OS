@@ -1,0 +1,206 @@
+import { useEffect, useRef, useState, type PointerEvent as PE } from 'react';
+import { MessageCircle, PanelRightClose, PanelRightOpen, Send, Shapes, Trash2, X } from 'lucide-react';
+import type { Topic } from '../../domain/types';
+import { useAI } from '../../hooks/useAI';
+import { useCelular } from '../../hooks/useCelular';
+import { cn } from '../../lib/utils';
+import { perguntarAoProfessor } from '../../services/ai/chatProfessor';
+import type { TopicContext } from '../../services/ai/professor';
+import { useAprendiz } from '../../store/aprendiz';
+import { useIALigada } from '../../store/conexoes';
+import { useRascunhos, type MensagemChat } from '../../store/rascunhos';
+import { useSelecaoQuadro } from '../../store/selecaoQuadro';
+import { useBoards } from '../lousa/boardsStore';
+import { Orbe } from '../../components/Orbe';
+
+// Mini chat do professor, ao lado do quadro: pra ajustes rápidos ("mais fácil",
+// "desenha isso"), não pra aula inteira. Arrasta pra qualquer canto, prende na
+// lateral, e no celular vira uma gaveta embaixo. Selecionar uma parte do quadro
+// diz ao professor de QUAL parte você está falando.
+
+const ATALHOS: { tipo: string; rotulo: string; pedido: string }[] = [
+  { tipo: 'mais-facil', rotulo: 'Mais fácil', pedido: 'Explica essa parte de um jeito mais fácil, como se eu nunca tivesse visto.' },
+  { tipo: 'desenho', rotulo: 'Desenha isso', pedido: 'Desenha isso pra mim, com o diagrama que mais ajuda a enxergar.' },
+  { tipo: 'exemplo', rotulo: 'Um exemplo', pedido: 'Me dá um exemplo concreto do dia a dia.' },
+  { tipo: 'analogia', rotulo: 'Analogia + emoji', pedido: 'Explica com uma analogia e uns emojis pra eu enxergar.' },
+  { tipo: 'resumo', rotulo: 'Resume em 1 frase', pedido: 'Resume em uma frase só.' },
+];
+
+const L = 360;
+const A = 500;
+
+export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext }) {
+  const janela = useRascunhos((s) => s.chatJanela);
+  const mover = useRascunhos((s) => s.moverChat);
+  const msgs = useRascunhos((s) => s.chat[topic.id]) ?? [];
+  const celular = useCelular();
+  const aiOn = useIALigada();
+  const { run, loading, error } = useAI();
+  const [texto, setTexto] = useState('');
+  const quadroId = useBoards((s) => s.boards.find((b) => b.quadroDe === topic.id)?.id);
+  const selecao = useSelecaoQuadro((s) => (s.boardId && s.boardId === quadroId ? s.texto : ''));
+  const [usarSelecao, setUsarSelecao] = useState(true);
+  const fim = useRef<HTMLDivElement>(null);
+  const arrasto = useRef<{ dx: number; dy: number } | null>(null);
+
+  useEffect(() => {
+    setUsarSelecao(true);
+  }, [selecao]);
+  // Chaves de propósito: no Chrome novo scrollIntoView devolve uma Promise, e efeito não pode devolver nada além de função.
+  useEffect(() => {
+    void fim.current?.scrollIntoView({ block: 'end' });
+  }, [msgs.length, loading, janela.aberto]);
+
+  // "Ajustes nesta aula": pedidos feitos depois que a aula atual foi escrita.
+  const desde = topic.lesson ? new Date(topic.lesson.generatedAt).getTime() : 0;
+  const ajustesAula = msgs.filter((m) => m.de === 'aluno' && new Date(m.em).getTime() >= desde).length;
+
+  const enviar = (pedido: string, tipo = 'pergunta') => {
+    const p = pedido.trim();
+    if (!p || loading || !ctx) return;
+    const sobre = usarSelecao && selecao ? selecao : undefined;
+    const historico = msgs;
+    const eu: MensagemChat = { de: 'aluno', texto: p, sobre, em: new Date().toISOString() };
+    useRascunhos.getState().falarNoChat(topic.id, eu);
+    useAprendiz.getState().registrarAjuste(tipo);
+    setTexto('');
+    void run(async (signal) => {
+      const r = await perguntarAoProfessor({ ctx, aula: topic.lesson, sobre, historico, pergunta: p }, signal);
+      useRascunhos.getState().falarNoChat(topic.id, { de: 'prof', texto: r.texto, cena: r.cena, em: new Date().toISOString() });
+    });
+  };
+
+  // Posição da janela flutuante (padrão: canto de baixo à direita), sempre dentro da tela.
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+  const x = Math.max(8, Math.min(vw - L - 8, janela.x < 0 ? vw - L - 24 : janela.x));
+  const y = Math.max(56, Math.min(vh - A - 8, janela.y < 0 ? vh - A - 24 : janela.y));
+
+  const comecarArrasto = (e: PE) => {
+    if (janela.preso || celular) return;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    arrasto.current = { dx: e.clientX - x, dy: e.clientY - y };
+  };
+  const arrastar = (e: PE) => {
+    if (!arrasto.current) return;
+    mover({ x: e.clientX - arrasto.current.dx, y: e.clientY - arrasto.current.dy });
+  };
+  const soltar = () => {
+    arrasto.current = null;
+  };
+
+  if (!janela.aberto) {
+    return (
+      <button
+        type="button"
+        onClick={() => mover({ aberto: true })}
+        className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border border-accent bg-panel px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-accent shadow-lg hover:bg-accent/10"
+        title="Ajustes rápidos com o professor: mais fácil, desenha isso, um exemplo..."
+      >
+        <MessageCircle size={16} /> Perguntar ao professor
+      </button>
+    );
+  }
+
+  const posicao = celular
+    ? 'fixed inset-x-0 bottom-0 h-[62dvh] rounded-t-lg border-t'
+    : janela.preso
+      ? 'fixed bottom-0 right-0 top-[52px] w-[360px] border-l'
+      : 'fixed rounded-lg border';
+
+  return (
+    <aside
+      className={cn('z-40 flex flex-col border-accent/50 bg-panel shadow-2xl', posicao)}
+      style={!celular && !janela.preso ? { left: x, top: y, width: L, height: A } : undefined}
+      aria-label="Chat com o professor"
+    >
+      <header
+        onPointerDown={comecarArrasto}
+        onPointerMove={arrastar}
+        onPointerUp={soltar}
+        className={cn('flex items-center gap-2 border-b border-line px-3 py-2', !janela.preso && !celular && 'cursor-move select-none')}
+      >
+        <Orbe estado={loading ? 'thinking' : 'idle'} tamanho={28} />
+        <div className="min-w-0 flex-1">
+          <p className="fonte-titulo truncate text-[10px] uppercase tracking-[0.2em] text-accent">Prof. A.Ilson</p>
+          <p className="text-[10px] text-muted">{ajustesAula ? `${ajustesAula} ajuste${ajustesAula > 1 ? 's' : ''} nesta aula` : 'ajustes rápidos da aula'}</p>
+        </div>
+        {!celular && (
+          <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={() => mover({ preso: !janela.preso })} className="rounded p-1 text-muted hover:text-accent" title={janela.preso ? 'Soltar (janela flutuante)' : 'Prender na lateral'}>
+            {janela.preso ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+          </button>
+        )}
+        {msgs.length > 0 && (
+          <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={() => confirm('Apagar a conversa deste tópico?') && useRascunhos.getState().limparChat(topic.id)} className="rounded p-1 text-muted hover:text-danger" title="Apagar a conversa">
+            <Trash2 size={14} />
+          </button>
+        )}
+        <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={() => mover({ aberto: false })} className="rounded p-1 text-muted hover:text-fg" title="Fechar">
+          <X size={15} />
+        </button>
+      </header>
+
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3 text-sm">
+        {msgs.length === 0 && (
+          <p className="text-xs leading-relaxed text-muted">
+            Travou numa parte? <b className="text-fg">Selecione ela no quadro</b> e aperte um botão aqui embaixo, ou escreva. É pra ajuste rápido: o professor responde curto e, se ajudar, desenha.
+          </p>
+        )}
+        {msgs.map((m, i) => (
+          <div key={i} className={cn('max-w-[92%] rounded px-2.5 py-1.5', m.de === 'aluno' ? 'ml-auto bg-accent/15 text-fg' : 'bg-panel-2 text-fg')}>
+            {m.sobre && <p className="mb-1 line-clamp-2 border-l-2 border-accent/60 pl-1.5 text-[10px] text-muted">sobre: {m.sobre}</p>}
+            <p className="whitespace-pre-wrap leading-snug">{m.texto}</p>
+            {m.cena && (
+              <button
+                type="button"
+                onClick={() => useRascunhos.getState().porNoQuadro(topic.id, m.texto.slice(0, 60), m.cena!)}
+                className="mt-1.5 flex items-center gap-1 rounded border border-accent/60 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-accent hover:bg-accent/10"
+              >
+                <Shapes size={12} /> Pôr no quadro ({m.cena.elementos.length} {m.cena.elementos.length === 1 ? 'desenho' : 'peças'})
+              </button>
+            )}
+          </div>
+        ))}
+        {loading && <p className="text-xs text-muted">O professor está pensando…</p>}
+        {error && <p className="text-xs text-warn">{error}</p>}
+        <div ref={fim} />
+      </div>
+
+      <div className="space-y-2 border-t border-line p-2">
+        {selecao && (
+          <label className="flex items-start gap-1.5 text-[10px] text-muted">
+            <input type="checkbox" checked={usarSelecao} onChange={(e) => setUsarSelecao(e.target.checked)} className="mt-0.5" />
+            <span className="line-clamp-2">
+              Sobre a parte selecionada: <span className="text-fg">{selecao}</span>
+            </span>
+          </label>
+        )}
+        <div className="flex flex-wrap gap-1">
+          {ATALHOS.map((a) => (
+            <button key={a.tipo} type="button" disabled={!aiOn || loading} onClick={() => enviar(a.pedido, a.tipo)} className="rounded border border-line px-2 py-1 text-[10px] hover:border-accent hover:text-accent disabled:opacity-50">
+              {a.rotulo}
+            </button>
+          ))}
+        </div>
+        <form
+          className="flex gap-1.5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            enviar(texto);
+          }}
+        >
+          <input
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            placeholder={aiOn ? 'Pergunte ou peça um ajuste…' : 'Conecte um modelo pra usar o chat'}
+            disabled={!aiOn}
+            className="min-w-0 flex-1 rounded border border-line bg-bg px-2 py-1.5 text-sm text-fg"
+          />
+          <button type="submit" disabled={!aiOn || loading || !texto.trim()} className="rounded border border-accent px-2.5 text-accent hover:bg-accent/10 disabled:opacity-50" aria-label="Enviar">
+            <Send size={14} />
+          </button>
+        </form>
+      </div>
+    </aside>
+  );
+}

@@ -10,6 +10,9 @@ interface AprendizState {
   /** Texto livre do fim da entrevista. */
   livre: string;
   perfil: PerfilAprendiz;
+  /** Quantas vezes a pessoa pediu cada ajuste ao professor no chat ("mais fácil", "desenha"...). */
+  ajustes: Record<string, number>;
+  registrarAjuste: (tipo: string) => void;
   /** Liga/desliga uma opção (pergunta de várias) ou troca a escolhida (pergunta de uma só). */
   alternar: (id: IdPergunta, valor: string) => void;
   /** Troca as opções da pergunta de uma vez. */
@@ -28,6 +31,8 @@ export const useAprendiz = create<AprendizState>()(
       respostas: {},
       livre: '',
       perfil: PERFIL_PADRAO,
+      ajustes: {},
+      registrarAjuste: (tipo) => set((s) => ({ ajustes: { ...s.ajustes, [tipo]: (s.ajustes[tipo] ?? 0) + 1 } })),
       alternar: (id, valor) => {
         const multi = ENTREVISTA.find((p) => p.id === id)?.multi;
         const atual = get().respostas[id] ?? [];
@@ -55,14 +60,30 @@ export const useAprendiz = create<AprendizState>()(
         const e = (estado ?? {}) as { respostas?: unknown; livre?: string };
         const respostas = normalizarRespostas(e.respostas);
         const livre = typeof e.livre === 'string' ? e.livre : '';
-        return { respostas, livre, perfil: Object.keys(respostas).length || livre ? recalcular(respostas, livre) : PERFIL_PADRAO };
+        return { respostas, livre, ajustes: {}, perfil: Object.keys(respostas).length || livre ? recalcular(respostas, livre) : PERFIL_PADRAO };
       },
     },
   ),
 );
 
 /** O que o professor precisa saber sobre como a pessoa aprende (vazio sem entrevista). */
+const NOME_AJUSTE: Record<string, string> = {
+  'mais-facil': 'pediu pra deixar mais fácil',
+  desenho: 'pediu pra desenhar',
+  exemplo: 'pediu um exemplo',
+  analogia: 'pediu analogia/emoji',
+  resumo: 'pediu um resumo curto',
+  pergunta: 'fez uma pergunta própria',
+};
+
 export const aprendizParaIA = () => {
-  const { perfil, respostas } = useAprendiz.getState();
-  return descreverPerfil(perfil, respostas);
+  const { perfil, respostas, ajustes } = useAprendiz.getState();
+  const base = descreverPerfil(perfil, respostas);
+  const pedidos = Object.entries(ajustes ?? {})
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([t, n]) => `${NOME_AJUSTE[t] ?? t} ${n}x`);
+  if (!pedidos.length) return base;
+  // Vem do comportamento do aluno (diário), não é conteúdo de matéria.
+  return `${base}\nO que ele já pediu ao professor nas aulas (comportamento do aluno, NÃO é matéria): ${pedidos.join(', ')}. Ensine já do jeito que ele mais pede (ex.: se pede muito desenho ou "mais fácil", comece desenhando e mais simples).`.trim();
 };

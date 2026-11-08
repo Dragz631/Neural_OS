@@ -1,4 +1,5 @@
 import { convertToExcalidrawElements } from '@excalidraw/excalidraw';
+import type { Cena } from '../../domain/cena';
 import type { Lesson } from '../../domain/types';
 import { paletaQuadro } from '../lousa/temaQuadro';
 import { cenaParaEsqueletos } from './cenaParaQuadro';
@@ -39,6 +40,11 @@ export function quebrar(texto: string, max: number): string {
 }
 
 const alturaDe = (texto: string, fonte: number) => texto.split('\n').length * fonte * 1.3;
+
+/** Só o desenho de uma cena (ex.: o que o professor sugeriu no chat), pronto pro quadro. */
+export function cenaParaElementos(titulo: string, cena: Cena) {
+  return convertToExcalidrawElements(cenaParaEsqueletos(titulo, cena).esqueletos, { regenerateIds: true });
+}
 
 export function aulaParaElementos(titulo: string, aula: Lesson) {
   const p = paletaQuadro();
