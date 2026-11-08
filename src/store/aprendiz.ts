@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from '../lib/persistir';
+import { focoParaIA } from './foco';
 import { derivarPerfil, descreverPerfil, ENTREVISTA, normalizarRespostas, PERFIL_PADRAO, type IdPergunta, type PerfilAprendiz, type Respostas } from '../domain/aprendiz';
 
 // O perfil de aprendizagem da pessoa (resultado da entrevista). Fica no navegador
@@ -129,5 +130,5 @@ export const aprendizParaIA = () => {
   const comportamento = pedidos.length
     ? `O que ele já pediu ao professor nas aulas (comportamento do aluno, NÃO é matéria): ${pedidos.join(', ')}. Ensine já do jeito que ele mais pede (ex.: se pede muito desenho ou "mais fácil", comece desenhando e mais simples).`
     : '';
-  return [base, comportamento, memoriasParaIA()].filter(Boolean).join('\n').trim();
+  return [base, comportamento, memoriasParaIA(), focoParaIA()].filter(Boolean).join('\n').trim();
 };

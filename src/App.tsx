@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import { NextStepBar } from './components/NextStepBar';
 import { Toaster } from './components/Toaster';
 import { TarefasBar } from './components/TarefasBar';
+import { FocoMotor } from './components/Foco';
 import { useBackupAutomatico } from './hooks/useBackupAutomatico';
 import { TABS, useNav, type TabId } from './store/nav';
 
@@ -42,6 +43,7 @@ export default function App() {
     <div className="min-h-screen">
       <Navbar />
       <TarefasBar />
+      <FocoMotor />
       {tab !== 'lobby' && <NextStepBar />}
       <main>
         <Suspense fallback={<div className="p-8 text-center text-xs text-muted">carregando…</div>}>

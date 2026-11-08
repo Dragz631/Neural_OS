@@ -6,6 +6,7 @@ import { CalendarioCard } from './CalendarioCard';
 import { EntregasCard } from './EntregasCard';
 import { FaixaMaterias } from './FaixaMaterias';
 import { FeedCartoes } from './feed/FeedCartoes';
+import { FocoWidget } from './FocoWidget';
 import { LembreteWidget } from './LembreteWidget';
 import { LigacaoDoDia } from './LigacaoDoDia';
 import { MissoesHoje } from './MissoesHoje';
@@ -33,6 +34,7 @@ export const WIDGETS: DefWidget[] = [
   { id: 'calendario', titulo: 'Calendário', Componente: CalendarioCard, padrao: { x: 6, y: 12, w: 3, h: 4 }, min: { w: 2, h: 3 } },
   { id: 'caixa', titulo: 'Caixa de entrada', Componente: CaixaEntradaCard, padrao: { x: 9, y: 12, w: 3, h: 4 }, min: { w: 2, h: 3 } },
   { id: 'lembrete', titulo: 'Lembrete', Componente: LembreteWidget, padrao: { x: 0, y: 16, w: 4, h: 3 }, min: { w: 2, h: 2 } },
+  { id: 'foco', titulo: 'Foco', Componente: FocoWidget, padrao: { x: 4, y: 16, w: 5, h: 3 }, min: { w: 3, h: 3 } },
   { id: 'abas', titulo: 'Troféus e mais', Componente: AbasLobby, padrao: { x: 0, y: 19, w: 12, h: 8 }, min: { w: 4, h: 3 } },
 ];
 

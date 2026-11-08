@@ -33,4 +33,8 @@ export const sons = {
   erro: () => tocar([[220, 140], [165, 200]], 0.04),
   combo: (n: number) => tocar([[523, 60], [659, 60], [784, 60], [1047 + n * 40, 140]]),
   fim: () => tocar([[523, 90], [659, 90], [784, 90], [1047, 260]]),
+  /** Estudo guiado: acabou o foco, hora de descansar (desce, calmo). */
+  pausa: () => tocar([[784, 160], [659, 160], [523, 320]], 0.04),
+  /** Estudo guiado: acabou a pausa, hora de voltar (sobe). */
+  voltar: () => tocar([[523, 120], [659, 120], [784, 220]], 0.04),
 };

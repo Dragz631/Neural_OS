@@ -1,6 +1,6 @@
 import { Orbe } from '../../components/Orbe';
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, PenLine, Play, Shapes, Sparkles, Square, Trash2 } from 'lucide-react';
+import { FileDown, PenLine, Shapes, Sparkles, Trash2 } from 'lucide-react';
 import { formatShort } from '../../domain/dates';
 import { isDue } from '../../domain/srs';
 import type { Id, Lesson, Topic } from '../../domain/types';
@@ -24,6 +24,7 @@ import { RoadmapPanel } from './RoadmapPanel';
 import { ChatProfessor } from './ChatProfessor';
 import { TermometroAula } from './TermometroAula';
 import { ProvaPanel } from './ProvaPanel';
+import { ComecarFoco } from '../../components/Foco';
 import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
 import { Select } from '../../components/ui';
 
@@ -101,7 +102,7 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
             <TopicSelect value={topicId} onChange={escolher} />
           </label>
           <Button onClick={() => setNewTopicOpen(true)}>+ Novo tópico</Button>
-          {topic && <SessionTimer key={topic.id} topic={topic} />}
+          {topic && <ComecarFoco topicId={topic.id} />}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {([['aula', 'Aula'], ['roadmap', 'Roadmap']] as const).map(([id, rotulo]) => (
@@ -192,41 +193,6 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
       {visao === 'aula' && topic && !emProva && <ChatProfessor key={topic.id} topic={topic} ctx={ctxChat} />}
       <TopicModal open={newTopicOpen} onClose={() => setNewTopicOpen(false)} onCreated={escolher} />
     </div>
-  );
-}
-
-function SessionTimer({ topic }: { topic: Topic }) {
-  const logSession = useStudy((s) => s.logSession);
-  const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [, tick] = useState(0);
-
-  useEffect(() => {
-    if (!startedAt) return;
-    const id = setInterval(() => tick((n) => n + 1), 15_000);
-    return () => clearInterval(id);
-  }, [startedAt]);
-
-  const minutes = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 60_000)) : 0;
-
-  if (!startedAt) {
-    return (
-      <Button variant="primary" onClick={() => setStartedAt(Date.now())}>
-        <Play size={14} /> Iniciar sessão
-      </Button>
-    );
-  }
-  return (
-    <Button
-      variant="primary"
-      onClick={() => {
-        // Tempo conta pra sequência e pro diário, não pra XP (XP só com a prova aprovada).
-        logSession({ topicId: topic.id, minutes, kind: 'aula' });
-        toast({ title: `Sessão registrada: ${minutes} min`, description: `Em ${topic.title}. O XP vem quando você passar na prova do tópico.`, variant: 'success' });
-        setStartedAt(null);
-      }}
-    >
-      <Square size={14} /> Encerrar ({minutes} min)
-    </Button>
   );
 }
 

@@ -39,6 +39,17 @@ export const useGradeLobby = create<GradeState>()(
       restaurar: (padrao) => set({ itens: padrao, iniciado: true }),
     }),
     // v2: o arranjo padrão mudou de tamanho; quem não mexeu ganha o novo (migrate zera).
-    { name: 'neural-os.lobby', version: 2, migrate: () => ({ itens: [], iniciado: false }) as never },
+    // v3 (08/11/2026): widget "Foco" (estudo guiado) entra no primeiro espaço livre de quem já arrumou.
+    {
+      name: 'neural-os.lobby',
+      version: 3,
+      migrate: (estado, versao) => {
+        if (versao < 2) return { itens: [], iniciado: false } as never;
+        const s = estado as { itens: ItemGrade[]; iniciado: boolean };
+        if (!s.iniciado || s.itens.some((i) => i.id === 'foco')) return s as never;
+        const livre = primeiroLivre(s.itens, 5, 3);
+        return (livre ? { ...s, itens: [...s.itens, { id: 'foco', ...livre }] } : s) as never;
+      },
+    },
   ),
 );
