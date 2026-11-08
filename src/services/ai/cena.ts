@@ -30,7 +30,7 @@ export async function gerarCena(ctx: TopicContext, aula: Pick<Lesson, 'explanati
     [
       {
         role: 'system',
-        content: `${PROFESSOR}\n${aprendizParaIA()}\nAgora você desenha no quadro negro. Pense como um professor que desenha: o desenho tem que mostrar o que a explicação só diz.`,
+        content: `${PROFESSOR}\n${aprendizParaIA()}\nAgora você desenha no quadro negro. Pense como um professor que desenha: o desenho tem que mostrar o que a explicação só diz. Escolha o diagrama que deixa o abstrato VISÍVEL pra este assunto, seja ele qual for.`,
       },
       {
         role: 'user',
@@ -49,9 +49,23 @@ Escolha o MELHOR jeito de desenhar ISTO (não force um modelo fixo):
 - camadas: coisas empilhadas ou que dependem uma da outra (de baixo pra cima).
 - linha-do-tempo: o que veio antes e depois.
 - livre: combine o que precisar.
+Você também tem DIAGRAMAS prontos (um elemento cada; servem pra QUALQUER matéria, não só matemática). Use quando o assunto tem essa forma:
+- "arvore": algo que se ramifica. Probabilidade em etapas (moeda, bebê menino/menina), hierarquia (classes e herança, taxonomia, órgãos de um sistema, partículas do átomo), classificação, árvore de decisão, cadeia de causas. Cada galho pode ter "chance" (o texto escrito no galho: "1/2", "sim", "herda").
+  {"id":"a","tipo":"arvore","texto":"Dois filhos: as chances","papel":"conceito","arvore":{"raiz":"👶 1º filho","filhos":[{"texto":"Menino","chance":"1/2","filhos":[{"texto":"MM","chance":"1/2"},{"texto":"MF","chance":"1/2"}]},{"texto":"Menina","chance":"1/2","filhos":[{"texto":"FM","chance":"1/2"},{"texto":"FF","chance":"1/2"}]}]}}
+  Até 4 níveis e 24 nós.
+- "conjuntos": o que é comum e o que é só de um (Venn, 2 ou 3 círculos). Você só diz os itens de cada conjunto; o desenho calcula a interseção sozinho.
+  {"id":"v","tipo":"conjuntos","texto":"Par ou maior que 3?","conjuntos":{"universo":"Ω = faces do 🎲","conjuntos":[{"nome":"A: par","itens":["2","4","6"]},{"nome":"B: maior que 3","itens":["4","5","6"]}],"fora":["1","3"]}}
+- "grade": quadradinhos em linhas e colunas. Espaço amostral (dois dados = 6×6), matriz, tabuleiro, tabela verdade pequena. "destaque" = células [linha, coluna] (base 0) que fazem parte do evento.
+  {"id":"q","tipo":"grade","texto":"Soma 7 com dois dados","grade":{"linhas":6,"colunas":6,"rotulosLinhas":["1","2","3","4","5","6"],"rotulosColunas":["1","2","3","4","5","6"],"destaque":[[0,5],[1,4],[2,3],[3,2],[4,1],[5,0]]}}
+  Até 10×10. "celulas" (texto em cada quadrado, curto) é opcional.
+- "tabela": comparar coisas em linhas e colunas (tipos de dado, tempos verbais, prós e contras, fórmulas lado a lado).
+  {"id":"t","tipo":"tabela","texto":"Lista × Tupla","tabela":{"cabecalho":["","Lista","Tupla"],"linhas":[["Muda?","sim","não"],["Sintaxe","[1, 2]","(1, 2)"]]}}
+  Até 6 colunas e 8 linhas, células curtas.
+Um diagrama sozinho já pode ser a cena inteira; junte caixas, notas e setas em volta quando ajudar.
 Regras:
-1. De 4 a 10 elementos, textos CURTOS (até 8 palavras). Quem tem dificuldade de ler precisa entender pelo desenho.
-2. "tipo": caixa | losango | estado | estado-final | nota | texto | formula | destaque | grafico.
+1. De 1 a 10 elementos, textos CURTOS (até 8 palavras). Quem tem dificuldade de ler precisa entender pelo desenho. Uma ideia = um desenho; nunca um parágrafo no quadro.
+   Emoji pode ancorar uma ideia (👶 🎲 💧 ⚛️), com moderação.
+2. "tipo": caixa | losango | estado | estado-final | nota | texto | formula | destaque | grafico | arvore | conjuntos | grade | tabela.
    "grafico" é um plano cartesiano estilo Desmos. SÓ use quando a própria aula trabalha com uma função, uma equação ou pontos num plano (função, reta, parábola, geometria analítica, estatística com eixos, física com gráfico). NUNCA use em programação, paradigmas, conceitos, história, línguas, definições: nesses casos desenhe fluxo, mapa, camadas ou comparação. Em dúvida, NÃO use gráfico.
    Quando usar: cada função tem que aparecer escrita na aula (não invente curvas pra enfeitar), no máximo 2 funções por gráfico, e um gráfico por ideia (se há duas ideias, são dois gráficos). Formato do elemento:
    {"id":"g","tipo":"grafico","texto":"Parábola e suas raízes","papel":"conceito","linha":0,"coluna":0,

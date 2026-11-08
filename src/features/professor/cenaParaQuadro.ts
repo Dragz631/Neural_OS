@@ -2,6 +2,8 @@ import { posicionar, type Cena, type ElementoCena, type PapelCena } from '../../
 import { paletaQuadro, type PaletaQuadro } from '../lousa/temaQuadro';
 import type { Esqueleto } from './aulaParaQuadro';
 import { graficoParaEsqueletos } from './graficoParaQuadro';
+import { diagramaParaEsqueletos } from './diagramasParaQuadro';
+import { tamanhoDiagrama } from '../../domain/diagramas';
 
 // Desenha a cena que o professor escolheu. Ele diz linha e coluna; aqui saem as
 // medidas, as cores (pelo papel, do tema) e as setas amarradas nas caixas.
@@ -20,7 +22,7 @@ function quebrarCena(texto: string, max: number): string[] {
   return linhas.length ? linhas : [''];
 }
 
-const LARGURA_MAX: Record<ElementoCena['tipo'], number> = { caixa: 24, losango: 16, estado: 11, 'estado-final': 11, nota: 26, texto: 32, formula: 26, destaque: 26, grafico: 40 };
+const LARGURA_MAX: Record<ElementoCena['tipo'], number> = { caixa: 24, losango: 16, estado: 11, 'estado-final': 11, nota: 26, texto: 32, formula: 26, destaque: 26, grafico: 40, arvore: 40, conjuntos: 40, grade: 40, tabela: 40 };
 const FONTE = 18;
 const LETRA = 11; // largura média de uma letra a 18px
 const LINHA = FONTE * 1.3;
@@ -33,6 +35,10 @@ interface Medida {
 
 function medir(el: ElementoCena): Medida {
   if (el.tipo === 'grafico') return { texto: el.texto, w: 500, h: 400 };
+  if (el.diagrama) {
+    const t = tamanhoDiagrama(el.diagrama);
+    return { texto: el.texto.trim(), w: Math.max(t.w, el.texto.trim().length * 9), h: t.h + 26 };
+  }
   const linhas = quebrarCena(el.texto, LARGURA_MAX[el.tipo]);
   const maior = Math.max(...linhas.map((l) => l.length));
   const tw = Math.max(90, maior * LETRA);
@@ -129,6 +135,12 @@ export function cenaParaEsqueletos(titulo: string, cena: Cena): CenaDesenhada {
     const rotulo = { text: m.texto, fontSize: FONTE, strokeColor: p.texto, fontFamily: p.fonte };
     const comum = { id: el.id, x, y, width: m.w, height: m.h, strokeColor: c.traco, backgroundColor: c.fundo, fillStyle: 'solid' as const, strokeWidth: c.grossura, roughness: 0 };
     switch (el.tipo) {
+      case 'arvore':
+      case 'conjuntos':
+      case 'grade':
+      case 'tabela':
+        if (el.diagrama) esq.push(...diagramaParaEsqueletos(el.id, m.texto, el.diagrama, x, y, m.w, m.h, p));
+        break;
       case 'grafico':
         if (el.grafico) esq.push(...graficoParaEsqueletos(el.id, m.texto, el.grafico, x, y, m.w, m.h, p));
         break;

@@ -2,12 +2,13 @@
 // comparação, mapa, linha do tempo...) e o código só faz o desenho. O professor
 // nunca dá coordenada: dá linha e coluna de uma grade pequena; o resto é cálculo.
 
+import { lerDiagrama, TIPOS_DIAGRAMA, type Diagrama, type TipoDiagrama } from './diagramas';
 import { compilarExpressao } from './expressao';
 
 export const ESTILOS_CENA = ['fluxo', 'estados', 'passos', 'comparar', 'mapa', 'camadas', 'linha-do-tempo', 'livre'] as const;
 export type EstiloCena = (typeof ESTILOS_CENA)[number];
 
-export const TIPOS_CENA = ['caixa', 'losango', 'estado', 'estado-final', 'nota', 'texto', 'formula', 'destaque', 'grafico'] as const;
+export const TIPOS_CENA = ['caixa', 'losango', 'estado', 'estado-final', 'nota', 'texto', 'formula', 'destaque', 'grafico', 'arvore', 'conjuntos', 'grade', 'tabela'] as const;
 export type TipoCena = (typeof TIPOS_CENA)[number];
 
 /** O papel decide a cor: a pessoa aprende a "ler" o quadro pela cor. */
@@ -49,6 +50,8 @@ export interface ElementoCena {
   coluna?: number;
   /** Só quando tipo = "grafico". */
   grafico?: Grafico;
+  /** Só quando tipo = arvore | conjuntos | grade | tabela. */
+  diagrama?: Diagrama;
 }
 
 export interface LigacaoCena {
@@ -157,14 +160,18 @@ export function lerCena(bruto: unknown): Cena | null {
     const ehGrafico = e.tipo === 'grafico';
     const grafico = ehGrafico ? lerGrafico(e.grafico) : null;
     if (ehGrafico && !grafico) continue;
-    const texto = typeof e.texto === 'string' ? e.texto.trim().slice(0, MAX_TEXTO) : ehGrafico ? 'Gráfico' : '';
+    const ehDiagrama = TIPOS_DIAGRAMA.includes(e.tipo as TipoDiagrama);
+    const diagrama = ehDiagrama ? lerDiagrama(e.tipo as TipoDiagrama, e[e.tipo as string] ?? e.dados) : null;
+    if (ehDiagrama && !diagrama) continue; // dado quebrado: some o diagrama, não o desenho inteiro
+    const texto = typeof e.texto === 'string' ? e.texto.trim().slice(0, MAX_TEXTO) : ehGrafico || ehDiagrama ? ' ' : '';
     if (!texto) continue;
     let id = typeof e.id === 'string' && e.id.trim() ? e.id.trim() : `e${elementos.length}`;
     if (ids.has(id)) id = `${id}-${elementos.length}`;
     ids.add(id);
-    elementos.push({ id, tipo: noArray(TIPOS_CENA, e.tipo, 'caixa'), texto, papel: noArray(PAPEIS_CENA, e.papel, 'neutro'), linha: nat(e.linha), coluna: nat(e.coluna), ...(grafico ? { grafico } : {}) });
+    elementos.push({ id, tipo: noArray(TIPOS_CENA, e.tipo, 'caixa'), texto, papel: noArray(PAPEIS_CENA, e.papel, 'neutro'), linha: nat(e.linha), coluna: nat(e.coluna), ...(grafico ? { grafico } : {}), ...(diagrama ? { diagrama } : {}) });
   }
-  if (elementos.length < 2) return null;
+  // Um diagrama sozinho já é um desenho; caixas soltas precisam de pelo menos duas.
+  if (elementos.length < 2 && !elementos.some((el) => el.grafico || el.diagrama)) return null;
   const ligacoes: LigacaoCena[] = [];
   for (const x of Array.isArray(o.ligacoes) ? o.ligacoes : []) {
     if (!x || typeof x !== 'object') continue;
