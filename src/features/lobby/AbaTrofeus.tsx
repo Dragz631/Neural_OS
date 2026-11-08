@@ -15,7 +15,7 @@ export function AbaTrofeus() {
           <div className="flex items-center gap-2">
             {t.destravado ? <Trophy size={16} className="text-accent" /> : <Lock size={14} className="text-muted" />}
             <span className={cn('text-xs font-bold', t.destravado ? 'text-accent' : 'text-fg')}>{t.nome}</span>
-            <span className="ml-auto text-[10px] text-muted">+{t.xp}</span>
+            <span className="ml-auto text-[10px] text-muted">{t.xp ? `+${t.xp}` : 'medalha'}</span>
           </div>
           <p className="my-1 text-[11px] text-muted">{t.descricao}</p>
           {!t.destravado && (

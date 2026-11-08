@@ -23,7 +23,10 @@ export class ErroConexao extends Error {
 
 const PRAZO_MS = 170_000;
 
-async function chamarOpenAI(c: Conexao, chave: string | undefined, mensagens: Mensagem[], temperatura: number): Promise<string> {
+/** Prazo do servidor + "o app desistiu" (Cancelar no app ou página fechada): o que vier primeiro. */
+const prazoOu = (signal?: AbortSignal) => (signal ? AbortSignal.any([AbortSignal.timeout(PRAZO_MS), signal]) : AbortSignal.timeout(PRAZO_MS));
+
+async function chamarOpenAI(c: Conexao, chave: string | undefined, mensagens: Mensagem[], temperatura: number, signal?: AbortSignal): Promise<string> {
   const corpo: Record<string, unknown> = { model: c.modelo, messages: mensagens, temperature: temperatura, stream: false };
   // Nemotron "pensa escondido" e às vezes gasta tudo sem responder (aprendido no Brazuka).
   if (c.baseUrl.includes('nvidia.com')) corpo.chat_template_kwargs = { enable_thinking: false };
@@ -31,8 +34,9 @@ async function chamarOpenAI(c: Conexao, chave: string | undefined, mensagens: Me
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(chave ? { Authorization: `Bearer ${chave}` } : {}) },
     body: JSON.stringify(corpo),
-    signal: AbortSignal.timeout(PRAZO_MS),
+    signal: prazoOu(signal),
   }).catch((e: unknown) => {
+    if (signal?.aborted) throw new ErroConexao('Cancelado pelo app.', false);
     throw new ErroConexao(`${c.nome}: sem resposta (${e instanceof Error ? e.name : 'erro'}).`, true);
   });
   if (!res.ok) {
@@ -55,7 +59,7 @@ export function caminhoClaude(env: Record<string, string>): string {
  * sem configurações nem ferramentas (testado: não carrega as instruções do
  * Hugo nem o cofre do Claude, só o que mandamos aqui).
  */
-async function chamarClaude(c: Conexao, bin: string, mensagens: Mensagem[]): Promise<string> {
+async function chamarClaude(c: Conexao, bin: string, mensagens: Mensagem[], signal?: AbortSignal): Promise<string> {
   const sistema = mensagens.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n') || 'Você é o Prof. A.Ilson.';
   const conversa = mensagens
     .filter((m) => m.role !== 'system')
@@ -73,6 +77,12 @@ async function chamarClaude(c: Conexao, bin: string, mensagens: Mensagem[]): Pro
       p.kill();
       reject(new ErroConexao('Claude demorou demais.', true));
     }, PRAZO_MS);
+    // O app desistiu: encerra o Claude na hora (não gasta a assinatura à toa).
+    signal?.addEventListener('abort', () => {
+      clearTimeout(prazo);
+      p.kill();
+      reject(new ErroConexao('Cancelado pelo app.', false));
+    });
     p.stdout.on('data', (d: Buffer) => (saida += d.toString('utf8')));
     p.stderr.on('data', (d: Buffer) => (erro += d.toString('utf8')));
     p.on('error', () => {
@@ -93,8 +103,8 @@ async function chamarClaude(c: Conexao, bin: string, mensagens: Mensagem[]): Pro
   });
 }
 
-export async function chamarConexao(c: Conexao, env: Record<string, string>, chave: string | undefined, mensagens: Mensagem[], temperatura: number): Promise<string> {
-  return c.tipo === 'claude-cli' ? chamarClaude(c, caminhoClaude(env), mensagens) : chamarOpenAI(c, chave, mensagens, temperatura);
+export async function chamarConexao(c: Conexao, env: Record<string, string>, chave: string | undefined, mensagens: Mensagem[], temperatura: number, signal?: AbortSignal): Promise<string> {
+  return c.tipo === 'claude-cli' ? chamarClaude(c, caminhoClaude(env), mensagens, signal) : chamarOpenAI(c, chave, mensagens, temperatura, signal);
 }
 
 /** Lista os modelos de uma conexão no formato OpenAI (GET /models). */

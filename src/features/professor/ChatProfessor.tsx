@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState, type PointerEvent as PE } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent as PE } from 'react';
 import { MessageCircle, PanelRightClose, PanelRightOpen, Send, Shapes, Trash2, X } from 'lucide-react';
+import { desistir, NOME_DEGRAU, novaEscada, pedeResposta, podeLiberar, subir, TENTATIVAS_PRA_LIBERAR, type Escada } from '../../domain/ajuda';
 import type { Topic } from '../../domain/types';
+import { useStudy } from '../../store/study';
+import { toast } from '../../store/toast';
 import { useAI } from '../../hooks/useAI';
 import { useCelular } from '../../hooks/useCelular';
 import { cn } from '../../lib/utils';
@@ -58,20 +61,40 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
   const desde = topic.lesson ? new Date(topic.lesson.generatedAt).getTime() : 0;
   const ajustesAula = msgs.filter((m) => m.de === 'aluno' && new Date(m.em).getTime() >= desde).length;
 
+  // Escada de ajuda: pediu a resposta de um exercício? O professor faz pensar antes (domain/ajuda.ts).
+  const escada = useRascunhos((s) => s.escada[topic.id]);
+  const sessoes = useStudy((s) => s.sessions);
+  // Travado de verdade: as 2 últimas provas deste tópico abaixo de 50. Aí a resposta pode vir antes.
+  const travado = useMemo(() => {
+    const provas = sessoes.filter((s) => s.topicId === topic.id && (s.kind === 'explicacao' || s.kind === 'revisao') && s.score !== undefined).slice(-2);
+    return provas.length === 2 && provas.every((s) => (s.score ?? 0) < 50);
+  }, [sessoes, topic.id]);
+
   const enviar = (pedido: string, tipo = 'pergunta', sobreFixo?: string) => {
     const p = pedido.trim();
     if (!p || loading || !ctx) return;
     const sobre = sobreFixo ?? (usarSelecao && selecao ? selecao : undefined);
     const historico = msgs;
+    const atual = useRascunhos.getState().escada[topic.id];
+    // Pergunta livre: continua a escada (cada resposta dele é uma tentativa) ou começa uma se pediu a resposta.
+    let esc: Escada | undefined = atual;
+    if (tipo === 'desisti' && atual) esc = desistir(atual, travado);
+    else if (tipo === 'pergunta') esc = atual ? subir(atual, p, travado) : pedeResposta(p) ? novaEscada(p) : undefined;
+    useRascunhos.getState().guardarEscada(topic.id, esc);
     const eu: MensagemChat = { de: 'aluno', texto: p, sobre, em: new Date().toISOString() };
     useRascunhos.getState().falarNoChat(topic.id, eu);
     useAprendiz.getState().registrarAjuste(tipo);
     setTexto('');
     void run(async (signal) => {
-      const r = await perguntarAoProfessor({ ctx, aula: topic.lesson, sobre, historico, pergunta: p }, signal);
+      const r = await perguntarAoProfessor({ ctx, aula: topic.lesson, sobre, historico, pergunta: p, escada: esc }, signal);
       useRascunhos.getState().falarNoChat(topic.id, { de: 'prof', texto: r.texto, cena: r.cena, em: new Date().toISOString() });
+      // Entregou a resposta explicada (degrau 5): a escada acaba, e o próximo é o exercício parecido dele.
+      if (esc?.degrau === 5) useRascunhos.getState().guardarEscada(topic.id, undefined);
     });
   };
+
+  /** Copiar a resposta do professor: tudo bem, mas anotar com as suas palavras fixa mais. */
+  const aoCopiar = () => toast({ title: 'Anota com as suas palavras', description: 'Copiar e colar não fixa. Escreva nas suas anotações do seu jeito: é isso que faz lembrar depois.' });
 
   // Pedido que veio de fora (o 😕 do termômetro): abre o chat e manda, sobre aquela parte.
   const pedidoFora = useRascunhos((s) => (s.pedidoChat?.topicId === topic.id ? s.pedidoChat : undefined));
@@ -160,7 +183,7 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
           </p>
         )}
         {msgs.map((m, i) => (
-          <div key={i} className={cn('max-w-[92%] rounded px-2.5 py-1.5', m.de === 'aluno' ? 'ml-auto bg-accent/15 text-fg' : 'bg-panel-2 text-fg')}>
+          <div key={i} onCopy={m.de === 'prof' ? aoCopiar : undefined} className={cn('max-w-[92%] rounded px-2.5 py-1.5', m.de === 'aluno' ? 'ml-auto bg-accent/15 text-fg' : 'bg-panel-2 text-fg')}>
             {m.sobre && <p className="mb-1 line-clamp-2 border-l-2 border-accent/60 pl-1.5 text-[10px] text-muted">sobre: {m.sobre}</p>}
             <p className="whitespace-pre-wrap leading-snug">{m.texto}</p>
             {m.cena && (
@@ -180,6 +203,32 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
       </div>
 
       <div className="space-y-2 border-t border-line p-2">
+        {escada && (
+          <div className="rounded border border-info/50 bg-info/5 p-2 text-[10px] leading-snug">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold uppercase tracking-widest text-info">Escada de ajuda {escada.degrau}/5</span>
+              <span className="text-muted">· {NOME_DEGRAU[escada.degrau]}</span>
+              <button type="button" onClick={() => useRascunhos.getState().guardarEscada(topic.id, undefined)} className="ml-auto text-muted hover:text-fg" title="Resolvi / encerrar a escada">
+                <X size={11} />
+              </button>
+            </div>
+            <p className="mt-1 text-muted">
+              {podeLiberar(escada, travado)
+                ? 'Você já tentou de verdade: se travou, pode pedir a resposta explicada.'
+                : `Responda com o que você acha (mesmo errado): ${escada.tentativas}/${TENTATIVAS_PRA_LIBERAR} tentativas pra liberar a resposta.`}
+            </p>
+            {escada.degrau < 5 && (
+              <button
+                type="button"
+                disabled={!aiOn || loading}
+                onClick={() => enviar(podeLiberar(escada, travado) ? 'Tentei e travei. Me mostra a resolução explicada.' : 'Travei. Me dá mais uma ajuda, sem a resposta.', 'desisti')}
+                className="mt-1.5 rounded border border-info/60 px-2 py-0.5 font-bold uppercase tracking-wider text-info hover:bg-info/10 disabled:opacity-50"
+              >
+                {podeLiberar(escada, travado) ? 'Desisti, me mostra' : 'Me ajuda mais um pouco'}
+              </button>
+            )}
+          </div>
+        )}
         {selecao && (
           <label className="flex items-start gap-1.5 text-[10px] text-muted">
             <input type="checkbox" checked={usarSelecao} onChange={(e) => setUsarSelecao(e.target.checked)} className="mt-0.5" />

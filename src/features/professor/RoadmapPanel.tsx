@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Map as MapaIcon, Sparkles } from 'lucide-react';
 import { acharTopico, type ItemRoadmap, type TipoItem } from '../../domain/roadmap';
-import { useAI } from '../../hooks/useAI';
 import { gerarRoadmap } from '../../services/ai/roadmap';
+import { rodarTarefa, useTarefa } from '../../store/tarefas';
 import { useIALigada } from '../../store/conexoes';
 import { useRoadmaps } from '../../store/roadmaps';
 import { useStudy } from '../../store/study';
-import { toast } from '../../store/toast';
 import { Badge, Button, Empty, ErrorNote, Panel, ProgressBar } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { useBoards } from '../lousa/boardsStore';
@@ -25,7 +24,8 @@ export function RoadmapPanel({ subjectId, onEstudar }: { subjectId: string; onEs
   const topics = useStudy((s) => s.topics);
   const roadmap = useRoadmaps((s) => s.porMateria[subjectId]);
   const aiOn = useIALigada();
-  const { run, loading, error } = useAI();
+  const chave = `roadmap:${subjectId}`;
+  const { rodando: loading, erro: error } = useTarefa(chave);
   const [visao, setVisao] = useState<'lista' | 'desenho'>('lista');
   const lousa = useBoards((s) => s.boards.find((b) => b.roadmapDe === subjectId));
 
@@ -35,11 +35,11 @@ export function RoadmapPanel({ subjectId, onEstudar }: { subjectId: string; onEs
 
   const criar = () => {
     if (roadmap && !confirm('Refazer o roadmap troca a lousa dele por uma nova (o que você anotou nela se perde). Continuar?')) return;
-    void run(async (signal) => {
-      const r = await gerarRoadmap({ materia: subject.name, topicosAtuais: daMateria.map((t) => t.title) }, signal);
+    const materia = subject.name;
+    const topicosAtuais = daMateria.map((t) => t.title);
+    void rodarTarefa(chave, { rotulo: `Professor montando o roadmap de ${materia}`, aba: 'professor', avisarPronto: `Roadmap de ${materia} pronto` }, async (signal) => {
+      const r = await gerarRoadmap({ materia, topicosAtuais }, signal);
       useRoadmaps.getState().salvar(subjectId, r);
-      toast({ title: 'Roadmap pronto.' });
-      setVisao('lista');
     });
   };
 

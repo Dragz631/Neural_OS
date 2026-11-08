@@ -18,7 +18,7 @@ export interface Resposta {
   doCache: boolean;
 }
 
-export async function pedirAoMotor(armazem: Armazem, motorPedido: Motor, mensagens: Mensagem[], temperatura: number): Promise<Resposta> {
+export async function pedirAoMotor(armazem: Armazem, motorPedido: Motor, mensagens: Mensagem[], temperatura: number, signal?: AbortSignal): Promise<Resposta> {
   const cfg = await armazem.lerConfig();
   const env = await armazem.lerEnv();
   const chaveCache = createHash('sha256').update(JSON.stringify([motorPedido, temperatura, mensagens])).digest('hex');
@@ -28,6 +28,7 @@ export async function pedirAoMotor(armazem: Armazem, motorPedido: Motor, mensage
   const falhas: string[] = [];
   const tentadas = new Set<string>();
   for (const motor of CADEIA[motorPedido]) {
+    if (signal?.aborted) throw new ErroConexao('Cancelado pelo app.', false);
     const conexao = cfg.conexoes.find((c) => c.id === cfg.motores[motor]);
     if (!conexao || tentadas.has(conexao.id)) continue;
     tentadas.add(conexao.id);
@@ -37,7 +38,7 @@ export async function pedirAoMotor(armazem: Armazem, motorPedido: Motor, mensage
     }
     try {
       await armazem.contarUso(conexao.id);
-      const texto = await chamarConexao(conexao, env, env[varDaChave(conexao.id)], mensagens, temperatura);
+      const texto = await chamarConexao(conexao, env, env[varDaChave(conexao.id)], mensagens, temperatura, signal);
       if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
       cache.set(chaveCache, { texto, quando: Date.now(), motor, conexao: conexao.nome });
       return { texto, motor, conexao: conexao.nome, doCache: false };

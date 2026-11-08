@@ -8,6 +8,7 @@ import { diagnosticar } from '../../services/ai/revisao';
 import { gerarMinis, type TopicContext } from '../../services/ai/professor';
 import { useIALigada } from '../../store/conexoes';
 import { useStudy } from '../../store/study';
+import { rodarTarefa, useTarefa } from '../../store/tarefas';
 import { toast } from '../../store/toast';
 import { Button, ErrorNote, Textarea } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -27,7 +28,8 @@ export function ProgressoAula({ topic, lesson, ctx }: { topic: Topic; lesson: Le
   const setLesson = useStudy((s) => s.setLesson);
   const updateTopic = useStudy((s) => s.updateTopic);
   const aiOn = useIALigada();
-  const { run, loading, error } = useAI();
+  const chaveMinis = `minis:${topic.id}`;
+  const { rodando: loading, erro: error } = useTarefa(chaveMinis);
 
   const prog = lesson.progresso ?? {};
   const minis = lesson.minis ?? [];
@@ -55,9 +57,11 @@ export function ProgressoAula({ topic, lesson, ctx }: { topic: Topic; lesson: Le
   }, [tudo, lesson, setLesson, topic.id]);
 
   const pedirMinis = () =>
-    run(async (signal) => {
+    void rodarTarefa(chaveMinis, { rotulo: `Professor montando os minidesafios de ${topic.title}`, aba: 'professor', topicId: topic.id, avisarPronto: 'Minidesafios prontos' }, async (signal) => {
       const novas = await gerarMinis(ctx, lesson, signal);
-      setLesson(topic.id, { ...lesson, minis: novas });
+      // Grava na aula mais nova (você pode ter marcado passos enquanto ele montava).
+      const agora = useStudy.getState().topics.find((t) => t.id === topic.id)?.lesson;
+      if (agora) useStudy.getState().setLesson(topic.id, { ...agora, minis: novas });
     });
 
   const novaAula = () => updateTopic(topic.id, { lesson: undefined });

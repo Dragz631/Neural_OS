@@ -7,6 +7,7 @@ import { basicCheck } from '../../domain/basicCheck';
 import { fatorDica } from '../../domain/dicas';
 import { CANAL_COMPILADOR } from '../../domain/sandbox';
 import { gradeFromScore } from '../../domain/srs';
+import { xpDeAprendizado } from '../../domain/xp';
 import type { Challenge, Topic } from '../../domain/types';
 import { useAI } from '../../hooks/useAI';
 import { retratoDoTopico } from '../../domain/conhecimento';
@@ -58,7 +59,7 @@ export function DesafioView({ challenge, topic }: { challenge: Challenge; topic:
       if (review.source !== 'ia') return;
       gradeTopic(topic.id, gradeFromScore(nota));
       for (const id of challenge.topicIds ?? []) gradeTopic(id, gradeFromScore(nota));
-      const xp = logSession({ topicId: topic.id, minutes: minutos(), kind: 'desafio', score: nota });
+      const xp = logSession({ topicId: topic.id, minutes: minutos(), kind: 'desafio', score: nota, avaliadoPor: 'ia', xp: xpDeAprendizado({ tipo: 'desafio', nota, minutos: minutos(), resolvido, porIA: true }) });
       setXpGanho(xp);
       if (resolvido && anterior?.length) setErrosAntes(anterior);
       toast({ title: resolvido ? `Resolvido! +${xp} XP` : `Nota ${nota} · +${xp} XP`, variant: resolvido ? 'success' : 'default' });
@@ -67,10 +68,11 @@ export function DesafioView({ challenge, topic }: { challenge: Challenge; topic:
   // Checagem básica não sabe se a lógica está certa: ele mesmo fecha o desafio.
   const autoavaliar = (ok: boolean) => {
     gradeTopic(topic.id, ok ? (fator < 1 ? 'dificil' : 'bom') : 'errei');
-    const xp = logSession({ topicId: topic.id, minutes: minutos(), kind: 'desafio', score: Math.round((ok ? 75 : 40) * fator) });
+    // Sem IA ninguém conferiu: registra o tempo e a revisão, mas não paga XP.
+    logSession({ topicId: topic.id, minutes: minutos(), kind: 'desafio', score: Math.round((ok ? 75 : 40) * fator), avaliadoPor: 'eu' });
     salvar({ code, solvedAt: ok ? new Date().toISOString() : undefined });
-    setXpGanho(xp);
-    toast({ title: `Registrado · +${xp} XP`, variant: 'success' });
+    setXpGanho(0);
+    toast({ title: 'Registrado', description: 'Sem XP: só desafio corrigido pela IA vale XP.', variant: 'success' });
   };
 
   const classificar = (categoria: Parameters<typeof addDiario>[1]['categoria']) =>

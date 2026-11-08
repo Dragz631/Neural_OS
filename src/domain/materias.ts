@@ -1,5 +1,5 @@
 import type { StudySession, Subject, Topic } from './types';
-import { levelFromXp, xpForSession } from './xp';
+import { levelFromXp, somaXpSessoes } from './xp';
 
 // Resumo de cada matéria pro Lobby: quanto já domina, nível e qual é o próximo tópico.
 
@@ -27,7 +27,7 @@ export function resumirMaterias(subjects: Subject[], topics: Topic[], sessions: 
   return subjects.map((subject) => {
     const doTema = topics.filter((t) => t.subjectId === subject.id);
     const ids = new Set(doTema.map((t) => t.id));
-    const xp = sessions.filter((s) => ids.has(s.topicId)).reduce((soma, s) => soma + xpForSession(s.minutes, s.score), 0);
+    const xp = somaXpSessoes(sessions.filter((s) => ids.has(s.topicId)));
     return {
       subject,
       total: doTema.length,

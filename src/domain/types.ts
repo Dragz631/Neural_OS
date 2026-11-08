@@ -80,6 +80,14 @@ export interface StudySession {
   kind: SessionKind;
   score?: number; // 0-100 quando houve avaliação
   note?: string;
+  /** Quem deu a nota. Sessões antigas não têm (contam como autoavaliação, a não ser que tenham nota). */
+  avaliadoPor?: 'ia' | 'eu';
+  /** XP que esta sessão pagou (regra de domain/xp.ts). Sessões antigas não têm. */
+  xp?: number;
+  /** Prova: o que faltou e o resumo do professor (pra mente do professor e o próximo passo). */
+  lacunas?: string[];
+  pontosFortes?: string[];
+  correcao?: string;
 }
 
 export interface CodeReview {
@@ -158,6 +166,8 @@ export interface DayCheckin {
 export interface Profile {
   name: string;
   xp: number;
+  /** XP de antes da regra "só aprendizado conferido" (08/11/2026), guardado pra não perder. */
+  xpAntigo?: number;
   title?: string;
   email?: string;
   birthday?: LocalDate;

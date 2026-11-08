@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Escada } from '../domain/ajuda';
 import type { Cena } from '../domain/cena';
 import type { Id } from '../domain/types';
 
@@ -75,6 +76,12 @@ interface RascunhosState {
   pedidoChat?: PedidoChat;
   pedirAoChat: (p: Omit<PedidoChat, 'chave'>) => void;
   limparPedidoChat: () => void;
+  /** Escada de ajuda em andamento no chat de cada tópico (domain/ajuda.ts). */
+  escada: Record<Id, Escada>;
+  guardarEscada: (topicId: Id, e: Escada | undefined) => void;
+  /** Tópico com a prova aberta: a aula, as anotações e o chat ficam escondidos ("sem olhar"). */
+  provaAberta?: Id;
+  abrirProva: (id: Id | undefined) => void;
   lembrarTopico: (id: Id) => void;
   escreverFeynman: (id: Id, texto: string) => void;
   guardarRevisao: (id: Id, r: RevisaoSalva | undefined) => void;
@@ -111,6 +118,15 @@ export const useRascunhos = create<RascunhosState>()(
       limparPedidoChat: () => set({ pedidoChat: undefined }),
       abrirDias: (datas, aberto) => set((s) => ({ diasAbertos: { ...s.diasAbertos, ...Object.fromEntries(datas.map((d) => [d, aberto])) } })),
       lembrarTopico: (id) => set({ ultimoTopico: id }),
+      abrirProva: (id) => set({ provaAberta: id }),
+      escada: {},
+      guardarEscada: (topicId, e) =>
+        set((s) => {
+          const escada = { ...s.escada };
+          if (e) escada[topicId] = e;
+          else delete escada[topicId];
+          return { escada };
+        }),
       escreverFeynman: (id, texto) =>
         set((s) => {
           const feynman = { ...s.feynman };

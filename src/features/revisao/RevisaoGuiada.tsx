@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRascunhos } from '../../store/rascunhos';
 import { Mic, MicOff, Sparkles } from 'lucide-react';
 import { toLocalDate } from '../../domain/dates';
+import { xpDeAprendizado } from '../../domain/xp';
 import { ERRO_TEXTO, notaDe, perguntasSemIA, quantasPerguntas, TAMANHOS, tamanhoSugerido, type Diagnostico, type PerguntaRevisao, type Tamanho } from '../../domain/revisao';
 import { useAI } from '../../hooks/useAI';
 import { useVoz } from '../../hooks/useVoz';
@@ -26,6 +27,8 @@ interface Feita {
   pergunta: PerguntaRevisao;
   resposta: string;
   diag: Diagnostico;
+  /** A IA conferiu (true) ou você se autoavaliou (false). Só a IA conferindo paga XP. */
+  ia?: boolean;
 }
 
 const COR_NIVEL = { certo: 'text-accent', quase: 'text-warn', errado: 'text-warn' } as const;
@@ -103,7 +106,7 @@ export function RevisaoGuiada({ topic, compacto = false }: { topic: Topic; compa
       setMostrarRef(true);
       return;
     }
-    registrar(d, texto);
+    registrar(d, texto, true);
   };
 
   /** Autoavaliação quando não há IA: a pessoa compara com a resposta-modelo. */
@@ -113,10 +116,10 @@ export function RevisaoGuiada({ topic, compacto = false }: { topic: Topic; compa
       resposta.trim(),
     );
 
-  const registrar = (d: Diagnostico, texto: string) => {
+  const registrar = (d: Diagnostico, texto: string, ia = false) => {
     setMostrarRef(false);
     setDiag(d);
-    setFeitas((f) => [...f, { pergunta, resposta: texto, diag: d }]);
+    setFeitas((f) => [...f, { pergunta, resposta: texto, diag: d, ia }]);
     if (d.nivel !== 'certo') useStudy.getState().addDiario(topic.id, { tipo: 'erro', original: `[revisão] ${pergunta.pergunta} → ${texto || 'não soube'}`, corrigido: d.reparo.ideia || pergunta.referencia });
     setFase('diagnostico');
   };
@@ -137,8 +140,17 @@ export function RevisaoGuiada({ topic, compacto = false }: { topic: Topic; compa
       const nota = certas === feitas.length ? 'bom' : certas * 2 >= feitas.length ? 'dificil' : 'errei';
       const score = Math.round(feitas.reduce((s, f) => s + notaDe(f.diag.nivel), 0) / Math.max(feitas.length, 1));
       useStudy.getState().gradeTopic(topic.id, nota);
-      const xp = useStudy.getState().logSession({ topicId: topic.id, minutes: Math.max(1, Math.round((Date.now() - inicioEm) / 60_000)), kind: 'revisao', score });
-      toast({ title: `Revisão feita · +${xp} XP`, description: 'Próxima revisão agendada.', variant: 'success' });
+      const certasPelaIA = feitas.filter((f) => f.ia && f.diag.nivel === 'certo').length;
+      const porIA = feitas.some((f) => f.ia);
+      const xp = useStudy.getState().logSession({
+        topicId: topic.id,
+        minutes: Math.max(1, Math.round((Date.now() - inicioEm) / 60_000)),
+        kind: 'revisao',
+        score,
+        avaliadoPor: porIA ? 'ia' : 'eu',
+        xp: xpDeAprendizado({ tipo: 'revisao-guiada', certasPelaIA }),
+      });
+      toast({ title: xp ? `Revisão feita · +${xp} XP` : 'Revisão feita', description: xp ? 'Próxima revisão agendada.' : 'Próxima revisão agendada. XP só pras respostas que o professor conferiu.', variant: 'success' });
     }
     setFase('fim');
   };

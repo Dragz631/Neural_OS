@@ -25,9 +25,11 @@ export interface Trofeu {
 
 const maxNota = (s: StudySession[], kinds: string[]) => s.filter((x) => kinds.includes(x.kind)).reduce((m, x) => Math.max(m, x.score ?? 0), 0);
 
+// XP só nos troféus que exigem acerto conferido (Feynman 90+, desafio sem dica, Dungeon, domínio).
+// Os de tempo, sequência, lousa e entrega são medalha: aparecem, mas pagam 0 (08/11/2026).
 export const TROFEUS: Trofeu[] = [
-  { id: 'primeira-sinapse', nome: 'Primeira Sinapse', descricao: 'Registrar a primeira sessão de estudo.', xp: 50, calc: (c) => ({ progresso: Math.min(1, c.sessions.length), total: 1 }) },
-  { id: 'streak-fogo', nome: 'Streak de Fogo', descricao: 'Estudar 7 dias seguidos.', xp: 350, calc: (c) => ({ progresso: Math.min(7, c.sequencia), total: 7 }) },
+  { id: 'primeira-sinapse', nome: 'Primeira Sinapse', descricao: 'Registrar a primeira sessão de estudo.', xp: 0, calc: (c) => ({ progresso: Math.min(1, c.sessions.length), total: 1 }) },
+  { id: 'streak-fogo', nome: 'Streak de Fogo', descricao: 'Estudar 7 dias seguidos.', xp: 0, calc: (c) => ({ progresso: Math.min(7, c.sequencia), total: 7 }) },
   { id: 'feynman-supremo', nome: 'Feynman Supremo', descricao: 'Tirar 90 ou mais explicando um tópico com suas palavras.', xp: 200, calc: (c) => ({ progresso: Math.min(90, maxNota(c.sessions, ['explicacao', 'revisao'])), total: 90 }) },
   {
     id: 'arquiteto',
@@ -40,15 +42,15 @@ export const TROFEUS: Trofeu[] = [
       return { progresso: Math.min(5, Math.max(0, ...porMateria.values())), total: 5 };
     },
   },
-  { id: 'pedreiro-digital', nome: 'Pedreiro Digital', descricao: 'Montar uma lousa com 10 ou mais elementos.', xp: 100, calc: (c) => ({ progresso: Math.min(10, c.maiorLousa), total: 10 }) },
-  { id: 'sem-escada', nome: 'Sem Escada', descricao: 'Resolver um desafio sem abrir nenhuma dica.', xp: 150, calc: (c) => ({ progresso: c.challenges.some((x) => x.solvedAt && x.hintLevel === undefined) ? 1 : 0, total: 1 }) },
-  { id: 'maratonista', nome: 'Maratonista', descricao: 'Somar 10 horas de estudo registradas.', xp: 200, calc: (c) => ({ progresso: Math.min(600, c.sessions.reduce((s, x) => s + x.minutes, 0)), total: 600 }) },
-  { id: 'entregador', nome: 'Entregador', descricao: 'Entregar 5 trabalhos/provas/listas.', xp: 150, calc: (c) => ({ progresso: Math.min(5, c.entregues), total: 5 }) },
+  { id: 'pedreiro-digital', nome: 'Pedreiro Digital', descricao: 'Montar uma lousa com 10 ou mais elementos.', xp: 0, calc: (c) => ({ progresso: Math.min(10, c.maiorLousa), total: 10 }) },
+  { id: 'sem-escada', nome: 'Sem Escada', descricao: 'Resolver um desafio sem abrir nenhuma dica.', xp: 150, calc: (c) => ({ progresso: c.challenges.some((x) => x.solvedAt && x.review?.source === 'ia' && x.hintLevel === undefined) ? 1 : 0, total: 1 }) },
+  { id: 'maratonista', nome: 'Maratonista', descricao: 'Somar 10 horas de estudo registradas.', xp: 0, calc: (c) => ({ progresso: Math.min(600, c.sessions.reduce((s, x) => s + x.minutes, 0)), total: 600 }) },
+  { id: 'entregador', nome: 'Entregador', descricao: 'Entregar 5 trabalhos/provas/listas.', xp: 0, calc: (c) => ({ progresso: Math.min(5, c.entregues), total: 5 }) },
   {
     id: 'em-dia',
     nome: 'Em Dia',
     descricao: 'Ter 5 tópicos estudados e nenhuma revisão vencida.',
-    xp: 150,
+    xp: 0,
     calc: (c) => {
       const estudados = c.topics.filter((t) => t.lastStudiedAt).length;
       return { progresso: c.revisoesVencidas === 0 ? Math.min(5, estudados) : 0, total: 5 };

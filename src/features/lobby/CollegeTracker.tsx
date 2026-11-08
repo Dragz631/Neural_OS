@@ -41,7 +41,6 @@ export function CollegeTracker({ open, onClose }: { open: boolean; onClose: () =
                     #{t}
                   </span>
                 ))}
-                <span className="text-accent">+{e.xp} XP</span>
               </div>
             </div>
             <button type="button" onClick={() => confirm(`Apagar "${e.titulo}"?`) && apagar(e.id)} className="text-muted hover:text-danger" aria-label="Apagar">

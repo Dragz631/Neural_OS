@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { proximoStatus, type Entrega } from '../domain/entregas';
-import { newId, useStudy } from './study';
+import { newId } from './study';
 import { usePresenca } from './presenca';
 
-// College Tracker: trabalhos, provas e listas. Entregar dá XP e marca presença no dia.
+// College Tracker: trabalhos, provas e listas. Entregar marca presença no dia (não paga XP desde 08/11/2026).
 
 interface EntregasState {
   lista: Entrega[];
@@ -36,7 +36,8 @@ export const useEntregas = create<EntregasState>()(
             x.id === id ? { ...x, status, entregueEm: entregue ? new Date().toISOString() : undefined, xpPago: x.xpPago || pagaAgora } : x,
           ),
         }));
-        if (pagaAgora) useStudy.getState().addXp(atual.xp);
+        // Entregar não paga XP (08/11/2026): marcar "feito" não prova que você aprendeu.
+        // O XP vem das provas e desafios conferidos. Entregar conta pra presença e pro troféu.
         if (entregue) usePresenca.getState().marcar();
       },
     }),

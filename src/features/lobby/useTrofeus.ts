@@ -41,7 +41,7 @@ export function useTrofeus() {
     if (novos.length === 0) return;
     useTrofeusPagos.getState().pagar(novos.map((t) => t.id));
     useStudy.getState().addXp(novos.reduce((s, t) => s + t.xp, 0));
-    for (const t of novos) toast({ title: `Troféu: ${t.nome}`, description: `+${t.xp} XP`, variant: 'success' });
+    for (const t of novos) toast({ title: `Troféu: ${t.nome}`, description: t.xp ? `+${t.xp} XP` : 'Medalha (sem XP: XP só com aprendizado conferido)', variant: 'success' });
   }, [lista, pagos]);
 
   return lista;

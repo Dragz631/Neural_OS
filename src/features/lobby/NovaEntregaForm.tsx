@@ -60,7 +60,7 @@ export function NovaEntregaForm() {
       <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
       <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="tags, separadas, por vírgula" />
       <Button type="submit" variant="primary" disabled={!titulo.trim()}>
-        <Plus size={14} /> +{XP_POR_TIPO[tipo]} XP
+        <Plus size={14} /> Adicionar
       </Button>
     </form>
   );

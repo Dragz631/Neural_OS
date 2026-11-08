@@ -5,7 +5,30 @@ import { derivarPerfil, descreverPerfil, ENTREVISTA, normalizarRespostas, PERFIL
 // O perfil de aprendizagem da pessoa (resultado da entrevista). Fica no navegador
 // e no backup; o professor lê daqui em todo pedido.
 
+/**
+ * Uma lembrança do professor sobre COMO você aprendeu um tópico (nasce quando você passa na prova).
+ * É sobre você, nunca é matéria. Você pode corrigir ou apagar (a sua edição vence).
+ */
+export interface Memoria {
+  id: string;
+  topicId: string;
+  topico: string;
+  materia: string;
+  quando: string;
+  nota: number;
+  oQueFuncionou: string;
+  oQueTravou: string;
+  comoExplicar: string;
+  /** Você editou: o professor não reescreve. */
+  editada?: boolean;
+}
+
 interface AprendizState {
+  /** A "mente do professor": o que ele lembra do seu jeito de aprender (mais nova primeiro, até 60). */
+  memorias: Memoria[];
+  guardarMemoria: (m: Omit<Memoria, 'id'>) => void;
+  editarMemoria: (id: string, patch: Partial<Pick<Memoria, 'oQueFuncionou' | 'oQueTravou' | 'comoExplicar'>>) => void;
+  apagarMemoria: (id: string) => void;
   respostas: Respostas;
   /** Texto livre do fim da entrevista. */
   livre: string;
@@ -32,6 +55,17 @@ export const useAprendiz = create<AprendizState>()(
       livre: '',
       perfil: PERFIL_PADRAO,
       ajustes: {},
+      memorias: [],
+      // Uma por tópico: passar de novo atualiza a lembrança (menos a que você editou à mão).
+      guardarMemoria: (m) =>
+        set((s) => {
+          const antiga = s.memorias.find((x) => x.topicId === m.topicId);
+          if (antiga?.editada) return {};
+          const nova: Memoria = { ...m, id: antiga?.id ?? `mem_${Date.now().toString(36)}` };
+          return { memorias: [nova, ...s.memorias.filter((x) => x.topicId !== m.topicId)].slice(0, 60) };
+        }),
+      editarMemoria: (id, patch) => set((s) => ({ memorias: s.memorias.map((x) => (x.id === id ? { ...x, ...patch, editada: true } : x)) })),
+      apagarMemoria: (id) => set((s) => ({ memorias: s.memorias.filter((x) => x.id !== id) })),
       registrarAjuste: (tipo) => set((s) => ({ ajustes: { ...s.ajustes, [tipo]: (s.ajustes[tipo] ?? 0) + 1 } })),
       alternar: (id, valor) => {
         const multi = ENTREVISTA.find((p) => p.id === id)?.multi;
@@ -76,6 +110,14 @@ const NOME_AJUSTE: Record<string, string> = {
   pergunta: 'fez uma pergunta própria',
 };
 
+/** As lembranças mais recentes, em texto pro professor (as 6 mais novas). */
+export function memoriasParaIA(): string {
+  const ms = (useAprendiz.getState().memorias ?? []).slice(0, 6);
+  if (!ms.length) return '';
+  const linhas = ms.map((m) => `- ${m.materia} › ${m.topico} (passou com ${m.nota}): funcionou: ${m.oQueFuncionou} | travou: ${m.oQueTravou} | ensine assim: ${m.comoExplicar}`);
+  return `MENTE DO PROFESSOR (o que você lembra de como ESTE aluno aprendeu, das provas que ele passou; é sobre ele, NÃO é matéria):\n${linhas.join('\n')}\nUse isso pra ensinar já do jeito que funcionou com ele.`;
+}
+
 export const aprendizParaIA = () => {
   const { perfil, respostas, ajustes } = useAprendiz.getState();
   const base = descreverPerfil(perfil, respostas);
@@ -83,7 +125,9 @@ export const aprendizParaIA = () => {
     .filter(([, n]) => n > 0)
     .sort((a, b) => b[1] - a[1])
     .map(([t, n]) => `${NOME_AJUSTE[t] ?? t} ${n}x`);
-  if (!pedidos.length) return base;
   // Vem do comportamento do aluno (diário), não é conteúdo de matéria.
-  return `${base}\nO que ele já pediu ao professor nas aulas (comportamento do aluno, NÃO é matéria): ${pedidos.join(', ')}. Ensine já do jeito que ele mais pede (ex.: se pede muito desenho ou "mais fácil", comece desenhando e mais simples).`.trim();
+  const comportamento = pedidos.length
+    ? `O que ele já pediu ao professor nas aulas (comportamento do aluno, NÃO é matéria): ${pedidos.join(', ')}. Ensine já do jeito que ele mais pede (ex.: se pede muito desenho ou "mais fácil", comece desenhando e mais simples).`
+    : '';
+  return [base, comportamento, memoriasParaIA()].filter(Boolean).join('\n').trim();
 };

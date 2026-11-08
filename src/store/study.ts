@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toLocalDate } from '../domain/dates';
 import { applyGrade, isDue, newReviewState, nextMastery, type Grade } from '../domain/srs';
-import { xpForSession } from '../domain/xp';
+import { somaXpSessoes } from '../domain/xp';
 import type { EntradaDiario } from '../domain/diario';
 import type {
   Challenge,
@@ -56,7 +56,22 @@ interface StudyActions {
   /** Registra dúvida/erro/conceito no diário do tópico. */
   addDiario: (topicId: Id, entrada: Omit<EntradaDiario, 'id' | 'data'>) => void;
 
-  logSession: (s: { topicId: Id; minutes: number; kind: SessionKind; score?: number; note?: string }) => number;
+  /**
+   * Registra uma sessão. O XP NÃO sai do tempo: quem chama calcula com `xpDeAprendizado`
+   * (domain/xp.ts) e passa em `xp`. Sem `xp`, a sessão paga 0 (cronômetro, autoavaliação).
+   */
+  logSession: (s: {
+    topicId: Id;
+    minutes: number;
+    kind: SessionKind;
+    score?: number;
+    note?: string;
+    xp?: number;
+    avaliadoPor?: 'ia' | 'eu';
+    lacunas?: string[];
+    pontosFortes?: string[];
+    correcao?: string;
+  }) => number;
 
   saveChallenge: (c: Challenge) => void;
   removeChallenge: (id: Id) => void;
@@ -150,9 +165,10 @@ export const useStudy = create<StudyData & StudyActions>()(
           ),
         })),
 
-      logSession: ({ topicId, minutes, kind, score, note }) => {
-        const xp = xpForSession(minutes, score);
-        const session: StudySession = { id: newId('ses'), topicId, date: toLocalDate(), minutes, kind, score, note };
+      logSession: ({ xp: xpPedido, ...dados }) => {
+        const xp = Math.max(0, Math.round(xpPedido ?? 0));
+        const { topicId } = dados;
+        const session: StudySession = { id: newId('ses'), date: toLocalDate(), ...dados, xp };
         set((s) => ({
           sessions: [...s.sessions, session],
           profile: { ...s.profile, xp: s.profile.xp + xp },
@@ -185,7 +201,20 @@ export const useStudy = create<StudyData & StudyActions>()(
 
       replaceAll: (data) => set({ ...INITIAL, ...data }),
     }),
-    { name: 'neural-os.v2', version: 1 },
+    {
+      name: 'neural-os.v2',
+      version: 2,
+      // v2 (08/11/2026): XP passa a medir só aprendizado conferido. O XP antigo fica guardado
+      // em `xpAntigo` e o atual é recalculado das sessões aprovadas (regra de domain/xp.ts).
+      migrate: (salvo, versao) => {
+        const s = salvo as StudyData;
+        if (versao < 2 && s?.profile) {
+          const sessoes = [...(s.sessions ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+          s.profile = { ...s.profile, xpAntigo: s.profile.xpAntigo ?? s.profile.xp, xp: somaXpSessoes(sessoes) };
+        }
+        return s;
+      },
+    },
   ),
 );
 

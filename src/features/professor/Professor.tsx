@@ -2,14 +2,14 @@ import { Orbe } from '../../components/Orbe';
 import { useEffect, useMemo, useState } from 'react';
 import { FileDown, PenLine, Play, Shapes, Sparkles, Square, Trash2 } from 'lucide-react';
 import { formatShort } from '../../domain/dates';
-import { GRADE_LABEL, gradeFromScore, isDue, type Grade } from '../../domain/srs';
+import { isDue } from '../../domain/srs';
 import type { Id, Lesson, Topic } from '../../domain/types';
-import { useAI } from '../../hooks/useAI';
 import { toast } from '../../store/toast';
 import { gerarCena } from '../../services/ai/cena';
-import { evaluateExplanation, generateLesson, type ExplanationReview, type TopicContext } from '../../services/ai/professor';
+import { generateLesson, type TopicContext } from '../../services/ai/professor';
 import { exportTopic } from '../../services/vault';
 import { useNav } from '../../store/nav';
+import { rodarTarefa, useTarefa } from '../../store/tarefas';
 import { useIALigada } from '../../store/conexoes';
 import { topicPath, useStudy } from '../../store/study';
 import { TopicModal, TopicSelect } from '../../components/TopicPicker';
@@ -23,6 +23,7 @@ import { RevisaoGuiada } from '../revisao/RevisaoGuiada';
 import { RoadmapPanel } from './RoadmapPanel';
 import { ChatProfessor } from './ChatProfessor';
 import { TermometroAula } from './TermometroAula';
+import { ProvaPanel } from './ProvaPanel';
 import { apagarMateria, resumoDaMateria } from '../../store/apagarMateria';
 import { Select } from '../../components/ui';
 
@@ -54,6 +55,7 @@ export default function Professor() {
   const [fechando, setFechando] = useState(false);
   const [visao, setVisao] = useState<'aula' | 'roadmap'>('aula');
   const ctxChat = useTopicContext(topic);
+  const emProva = useRascunhos((s) => !!topic && s.provaAberta === topic.id);
   const [materiaRM, setMateriaRM] = useState<Id | undefined>();
   // Matéria em foco: a escolhida no roadmap, senão a do tópico aberto, senão a primeira.
   const materiaId = materiaRM ?? topic?.subjectId ?? subjects[0]?.id;
@@ -151,6 +153,16 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
         )
       ) : !topic ? (
         <Empty>Escolha um tópico (ou crie um) pra o Prof. A.Ilson preparar o quadro.</Empty>
+      ) : emProva ? (
+        <>
+          {/* Prova "sem olhar": a aula, as anotações e o chat somem até entregar ou desistir. */}
+          <Panel>
+            <p className="text-sm text-muted">
+              A aula, as suas anotações e o chat estão escondidos durante a prova. Ninguém aprende copiando: escreva o que <b className="text-fg">você</b> lembra.
+            </p>
+          </Panel>
+          <ProvaPanel key={`prova-${topic.id}`} topic={topic} ctx={ctxChat} />
+        </>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -173,11 +185,11 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
               </div>
             </div>
           </div>
-          <ExplainPanel key={`explain-${topic.id}`} topic={topic} />
+          <ProvaPanel key={`prova-${topic.id}`} topic={topic} ctx={ctxChat} />
         </>
       )}
 
-      {visao === 'aula' && topic && <ChatProfessor key={topic.id} topic={topic} ctx={ctxChat} />}
+      {visao === 'aula' && topic && !emProva && <ChatProfessor key={topic.id} topic={topic} ctx={ctxChat} />}
       <TopicModal open={newTopicOpen} onClose={() => setNewTopicOpen(false)} onCreated={escolher} />
     </div>
   );
@@ -207,8 +219,9 @@ function SessionTimer({ topic }: { topic: Topic }) {
     <Button
       variant="primary"
       onClick={() => {
-        const xp = logSession({ topicId: topic.id, minutes, kind: 'aula' });
-        toast({ title: `Sessão registrada: ${minutes} min`, description: `+${xp} XP em ${topic.title}`, variant: 'success' });
+        // Tempo conta pra sequência e pro diário, não pra XP (XP só com a prova aprovada).
+        logSession({ topicId: topic.id, minutes, kind: 'aula' });
+        toast({ title: `Sessão registrada: ${minutes} min`, description: `Em ${topic.title}. O XP vem quando você passar na prova do tópico.`, variant: 'success' });
         setStartedAt(null);
       }}
     >
@@ -217,40 +230,56 @@ function SessionTimer({ topic }: { topic: Topic }) {
   );
 }
 
+/**
+ * Desenha a aula salva do tópico (segunda chamada). Lê a aula mais nova do store na hora de gravar,
+ * pra não atropelar o que você editou enquanto ele desenhava. Falha do desenho não derruba a aula.
+ */
+async function desenharNaAula(ctx: TopicContext, topicId: Id, signal: AbortSignal): Promise<boolean> {
+  const atual = () => useStudy.getState().topics.find((t) => t.id === topicId)?.lesson;
+  const l = atual();
+  if (!l) return false;
+  let cena: Lesson['cena'];
+  try {
+    cena = await gerarCena(ctx, l, signal);
+  } catch (e) {
+    if (signal.aborted) throw e;
+    return false;
+  }
+  const agora = atual();
+  if (!cena || !agora) return false;
+  useStudy.getState().setLesson(topicId, { ...agora, cena, generatedAt: new Date().toISOString() });
+  return true;
+}
+
 function Blackboard({ topic }: { topic: Topic }) {
   const ctx = useTopicContext(topic);
-  const setLesson = useStudy((s) => s.setLesson);
   const aiOn = useIALigada();
-  const { run, loading, error } = useAI();
+  // A aula roda como tarefa: trocar de aba não cancela, o resultado é gravado quando chega.
+  const chave = `aula:${topic.id}`;
+  const { rodando: loading, erro: error } = useTarefa(chave);
   const [editing, setEditing] = useState(false);
   const lesson = topic.lesson;
 
-  // O desenho é uma segunda chamada: se falhar, a aula fica e o quadro usa o desenho em colunas.
-  const desenhar = async (l: Lesson, signal: AbortSignal) => {
-    try {
-      return await gerarCena(ctx!, l, signal);
-    } catch (e) {
-      if (signal.aborted) throw e;
-      return undefined;
-    }
-  };
   const [aba, setAba] = useState<'prof' | 'livre'>('prof');
   const emAndamento = !!lesson && !lesson.concluidaEm && (Object.values(lesson.progresso ?? {}).some(Boolean) || !!lesson.minis?.some((m) => m.ok));
   const generate = () => {
     if (emAndamento && !window.confirm('Você está no meio desta aula. Reescrever apaga o progresso dos passos e dos minidesafios (as suas anotações ficam). Continuar?')) return;
-    return run(async (signal) => {
-      const l = await generateLesson(ctx!, signal);
-      setLesson(topic.id, { ...l, cena: await desenhar(l, signal) });
+    const c = ctx!;
+    void rodarTarefa(chave, { rotulo: `Professor preparando a aula de ${topic.title}`, aba: 'professor', topicId: topic.id, avisarPronto: `Aula de ${topic.title} pronta` }, async (signal) => {
+      const l = await generateLesson(c, signal);
+      // O texto entra já: se o desenho falhar ou for cancelado, a aula não se perde.
+      useStudy.getState().setLesson(topic.id, l);
+      await desenharNaAula(c, topic.id, signal);
     });
   };
   /** Mesmo conteúdo, outro jeito de desenhar: entra ao lado, sem apagar o que já está no quadro. */
-  const redesenhar = () =>
-    run(async (signal) => {
-      if (!lesson) return;
-      const cena = await desenhar(lesson, signal);
-      if (!cena) throw new Error('o professor não conseguiu desenhar de outro jeito agora, tente de novo');
-      setLesson(topic.id, { ...lesson, cena, generatedAt: new Date().toISOString() });
+  const redesenhar = () => {
+    const c = ctx!;
+    void rodarTarefa(chave, { rotulo: `Professor redesenhando ${topic.title}`, aba: 'professor', topicId: topic.id }, async (signal) => {
+      const ok = await desenharNaAula(c, topic.id, signal);
+      if (!ok) throw new Error('o professor não conseguiu desenhar de outro jeito agora, tente de novo');
     });
+  };
 
   return (
     <section className="min-w-0 rounded border-4 border-line bg-panel-2 p-3 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)] md:p-5">
@@ -420,100 +449,5 @@ function NotesPanel({ topic }: { topic: Topic }) {
       />
       <p className="mt-2 text-[10px] text-muted">Salva sozinho. Pelo menos umas 2 linhas completam o passo "escrever" da aula.</p>
     </Panel>
-  );
-}
-
-/** Técnica Feynman: explique com suas palavras. Resultado agenda a próxima revisão. */
-function ExplainPanel({ topic }: { topic: Topic }) {
-  const ctx = useTopicContext(topic);
-  const gradeTopic = useStudy((s) => s.gradeTopic);
-  const logSession = useStudy((s) => s.logSession);
-  const aiOn = useIALigada();
-  const { run, loading, error } = useAI();
-  const text = useRascunhos((s) => s.feynman[topic.id] ?? '');
-  const setText = (t: string) => useRascunhos.getState().escreverFeynman(topic.id, t);
-  const [review, setReview] = useState<ExplanationReview | null>(null);
-  const [done, setDone] = useState<Grade | null>(null);
-  const due = !!topic.lastStudiedAt && isDue(topic.review);
-
-  const finish = (grade: Grade, score?: number) => {
-    gradeTopic(topic.id, grade);
-    const xp = logSession({ topicId: topic.id, minutes: 5, kind: due ? 'revisao' : 'explicacao', score, note: text.slice(0, 500) || undefined });
-    setDone(grade);
-    toast({ title: `${GRADE_LABEL[grade]} · +${xp} XP`, description: 'Próxima revisão agendada.', variant: 'success' });
-  };
-
-  const evaluate = () =>
-    run(async (signal) => {
-      const r = await evaluateExplanation(ctx!, text, signal);
-      setReview(r);
-      finish(gradeFromScore(r.score), r.score);
-    });
-
-  return (
-    <Panel title={due ? 'Revisão — explique sem olhar as anotações' : 'Prove que entendeu (Técnica Feynman)'}>
-      <p className="mb-3 text-xs leading-relaxed text-muted">
-        Explique como se fosse pra alguém que nunca viu o assunto. Se travar em algum ponto, é ali que está a lacuna.
-      </p>
-      <Textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={`O que é ${topic.title}, pra que serve, e um exemplo…`} disabled={!!done} />
-      <ErrorNote error={error} />
-
-      {!done && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {aiOn && (
-            <Button variant="primary" onClick={evaluate} disabled={loading || text.trim().length < 20}>
-              <Sparkles size={14} /> {loading ? 'Avaliando…' : 'Avaliar com o professor'}
-            </Button>
-          )}
-          <span className="text-[10px] uppercase tracking-widest text-muted">{aiOn ? 'ou avalie você mesmo:' : 'Compare com o quadro e avalie-se:'}</span>
-          {(Object.keys(GRADE_LABEL) as Grade[]).map((g) => (
-            <Button key={g} onClick={() => finish(g)} className={cn(g === 'errei' && 'text-danger')}>
-              {GRADE_LABEL[g]}
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {review && (
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <div className="rounded border border-line bg-bg p-3 text-center">
-            <div className={cn('text-3xl font-bold', review.score >= 70 ? 'text-accent' : review.score >= 50 ? 'text-warn' : 'text-danger')}>{review.score}</div>
-            <div className="text-[10px] uppercase text-muted">nota</div>
-          </div>
-          <FeedbackList title="Acertou" items={review.strengths} color="text-accent" />
-          <FeedbackList title="Faltou" items={review.gaps} color="text-warn" />
-          <p className="rounded border border-line bg-bg p-3 text-sm leading-relaxed md:col-span-3">
-            <b className="text-info">Resumo do professor:</b> {review.correction}
-          </p>
-        </div>
-      )}
-
-      {done && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-muted">
-          Avaliado como <Badge>{GRADE_LABEL[done]}</Badge>
-          <Button
-            className="px-2 py-1 text-[10px]"
-            onClick={() => {
-              setDone(null);
-              setReview(null);
-              setText('');
-            }}
-          >
-            Explicar de novo
-          </Button>
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-function FeedbackList({ title, items, color }: { title: string; items: string[]; color: string }) {
-  return (
-    <div className="rounded border border-line bg-bg p-3">
-      <div className={cn('mb-1 text-[10px] font-bold uppercase tracking-widest', color)}>{title}</div>
-      <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed">
-        {items.length ? items.map((i) => <li key={i}>{i}</li>) : <li className="list-none text-muted">—</li>}
-      </ul>
-    </div>
   );
 }

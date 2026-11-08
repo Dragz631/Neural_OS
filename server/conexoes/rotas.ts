@@ -154,7 +154,12 @@ export function registrarConexoes(server: ViteDevServer, raiz: string) {
       const corpo = await lerCorpo(req);
       const mensagens = (Array.isArray(corpo.messages) ? corpo.messages : []) as Mensagem[];
       const temperatura = typeof corpo.temperature === 'number' ? corpo.temperature : 0.4;
-      return responder(res, 200, await pedirAoMotor(armazem, motor, mensagens, temperatura));
+      // O app cancelou (botão Cancelar, página fechada): para o modelo também, sem gastar cota à toa.
+      const desistiu = new AbortController();
+      res.on('close', () => {
+        if (!res.writableFinished) desistiu.abort();
+      });
+      return responder(res, 200, await pedirAoMotor(armazem, motor, mensagens, temperatura, desistiu.signal));
     } catch (e) {
       return responder(res, 502, { erro: e instanceof Error ? e.message : String(e) });
     }

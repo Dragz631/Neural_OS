@@ -3,7 +3,7 @@ import { Empty, Panel } from '../../components/ui';
 import { proximoTopico } from '../../domain/materias';
 import { habilidadesDa } from '../../domain/sandbox';
 import type { Challenge, Id } from '../../domain/types';
-import { levelFromXp, xpForSession } from '../../domain/xp';
+import { levelFromXp, somaXpSessoes } from '../../domain/xp';
 import { useNav } from '../../store/nav';
 import { newId, selectDueTopics, useStudy } from '../../store/study';
 import { toast } from '../../store/toast';
@@ -53,7 +53,7 @@ export default function Sandbox() {
 
   const trilha = useMemo(() => {
     const ids = new Set(habilidades.map((h) => h.topic.id));
-    const xp = sessions.filter((s) => ids.has(s.topicId)).reduce((soma, s) => soma + xpForSession(s.minutes, s.score), 0);
+    const xp = somaXpSessoes(sessions.filter((s) => ids.has(s.topicId)));
     const dominio = habilidades.length ? Math.round(habilidades.reduce((s, h) => s + h.topic.mastery, 0) / habilidades.length) : 0;
     return { nivel: levelFromXp(xp).level, xp, resolvidos: desafiosDaMateria.filter((c) => c.solvedAt).length, dominioMedio: dominio };
   }, [habilidades, sessions, desafiosDaMateria]);
