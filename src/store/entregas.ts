@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import { proximoStatus, type Entrega } from '../domain/entregas';
 import { newId } from './study';
 import { usePresenca } from './presenca';

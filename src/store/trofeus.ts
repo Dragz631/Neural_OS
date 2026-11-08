@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 
 // Só guarda quais troféus já pagaram XP (o "destravado" é sempre calculado).
 

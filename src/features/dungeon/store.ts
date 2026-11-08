@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../../lib/persistir';
 import type { DungeonProgress, TrackDungeonState, TrackId } from './types';
 
 const fresh = (): TrackDungeonState => ({ currentStageNumber: 1, completedStageIds: [], defeatedBossIds: [], highScores: {} });

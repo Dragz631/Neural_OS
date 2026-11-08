@@ -82,7 +82,7 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:5173. Na primeira vez o app está vazio de propósito: ele pede pra você criar a **sua** primeira matéria e tópico, e tudo nasce do que você estuda. Os dados ficam no navegador deste computador (faça backup em ⚙ Configurações).
+Abra http://localhost:5173. Na primeira vez o app está vazio de propósito: ele pede pra você criar a **sua** primeira matéria e tópico, e tudo nasce do que você estuda. Os dados ficam neste computador: no navegador e em `dados.local.json` na pasta do app (é o que deixa o celular com o mesmo progresso). Faça backup em ⚙ Configurações quando quiser.
 
 - **Sem IA ele funciona inteiro.** A IA só deixa as aulas, os desafios e o feed mais personalizados.
 - **Seus dados e suas chaves são seus:** ninguém recebe o que você estuda, e as chaves nunca saem do seu `.env.local`.
@@ -99,6 +99,46 @@ Nada exige editar arquivo nem abrir terminal:
   - **Notion:** passo a passo para criar a sua integração e liberar as páginas.
   - **NotebookLM:** "Instalar" (precisa de Python 3.10+) e depois "Entrar no Google".
 - **Aparência:** botão de paleta, no topo. O tema padrão é o do Neural-OS; você muda cores, letras e efeitos, ou importa o tema de um amigo (arquivo `.json`).
+
+### Usar no celular, com o mesmo progresso do PC
+
+Botão de celular, no topo → **Abrir acesso pelo celular**. Aparecem um endereço e um PIN novo (funciona no 5G e em qualquer Wi-Fi). No celular, abra o endereço e digite o PIN.
+
+- **O progresso é o mesmo nos dois, ao vivo.** O PC guarda tudo em `dados.local.json` (fora do git, com uma cópia por dia dos últimos 7 dias). Passou numa prova no celular? O XP aparece no PC em segundos, e vice-versa. O pontinho verde ao lado do nível diz que está sincronizado.
+- **Sem rede por um momento?** O que você fizer fica guardado no aparelho e vai quando a conexão voltar.
+- **Apagou a tela do celular no meio de uma aula?** O PC termina a aula e o celular busca quando voltar. Só o botão Cancelar (ou fechar a página) para de verdade.
+- Só a grade do Lobby e as tarefas em andamento são de cada aparelho.
+
+### Fotos de perfil personalizadas (ASCII animado)
+
+No Lobby, clique na sua foto (ou no lápis do perfil). Dá pra escolher um ícone ASCII animado, usar uma imagem sua ou transformar a sua imagem em ASCII.
+
+**Ícones só seus:** crie o arquivo `avatares.local.txt` na pasta do app. Ele fica fora do git, só com você, e o app mostra em "Os meus". Peça pra sua IA criar com este formato (ela sabe, é só texto):
+
+```text
+@avatar samurai
+nome: Samurai
+ms: 450
+cor: \=warn /=warn O=accent
+---
+  \\_||_//
+ /========\
+|  O    O  |
+|  ______  |
+ \________/
+---
+  \\_||_//
+ /========\
+|  -    -  |
+|  ______  |
+ \________/
+```
+
+- `@avatar <id>`: começa um avatar (id com letras, números e hífen).
+- `nome:` aparece pra escolher · `ms:` tempo de cada quadro (120 a 5000).
+- `cor:` cada caractere ganha uma cor do tema: `accent`, `warn`, `info`, `danger`, `muted` ou `fg`.
+- Cada `---` começa um quadro da animação. Até 16 linhas e 28 colunas por quadro; o app iguala o tamanho dos quadros.
+- Só caracteres ASCII (os acentuados/emoji podem desalinhar). Escreva a arte você mesmo, sem copiar personagem de outra pessoa se for publicar.
 
 As chaves ficam só no `.env.local` (fora do git); o navegador nunca as vê. O servidor do Vite repassa os pedidos de IA com a chave (`server/devApi.ts`). As escolhas de pasta ficam em `fontes.local.json` (também fora do git).
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import type { Escada } from '../domain/ajuda';
 import type { Cena } from '../domain/cena';
 import type { Id } from '../domain/types';

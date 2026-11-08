@@ -22,22 +22,84 @@ export interface ChatMessage {
 
 const TIMEOUT_MS = 180_000; // modelo local ou o Claude pela assinatura podem demorar
 
+// Pedidos retomáveis: cada chamada leva um id. Se a conexão cair (celular com a tela apagada),
+// o servidor termina e o app busca o resultado quando volta. Cancelar avisa o servidor pra parar.
+const emAndamento = new Set<string>();
+const novoId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
+const cancelarNoServidor = (id: string) => {
+  emAndamento.delete(id);
+  void fetch('/ai/cancelar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }), keepalive: true }).catch(() => undefined);
+};
+// Fechar ou recarregar a página: o que estava pedindo não vai ser lido por ninguém, então para.
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', (e) => {
+    if (e.persisted) return; // foi só pro cache de voltar (bfcache): pode voltar e buscar
+    for (const id of emAndamento) navigator.sendBeacon?.('/ai/cancelar', new Blob([JSON.stringify({ id })], { type: 'application/json' }));
+    emAndamento.clear();
+  });
+}
+
+const esperar = (ms: number, signal: AbortSignal) =>
+  new Promise<void>((ok, falha) => {
+    const t = setTimeout(ok, ms);
+    signal.addEventListener('abort', () => {
+      clearTimeout(t);
+      falha(signal.reason);
+    });
+  });
+
+/** A conexão caiu no meio: busca de novo o resultado do mesmo pedido até chegar (ou o tempo acabar). */
+async function retomar(id: string, sinal: AbortSignal): Promise<Response> {
+  for (;;) {
+    await esperar(document.hidden ? 4000 : 1500, sinal);
+    const r = await fetch(`/ai/motor/resultado?id=${encodeURIComponent(id)}`, { signal: sinal }).catch((e: unknown) => {
+      if (sinal.aborted) throw e;
+      return undefined; // ainda sem rede: tenta de novo
+    });
+    if (r) return r;
+  }
+}
+
 export async function chat(messages: ChatMessage[], signal?: AbortSignal, motor: Motor = 'professor'): Promise<string> {
   if (!iaLigada(useConexoes.getState().motores)) throw new AIError('Nenhum motor conectado. Abra Configurações → Conexões.');
   const { temperature } = useSettings.getState();
 
+  const id = novoId();
+  emAndamento.add(id);
   const timeout = AbortSignal.timeout(TIMEOUT_MS);
-  const res = await fetch(`/ai/motor/${motor}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, temperature }),
-    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-  }).catch((e: unknown) => {
+  const sinal = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const traduzir = (e: unknown): never => {
     const name = e instanceof Error ? e.name : '';
-    if (name === 'TimeoutError') throw new AITempo('A IA demorou demais pra responder.');
-    if (name === 'AbortError') throw new AIError('Cancelado.');
+    if (timeout.aborted || name === 'TimeoutError') {
+      cancelarNoServidor(id);
+      throw new AITempo('A IA demorou demais pra responder.');
+    }
+    if (signal?.aborted || name === 'AbortError') {
+      cancelarNoServidor(id);
+      throw new AIError('Cancelado.');
+    }
+    emAndamento.delete(id);
     throw new AIError('Não consegui falar com o servidor. O "npm run dev" está rodando?');
-  });
+  };
+
+  let res: Response;
+  try {
+    res = await fetch(`/ai/motor/${motor}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-pedido': id },
+      body: JSON.stringify({ messages, temperature }),
+      signal: sinal,
+    });
+  } catch (e) {
+    if (sinal.aborted) return traduzir(e);
+    // Caiu a conexão (não foi cancelamento): o servidor continua; busca o resultado quando der.
+    try {
+      res = await retomar(id, sinal);
+    } catch (e2) {
+      return traduzir(e2);
+    }
+  }
+  emAndamento.delete(id);
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new AIError(data?.erro ?? `IA respondeu erro ${res.status}.`);

@@ -4,7 +4,7 @@ import { CalendarDays, Flame, Pencil } from 'lucide-react';
 import { toLocalDate, weekStartOf } from '../../domain/dates';
 import { levelFromXp } from '../../domain/xp';
 import { minutesByDate, streakDays, useStudy } from '../../store/study';
-import { Orbe } from '../../components/Orbe';
+import { AvatarPerfil } from '../../components/AvatarAscii';
 import { Button, Panel, ProgressBar } from '../../components/ui';
 import { PerfilModal } from './PerfilModal';
 
@@ -29,7 +29,9 @@ export function PerfilResumo() {
       }
     >
       <div className="flex items-center gap-3">
-        <Orbe tamanho={72} />
+        <button type="button" onClick={() => setEditando(true)} title="Trocar a foto de perfil" className="rounded">
+          <AvatarPerfil tamanho={72} />
+        </button>
         <div className="min-w-0">
           <p className="truncate text-base font-bold text-accent">{profile.name}</p>
           {profile.title && <p className="truncate text-[11px] text-muted">{profile.title}</p>}

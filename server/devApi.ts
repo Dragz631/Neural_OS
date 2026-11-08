@@ -5,6 +5,7 @@ import type { Plugin } from 'vite';
 import { registrarConexoes } from './conexoes/rotas.ts';
 import { registrarFontes } from './fontes.ts';
 import { criarPastas, registrarPastas } from './pastas.ts';
+import { registrarDados } from './dados.ts';
 
 // ─── "Backend" mínimo que roda dentro do servidor do Vite ────────────────────
 // 1) IA: o navegador pede por MOTOR (/ai/motor/<leve|professor|dificil>) e o
@@ -16,6 +17,8 @@ export interface DevApiEnv {
   OBSIDIAN_VAULT_PATH?: string;
   /** Cofre de estudos (lousas, resumo pro Brazuka). Se faltar, usa o OBSIDIAN_VAULT_PATH. */
   ESTUDOS_VAULT_PATH?: string;
+  /** Onde ficam os dados do app (progresso) neste PC. O modo teste usa outro arquivo. */
+  ARQUIVO_DADOS?: string;
 }
 
 const MAX_BODY = 1_000_000;
@@ -68,6 +71,20 @@ export function devApi(env: DevApiEnv): Plugin {
       registrarConexoes(server, path.resolve(import.meta.dirname, '..'));
       registrarFontes(server, path.resolve(import.meta.dirname, '..'));
       registrarPastas(server, pastas);
+      registrarDados(server, path.resolve(import.meta.dirname, '..'), env.ARQUIVO_DADOS ?? 'dados.local.json');
+
+      // Avatares pessoais (fotos de perfil em ASCII): `avatares.local.txt` na pasta do app, fora do git.
+      server.middlewares.use('/api/avatares', async (_req, res) => {
+        res.setHeader('Cache-Control', 'no-store');
+        try {
+          const texto = await fs.readFile(path.resolve(import.meta.dirname, '..', 'avatares.local.txt'), 'utf8');
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          res.end(texto.slice(0, 200_000));
+        } catch {
+          res.statusCode = 404;
+          res.end('');
+        }
+      });
 
       server.middlewares.use('/api/vault/status', async (_req, res) => {
         const vaultRoot = await vaultRootAtual();

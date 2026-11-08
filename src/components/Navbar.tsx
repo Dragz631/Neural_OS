@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { aoMudarSincronia, estadoSincronia } from '../lib/sincronia';
+import { AvatarPerfil } from './AvatarAscii';
 import { Cpu, Link2, Palette, Settings, Smartphone, Zap } from 'lucide-react';
 import { levelFromXp } from '../domain/xp';
 import { TABS, useNav } from '../store/nav';
@@ -28,6 +30,7 @@ export function Navbar() {
     void useConexoes.getState().recarregar();
   }, []);
   const { level, into, needed } = levelFromXp(xp);
+  const sinc = useSyncExternalStore(aoMudarSincronia, estadoSincronia);
 
   return (
     <nav className="sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur">
@@ -55,7 +58,15 @@ export function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 text-[11px]">
+          {sinc !== 'desligada' && (
+            <span
+              className={cn('h-1.5 w-1.5 rounded-full', sinc === 'ok' ? 'bg-accent' : 'animate-pulse bg-warn')}
+              title={sinc === 'ok' ? 'Sincronizado com o PC: o mesmo progresso no PC e no celular.' : 'Sem conexão com o PC agora. O que você fizer fica guardado aqui e vai quando a conexão voltar.'}
+              aria-label={sinc === 'ok' ? 'Sincronizado' : 'Sem conexão com o PC'}
+            />
+          )}
           <div className="hidden items-center gap-2 sm:flex" title={`${into}/${needed} XP para o próximo nível`}>
+            <AvatarPerfil tamanho={24} />
             <Zap size={12} className="text-accent" />
             <span className="font-bold text-accent">NV {level}</span>
             <div className="h-1.5 w-16 overflow-hidden rounded bg-panel-2">

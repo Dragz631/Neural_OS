@@ -168,6 +168,12 @@ export interface Profile {
   xp: number;
   /** XP de antes da regra "só aprendizado conferido" (08/11/2026), guardado pra não perder. */
   xpAntigo?: number;
+  /** Foto de perfil: id de um avatar ASCII, 'foto' (imagem própria) ou 'foto-ascii'. Sem nada = Orbe. */
+  avatar?: string;
+  /** Imagem própria, já recortada em quadrado e reduzida (data URL, ~256 px). */
+  foto?: string;
+  /** A imagem própria transformada em ASCII (linhas de texto). */
+  fotoAscii?: string[];
   title?: string;
   email?: string;
   birthday?: LocalDate;

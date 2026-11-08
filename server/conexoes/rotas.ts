@@ -6,6 +6,7 @@ import type { Conexao, ConexaoPublica, Motor } from '../../src/domain/conexoes.t
 import { criarArmazem, lerEnvTexto, varDaChave } from './armazem.ts';
 import { chamarConexao, ErroConexao, listarModelos, type Mensagem } from './chamar.ts';
 import { pedirAoMotor } from './motor.ts';
+import { cancelarPedido, idValido, iniciarPedido, resultadoDoPedido } from './pedidos.ts';
 import { chamarNotion, ErroNotion, tituloDe } from '../notion/cliente.ts';
 
 // Rotas das conexões. A chave entra por aqui UMA vez (o Hugo digita no modal)
@@ -147,19 +148,37 @@ export function registrarConexoes(server: ViteDevServer, raiz: string) {
   });
 
   // O app pede por MOTOR, nunca por provedor: POST /ai/motor/<leve|professor|dificil>.
+  // Cancelamento de verdade (botão Cancelar, página fechada): para o modelo, sem gastar cota à toa.
+  server.middlewares.use('/ai/cancelar', async (req, res) => {
+    try {
+      const corpo = await lerCorpo(req);
+      return responder(res, 200, { ok: idValido(corpo.id) && cancelarPedido(corpo.id) });
+    } catch {
+      return responder(res, 200, { ok: false });
+    }
+  });
+
   server.middlewares.use('/ai/motor', async (req, res) => {
     try {
-      const motor = (req.url ?? '').split('?')[0].replace(/^\/+/, '') as Motor;
-      if (req.method !== 'POST' || !MOTORES_OK.includes(motor)) return responder(res, 404, { erro: 'Motor desconhecido.' });
+      const [caminho, busca = ''] = (req.url ?? '').split('?');
+      const motor = caminho.replace(/^\/+/, '');
+
+      // O celular voltou (a conexão tinha caído): entrega o resultado do pedido que ficou rodando.
+      if (motor === 'resultado') {
+        const id = new URLSearchParams(busca).get('id');
+        const p = idValido(id) ? resultadoDoPedido<Awaited<ReturnType<typeof pedirAoMotor>>>(id) : undefined;
+        if (!p) return responder(res, 404, { erro: 'O servidor não tem mais esse pedido (reiniciou ou passou de 10 min). Peça de novo.' });
+        return responder(res, 200, await p);
+      }
+
+      if (req.method !== 'POST' || !MOTORES_OK.includes(motor as Motor)) return responder(res, 404, { erro: 'Motor desconhecido.' });
       const corpo = await lerCorpo(req);
       const mensagens = (Array.isArray(corpo.messages) ? corpo.messages : []) as Mensagem[];
       const temperatura = typeof corpo.temperature === 'number' ? corpo.temperature : 0.4;
-      // O app cancelou (botão Cancelar, página fechada): para o modelo também, sem gastar cota à toa.
-      const desistiu = new AbortController();
-      res.on('close', () => {
-        if (!res.writableFinished) desistiu.abort();
-      });
-      return responder(res, 200, await pedirAoMotor(armazem, motor, mensagens, temperatura, desistiu.signal));
+      const id = req.headers['x-pedido'];
+      // Com id: o pedido sobrevive à conexão cair (celular com a tela apagada). Sem id: o jeito antigo.
+      if (idValido(id)) return responder(res, 200, await iniciarPedido(id, (signal) => pedirAoMotor(armazem, motor as Motor, mensagens, temperatura, signal)));
+      return responder(res, 200, await pedirAoMotor(armazem, motor as Motor, mensagens, temperatura));
     } catch (e) {
       return responder(res, 502, { erro: e instanceof Error ? e.message : String(e) });
     }

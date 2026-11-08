@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import type { BlocoGrade } from '../domain/grade';
 import type { Id, LocalDate } from '../domain/types';
 

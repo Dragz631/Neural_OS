@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import { copiarValores, corSobre, ehEscuro, FONTE_CORPO, FONTE_TITULOS, lerTema, presetPorId, TEMA_PADRAO, type TemaValores } from '../domain/tema';
 
 // Tema escolhido (só aparência). Fica no navegador e no backup. Cada mudança vira

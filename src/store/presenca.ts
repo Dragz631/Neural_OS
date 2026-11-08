@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import { toLocalDate } from '../domain/dates';
 import type { LocalDate } from '../domain/types';
 

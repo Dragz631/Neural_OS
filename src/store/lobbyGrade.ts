@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import { encaixar, primeiroLivre, type ItemGrade, type Retangulo } from '../domain/lobbyGrade';
 
 // Onde cada widget do Lobby está e que tamanho tem. O que a pessoa arruma fica guardado.

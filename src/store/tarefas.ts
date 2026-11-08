@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import type { Id } from '../domain/types';
 import { AIError } from '../services/ai/client';
 import { useNav, type TabId } from './nav';

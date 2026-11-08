@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import type { Roadmap } from '../domain/roadmap';
 import { useBoards } from '../features/lousa/boardsStore';
 

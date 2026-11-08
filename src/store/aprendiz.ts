@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import { derivarPerfil, descreverPerfil, ENTREVISTA, normalizarRespostas, PERFIL_PADRAO, type IdPergunta, type PerfilAprendiz, type Respostas } from '../domain/aprendiz';
 
 // O perfil de aprendizagem da pessoa (resultado da entrevista). Fica no navegador

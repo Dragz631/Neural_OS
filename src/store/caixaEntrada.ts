@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import type { DestinoNota, NotaRapida } from '../domain/caixaEntrada';
 import { newId } from './study';
 

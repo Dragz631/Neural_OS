@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 
 // Preferências do app. Qual modelo responde (os motores) NÃO fica aqui: fica no
 // servidor (conexoes.local.json), ver store/conexoes.ts.

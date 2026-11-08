@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     // O portão do acesso remoto vem primeiro: nada de fora passa sem o PIN.
-    plugins: [acessoRemoto(env, import.meta.dirname), react(), tailwindcss(), devApi(env)],
+    // Modo teste (--mode teste, porta 5175) grava os dados num arquivo SEPARADO: nunca mistura com o seu.
+    plugins: [acessoRemoto(env, import.meta.dirname), react(), tailwindcss(), devApi({ ...env, ARQUIVO_DADOS: env.ARQUIVO_DADOS || (mode === 'teste' ? 'dados-teste.local.json' : 'dados.local.json') })],
     resolve: {
       alias: { '@': path.resolve(import.meta.dirname, './src') },
     },

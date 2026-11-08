@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../lib/persistir';
 import type { Id } from '../domain/types';
 
 // O que já veio do Notion/NotebookLM (importado ou dispensado, pra não oferecer

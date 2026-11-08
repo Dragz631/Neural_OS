@@ -1,6 +1,6 @@
 import { Palette, X } from 'lucide-react';
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../../lib/persistir';
 import { useStudy } from '../../store/study';
 import { useUI } from '../../store/ui';
 import { Button } from '../../components/ui';

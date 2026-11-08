@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist } from '../../lib/persistir';
 import { newId } from '../../store/study';
 import { idbDel } from '../../services/idb';
 import type { MapaMateria } from '../../domain/mapa';

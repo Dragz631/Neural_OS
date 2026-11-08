@@ -78,7 +78,7 @@ export function AcessoCelular({ open, onClose }: { open: boolean; onClose: () =>
     <Modal open={open} onClose={onClose} title="Usar no celular // de qualquer rede">
       <div className="space-y-4 text-sm">
         <p className="text-xs leading-relaxed text-muted">
-          O app continua rodando <b className="text-fg">no seu computador</b> (as chaves e o seu cofre ficam aqui). O celular só abre a tela, por um endereço temporário, e entra com um <b className="text-fg">PIN novo a cada vez</b>. Funciona no 5G e em qualquer Wi-Fi.
+          O app continua rodando <b className="text-fg">no seu computador</b> (as chaves e o seu cofre ficam aqui). O celular abre a tela por um endereço temporário e entra com um <b className="text-fg">PIN novo a cada vez</b>. Funciona no 5G e em qualquer Wi-Fi. O <b className="text-fg">progresso é o mesmo</b> nos dois, ao vivo: o que você faz no celular aparece no PC, e vice-versa.
         </p>
 
         {!e && <ErrorNote error="Não consegui falar com o servidor do app. Ele está ligado (npm run dev)?" />}
