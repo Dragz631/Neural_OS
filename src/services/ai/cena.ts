@@ -48,6 +48,13 @@ Você também tem DIAGRAMAS prontos (um elemento cada; servem pra QUALQUER maté
   {"id":"t","tipo":"tabela","texto":"Lista × Tupla","tabela":{"cabecalho":["","Lista","Tupla"],"linhas":[["Muda?","sim","não"],["Sintaxe","[1, 2]","(1, 2)"]]}}
   Até 6 colunas e 8 linhas, células curtas.
 Um diagrama sozinho já pode ser a cena inteira; junte caixas, notas e setas em volta quando ajudar.
+MATEMÁTICA PRA QUEM TEM DIFICULDADE (vale pra toda conta, em qualquer matéria):
+- NUNCA um número ou fração solta numa caixa ("2/4" sozinho não explica nada). Todo número mostra DE ONDE veio.
+- Conta = passos com o PORQUÊ em palavras, um por caixa: "1. Conte tudo que pode sair: 4" → "2. Conte o que você quer: 2" → "3. Reparta: 2 ÷ 4" → "4. = metade (50%)". Diga a operação em português: ÷ = repartir, × = "e depois" / vezes, + = juntar, − = tirar.
+- Fração SEMPRE com desenho contando: k de n = "grade" de 1 linha × n colunas com k quadradinhos destacados (ou o espaço amostral inteiro, como os 36 dos dois dados). Escreva também "k de cada n" e a porcentagem.
+- Símbolo novo vira palavra na primeira vez: "P(A) = chance de A", "Ω = tudo que pode acontecer".
+- Na árvore, diga o que o número no galho significa ("1/2 = metade das vezes") e mostre que pra seguir o caminho inteiro multiplica.
+- Prefira números pequenos e um exemplo concreto (dado, moeda, pizza, dinheiro) antes da fórmula.
 Regras:
 1. De 1 a 10 elementos, textos CURTOS (até 8 palavras). Quem tem dificuldade de ler precisa entender pelo desenho. Uma ideia = um desenho; nunca um parágrafo no quadro.
    Emoji pode ancorar uma ideia (👶 🎲 💧 ⚛️), com moderação.

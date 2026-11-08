@@ -86,7 +86,10 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
     useAprendiz.getState().registrarAjuste(tipo);
     setTexto('');
     void run(async (signal) => {
-      const r = await perguntarAoProfessor({ ctx, aula: topic.lesson, sobre, historico, pergunta: p, escada: esc }, signal);
+      // A escada só vale pra pergunta de exercício. Pedido de ajuste ("mais fácil", "rever o que faltou")
+      // é sobre entender o conceito: não mistura com a conta que estava na escada.
+      const naEscada = tipo === 'pergunta' || tipo === 'desisti' ? esc : undefined;
+      const r = await perguntarAoProfessor({ ctx, aula: topic.lesson, sobre, historico: naEscada ? historico : historico.slice(-2), pergunta: p, escada: naEscada }, signal);
       useRascunhos.getState().falarNoChat(topic.id, { de: 'prof', texto: r.texto, cena: r.cena, em: new Date().toISOString() });
       // Entregou a resposta explicada (degrau 5): a escada acaba, e o próximo é o exercício parecido dele.
       if (esc?.degrau === 5) useRascunhos.getState().guardarEscada(topic.id, undefined);

@@ -4,6 +4,7 @@
 
 import { lerDiagrama, TIPOS_DIAGRAMA, type Diagrama, type TipoDiagrama } from './diagramas';
 import { compilarExpressao } from './expressao';
+import { explicarNumero, legendaDeChance } from './numerosFalados';
 
 export const ESTILOS_CENA = ['fluxo', 'estados', 'passos', 'comparar', 'mapa', 'camadas', 'linha-do-tempo', 'livre'] as const;
 export type EstiloCena = (typeof ESTILOS_CENA)[number];
@@ -207,13 +208,29 @@ export function lerCena(bruto: unknown): Cena | null {
     const a = x as Record<string, unknown>;
     if (typeof a.texto === 'string' && a.texto.trim() && typeof a.em === 'string' && ids.has(a.em)) anotacoes.push({ texto: a.texto.trim().slice(0, MAX_TEXTO), em: a.em });
   }
-  return {
+  return falarNumeros({
     estilo: noArray(ESTILOS_CENA, o.estilo, 'livre'),
     porque: typeof o.porque === 'string' ? o.porque.trim().slice(0, 200) : '',
     elementos,
     ligacoes,
     anotacoes: anotacoes.slice(0, 4),
-  };
+  });
+}
+
+/**
+ * Número solto vira fala ("2/4" → "2/4 = 2 de cada 4 = metade (50%)") e árvore com chance
+ * nos galhos ganha legenda. Roda ao ler e ao desenhar (corrige desenhos antigos também).
+ */
+export function falarNumeros(cena: Cena): Cena {
+  const elementos = cena.elementos.map((el) => (el.tipo === 'grafico' ? el : { ...el, texto: explicarNumero(el.texto) }));
+  const anotacoes = [...cena.anotacoes];
+  for (const el of elementos) {
+    if (anotacoes.length >= 4 || anotacoes.some((a) => a.em === el.id)) continue;
+    const chance = /"chance":"([^"]+)"/.exec(JSON.stringify(el.diagrama ?? {}))?.[1];
+    const legenda = chance ? legendaDeChance(chance) : undefined;
+    if (legenda) anotacoes.push({ texto: legenda.slice(0, MAX_TEXTO), em: el.id });
+  }
+  return { ...cena, elementos, anotacoes };
 }
 
 /**

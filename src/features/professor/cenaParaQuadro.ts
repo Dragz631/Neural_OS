@@ -1,4 +1,4 @@
-import { posicionar, type Cena, type ElementoCena, type PapelCena } from '../../domain/cena';
+import { falarNumeros, posicionar, type Cena, type ElementoCena, type PapelCena } from '../../domain/cena';
 import { paletaQuadro, type PaletaQuadro } from '../lousa/temaQuadro';
 import type { Esqueleto } from './aulaParaQuadro';
 import { graficoParaEsqueletos } from './graficoParaQuadro';
@@ -89,7 +89,9 @@ export interface CenaDesenhada {
   altura: number;
 }
 
-export function cenaParaEsqueletos(titulo: string, cena: Cena): CenaDesenhada {
+export function cenaParaEsqueletos(titulo: string, cenaOriginal: Cena): CenaDesenhada {
+  // Desenho antigo com "2/4" solto também ganha a fala (a regra veio depois dele).
+  const cena = falarNumeros(cenaOriginal);
   const p = paletaQuadro();
   const colocados = posicionar(cena);
   const medidas = new Map(colocados.map(({ el }) => [el.id, medir(el)]));
