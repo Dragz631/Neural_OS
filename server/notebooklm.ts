@@ -49,10 +49,10 @@ export function criarNotebookLM(raiz: string, env: () => Promise<Record<string, 
    */
   const caminhos = async () => {
     const e = await env();
+    // Tudo do NotebookLM fica na pasta do app (09/11/2026: a instalação antiga, fora do projeto, foi apagada).
     const local = path.join(raiz, '.notebooklm-venv');
-    const antigo = path.resolve(raiz, '..', '..', '..', '.notebooklm-venv');
-    const pasta = e.NOTEBOOKLM_VENV || ((await existe(dentro(local, 'notebooklm'))) ? local : (await existe(dentro(antigo, 'notebooklm'))) ? antigo : local);
-    const navegadores = e.PLAYWRIGHT_BROWSERS_PATH || (pasta === antigo ? path.resolve(raiz, '..', '..', '..', '.playwright-browsers') : path.join(raiz, '.playwright-browsers'));
+    const pasta = e.NOTEBOOKLM_VENV || local;
+    const navegadores = e.PLAYWRIGHT_BROWSERS_PATH || path.join(raiz, '.playwright-browsers');
     return {
       pasta,
       local,
