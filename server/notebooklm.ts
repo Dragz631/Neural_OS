@@ -93,10 +93,14 @@ export function criarNotebookLM(raiz: string, env: () => Promise<Record<string, 
   // Login pelo botão do app: abre a janela do Google; quem digita é a pessoa.
   let login: { fase: 'parado' | 'janela' | 'capturando' | 'pronto' | 'erro'; erro?: string } = { fase: 'parado' };
 
-  const capturar = async () => {
+  /** Salva o acesso a partir do perfil já logado, com o MESMO navegador que fez o login. */
+  const capturar = async (navegador: string) => {
     const { bin, ambiente } = await caminhos();
+    const args = ['login', '--browser-timeout', '120', ...(navegador !== 'chromium' ? ['--browser', navegador] : [])];
     await new Promise<void>((ok, falha) =>
-      execFile(bin, ['login', '--browser-timeout', '120'], { timeout: 180_000, windowsHide: true, env: ambiente }, (erro) => (erro ? falha(erro) : ok())),
+      execFile(bin, args, { timeout: 180_000, windowsHide: true, env: ambiente }, (erro, _out, stderr) =>
+        erro ? falha(new Error(String(stderr || erro.message).trim().split('\n').slice(-3).join(' '))) : ok(),
+      ),
     );
   };
 
@@ -106,16 +110,27 @@ export function criarNotebookLM(raiz: string, env: () => Promise<Record<string, 
     login = { fase: 'janela' };
     const janela = spawn(python, ['-I', path.join(import.meta.dirname, 'notebooklm_entrar.py'), perfil], { env: ambiente });
     let saida = '';
+    let erros = '';
     janela.stdout.on('data', (d: Buffer) => (saida += d.toString('utf8')));
+    janela.stderr.on('data', (d: Buffer) => (erros += d.toString('utf8')));
     janela.on('error', () => (login = { fase: 'erro', erro: 'Não consegui abrir a janela: o NotebookLM não está instalado neste PC.' }));
     janela.on('close', () => {
       if (login.fase !== 'janela') return;
       if (!saida.includes('LOGIN_OK')) {
-        login = { fase: 'erro', erro: 'A janela fechou antes do login terminar. Tente de novo.' };
+        // Diz o motivo de verdade (antes era sempre "fechou antes", e ninguém sabia por quê).
+        const motivo = saida.includes('BLOQUEADO')
+          ? 'O Google bloqueou o login nessa janela ("navegador pode não ser seguro"). Instale o Google Chrome e tente de novo: a janela abre nele.'
+          : saida.includes('SEM_NAVEGADOR')
+            ? `Não consegui abrir nenhum navegador. ${erros.trim().split('\n').slice(-1)[0] ?? ''}`
+            : !saida.includes('JANELA_ABERTA')
+              ? `A janela não chegou a abrir: ${erros.trim().split('\n').slice(-2).join(' ').slice(0, 300) || 'erro desconhecido'}`
+              : 'A janela fechou antes do NotebookLM abrir logado. Entre na conta e espere a página do NotebookLM carregar: a janela fecha sozinha.';
+        login = { fase: 'erro', erro: motivo };
         return;
       }
       login = { fase: 'capturando' };
-      capturar()
+      const navegador = /NAVEGADOR (\w+)/.exec(saida)?.[1] ?? 'chromium';
+      capturar(navegador)
         .then(async () => {
           const c = await lerCache();
           delete c.listas.cadernos; // a lista antiga pode ter sido a do erro
@@ -162,7 +177,11 @@ export function criarNotebookLM(raiz: string, env: () => Promise<Record<string, 
       try {
         const py = await acharPython();
         if (!py) throw new Error('Não achei o Python (versão 3.10 ou mais nova). Instale em python.org/downloads, marque "Add Python to PATH" no instalador, e aperte "Instalar" de novo.');
-        const { local, navegadores, ambiente } = await caminhos();
+        // O navegador vai pra pasta do ambiente que ESTA instalação cria (bug de 09/11: com o
+        // ambiente antigo ainda na máquina, ele baixava na pasta antiga e o login não achava).
+        const { local, ambiente: amb } = await caminhos();
+        const navegadores = (await env()).PLAYWRIGHT_BROWSERS_PATH || path.join(raiz, '.playwright-browsers');
+        const ambiente = { ...amb, PLAYWRIGHT_BROWSERS_PATH: navegadores };
         const pythonLocal = dentro(local, 'python');
         instalacao = { ...instalacao, passo: 'Criando o ambiente do NotebookLM', passoN: 2 };
         if (!(await existe(pythonLocal))) await executar(py.cmd, [...py.args, '-m', 'venv', local]);
