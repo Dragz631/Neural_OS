@@ -82,7 +82,7 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:5173. Na primeira vez o app está vazio de propósito: ele pede pra você criar a **sua** primeira matéria e tópico, e tudo nasce do que você estuda. Os dados ficam neste computador: no navegador e em `dados.local.json` na pasta do app (é o que deixa o celular com o mesmo progresso). Faça backup em ⚙ Configurações quando quiser.
+Abra http://localhost:5173. Na primeira vez um **tour guiado** te leva pelas telas principais, passo a passo, mostrando o que o professor pode te dizer em cada uma. Depois, o app está vazio de propósito: ele pede pra você criar a **sua** primeira matéria e tópico, e tudo nasce do que você estuda. Os dados ficam neste computador: no navegador e em `dados.local.json` na pasta do app (é o que deixa o celular com o mesmo progresso). Faça backup em ⚙ Configurações quando quiser.
 
 - **Sem IA ele funciona inteiro.** A IA só deixa as aulas, os desafios e o feed mais personalizados.
 - **Seus dados e suas chaves são seus:** ninguém recebe o que você estuda, e as chaves nunca saem do seu `.env.local`.

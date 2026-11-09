@@ -86,7 +86,7 @@ export function GradeLobby() {
       <div className="space-y-4">
         {emOrdem(itens).map((i) => {
           const def = DEF.get(i.id);
-          return def ? <def.Componente key={i.id} /> : null;
+          return def ? (<div key={i.id} data-tour={`widget-${i.id}`}><def.Componente /></div>) : null;
         })}
       </div>
     );
@@ -147,7 +147,7 @@ export function GradeLobby() {
             const style: CSSProperties = { gridColumn: `${i.x + 1} / span ${i.w}`, gridRow: `${i.y + 1} / span ${i.h}` };
             if (ativo && arrasto.modo === 'mover') style.transform = `translate(${arrasto.dx}px, ${arrasto.dy}px)`;
             return (
-              <div key={i.id} style={style} className={cn('relative min-h-0 min-w-0', ativo && 'z-20 opacity-80', editando && 'rounded ring-1 ring-accent/40')}>
+              <div key={i.id} data-tour={`widget-${i.id}`} style={style} className={cn('relative min-h-0 min-w-0', ativo && 'z-20 opacity-80', editando && 'rounded ring-1 ring-accent/40')}>
                 <div className={cn('h-full overflow-auto [&>*]:min-h-full', editando && 'pointer-events-none select-none')}>
                   <def.Componente />
                 </div>

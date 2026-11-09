@@ -146,6 +146,7 @@ export function ChatProfessor({ topic, ctx }: { topic: Topic; ctx?: TopicContext
       <button
         type="button"
         onClick={() => mover({ aberto: true })}
+        data-tour="chat"
         className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border border-accent bg-panel px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-accent shadow-lg hover:bg-accent/10"
         title="Ajustes rápidos com o professor: mais fácil, desenha isso, um exemplo..."
       >

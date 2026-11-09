@@ -20,7 +20,7 @@ import { Button } from './ui';
 /** O botão que abre o parêntese. */
 export function BotaoTraveiBase({ topicId, duvida, className, rotulo = 'Travei numa base' }: { topicId?: Id; duvida?: string; className?: string; rotulo?: string }) {
   return (
-    <Button className={className} onClick={() => useGavetaBase.getState().abrir({ topicId, duvida })} title="Não sabe uma conta que a aula usa (dividir, fração...)? O professor explica desenhando, sem parar a aula.">
+    <Button data-tour="base" className={className} onClick={() => useGavetaBase.getState().abrir({ topicId, duvida })} title="Não sabe uma conta que a aula usa (dividir, fração...)? O professor explica desenhando, sem parar a aula.">
       <LifeBuoy size={14} /> {rotulo}
     </Button>
   );

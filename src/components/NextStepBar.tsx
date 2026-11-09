@@ -10,7 +10,7 @@ export function NextStepBar({ variant = 'bar' }: { variant?: 'bar' | 'hero' }) {
 
   if (variant === 'hero') {
     return (
-      <section className="glow scanlines relative overflow-hidden rounded border border-accent/70 bg-panel p-5">
+      <section data-tour="proximo-passo" className="glow scanlines relative overflow-hidden rounded border border-accent/70 bg-panel p-5">
         <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-accent">
           <span className="pulse-dot" aria-hidden />
           Próximo passo <span className="text-muted/70">// o que fazer agora</span>

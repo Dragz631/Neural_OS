@@ -220,7 +220,9 @@ Não dá pra desfazer (faça um backup em Configurações se tiver dúvida).`;
               </div>
             </div>
           </div>
-          <ProvaPanel key={`prova-${topic.id}`} topic={topic} ctx={ctxChat} />
+          <div data-tour="prova">
+            <ProvaPanel key={`prova-${topic.id}`} topic={topic} ctx={ctxChat} />
+          </div>
         </>
       )}
 
@@ -303,7 +305,7 @@ function Blackboard({ topic }: { topic: Topic }) {
   };
 
   return (
-    <section className="min-w-0 rounded border-4 border-line bg-panel-2 p-3 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)] md:p-5">
+    <section data-tour="quadro" className="min-w-0 rounded border-4 border-line bg-panel-2 p-3 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)] md:p-5">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <div className="flex items-center gap-3">
           <Orbe estado={loading ? 'thinking' : 'idle'} tamanho={64} />

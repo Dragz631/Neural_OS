@@ -10,6 +10,7 @@ import { useUI } from '../store/ui';
 import { cn } from '../lib/utils';
 import { ConexoesModal } from './conexoes/ConexoesModal';
 import { ConectarFontes } from './fontes/ConectarFontes';
+import { BotaoTour } from './Tour';
 import { AcessoCelular } from './AcessoCelular';
 import { SettingsModal } from './SettingsModal';
 import { TemaModal } from './TemaModal';
@@ -44,6 +45,7 @@ export function Navbar() {
           {TABS.map((t, i) => (
             <button
               key={t.id}
+              data-tour={`aba-${t.id}`}
               type="button"
               onClick={() => go(t.id)}
               title={`Atalho: ${i + 1}`}
@@ -82,6 +84,7 @@ export function Navbar() {
             <Cpu size={12} className={professor ? 'text-accent' : ''} />
             <span className="hidden sm:inline">{professor?.nome ?? 'Conectar modelo'}</span>
           </button>
+          <BotaoTour />
           <button
             type="button"
             onClick={() => abrirPainel('fontes')}
