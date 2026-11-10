@@ -7,6 +7,7 @@ import { useAI } from '../../hooks/useAI';
 import { gerarMapa } from '../../services/ai/mapa';
 import { mapaManual, mapaSemIA } from '../../services/fontesMapa';
 import { aplicarMapa } from '../../store/aplicarMapa';
+import { montarTrilha } from '../../lib/trilha';
 import { useImportacao } from '../../store/importacao';
 import { useNav } from '../../store/nav';
 import { useIALigada } from '../../store/conexoes';
@@ -72,6 +73,9 @@ export function NovaMateriaModal({
     const { subjectId, topicIds } = aplicarMapa({ ...mapa, materia: mapa.materia || nome, objetivo });
     // O material colado (ou vindo do Notion/NotebookLM) continua servindo: alimenta os cartões da matéria.
     if (contexto.trim()) useImportacao.getState().juntarContexto(subjectId, contexto.trim());
+    // O que você acabou de dizer que quer aprender vira o Target, e o professor já monta a trilha (roadmap).
+    if (topicIds[0]) useStudy.getState().setTarget({ ...useStudy.getState().target, topicId: topicIds[0] });
+    if (aiOn) montarTrilha(subjectId);
     onCriada?.(subjectId);
     toast({ title: `${mapa.materia} criada`, description: `${topicIds.length} tópicos na Árvore. Próximo passo: ${mapa.topicos[0].titulo}`, variant: 'success' });
     setMapa(null);

@@ -6,6 +6,7 @@ import { TarefasBar } from './components/TarefasBar';
 import { FocoMotor } from './components/Foco';
 import { GavetaBase } from './components/GavetaBase';
 import { Tour } from './components/Tour';
+import { useTrilhaDoTarget } from './lib/trilha';
 import { useBackupAutomatico } from './hooks/useBackupAutomatico';
 import { TABS, useNav, type TabId } from './store/nav';
 
@@ -48,6 +49,7 @@ export default function App() {
       <FocoMotor />
       <GavetaBase />
       <Tour />
+      <TrilhaAutomatica />
       {tab !== 'lobby' && <NextStepBar />}
       <main>
         <Suspense fallback={<div className="p-8 text-center text-xs text-muted">carregando…</div>}>
@@ -57,4 +59,10 @@ export default function App() {
       <Toaster />
     </div>
   );
+}
+
+/** A matéria do Target sem trilha ganha a trilha sozinha (o professor sabe o que fazer). */
+function TrilhaAutomatica() {
+  useTrilhaDoTarget();
+  return null;
 }

@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Code2, GraduationCap, Plus, SlidersHorizontal, Target as TargetIcon } from 'lucide-react';
+import { Code2, GraduationCap, Plus, SlidersHorizontal, Sparkles, Target as TargetIcon } from 'lucide-react';
+import { montarTrilha } from '../../lib/trilha';
+import { useRoadmaps } from '../../store/roadmaps';
+import { useTarefa } from '../../store/tarefas';
 import { diffDays, formatShort, toLocalDate } from '../../domain/dates';
 import type { Priority } from '../../domain/types';
 import { useNav } from '../../store/nav';
@@ -30,6 +33,9 @@ function Target() {
   const go = useNav((s) => s.go);
   const [calibrando, setCalibrando] = useState(!target.topicId);
   const [topicOpen, setTopicOpen] = useState(false);
+  const [novaMateria, setNovaMateria] = useState(false);
+  const trilha = useTarefa(topic ? `roadmap:${topic.subjectId}` : undefined);
+  const temTrilha = useRoadmaps((s) => !!(topic && s.porMateria[topic.subjectId]));
   const prioridade = target.priority ?? 'NORMAL';
   const dias = target.deadline ? diffDays(target.deadline, toLocalDate()) : undefined;
 
@@ -69,6 +75,16 @@ function Target() {
             </div>
             <ProgressBar value={topic.mastery} />
           </div>
+          {trilha.rodando && <p className="text-xs text-info">O professor está montando a trilha desta matéria (roadmap e primeiros tópicos). Pode continuar usando o app.</p>}
+          {!trilha.rodando && trilha.erro && (
+            <p className="text-xs text-warn">
+              Não consegui montar a trilha: {trilha.erro}{' '}
+              <button type="button" className="underline" onClick={() => { trilha.limpar(); montarTrilha(topic.subjectId); }}>
+                tentar de novo
+              </button>
+            </p>
+          )}
+          {!trilha.rodando && !trilha.erro && temTrilha && <p className="text-[11px] text-muted">Trilha pronta: Prof. A.Ilson → Roadmap.</p>}
           <div className="flex flex-wrap gap-2">
             <Button variant="primary" onClick={() => go('professor', topic.id)}>
               <GraduationCap size={14} /> Iniciar sessão no Prof. A.Ilson
@@ -80,6 +96,13 @@ function Target() {
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Matéria nova: o professor monta o caminho (tópicos + roadmap). Tópico solto não monta nada. */}
+          <div className="flex flex-wrap items-center gap-2 rounded border border-accent/50 bg-accent/5 p-2">
+            <span className="min-w-0 flex-1 text-xs text-muted">Quer aprender uma matéria nova? Diga qual e o professor monta a trilha.</span>
+            <Button variant="primary" onClick={() => setNovaMateria(true)}>
+              <Sparkles size={14} /> Quero aprender outra coisa
+            </Button>
+          </div>
           <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
             <label className="block">
               <Label>O que estou aprendendo</Label>
@@ -116,6 +139,11 @@ function Target() {
         </div>
       )}
       <TopicModal open={topicOpen} onClose={() => setTopicOpen(false)} onCreated={(topicId) => setTarget({ ...target, topicId })} />
+      <NovaMateriaModal
+        open={novaMateria}
+        onClose={() => setNovaMateria(false)}
+        onCriada={() => setCalibrando(false)}
+      />
     </Panel>
   );
 }
